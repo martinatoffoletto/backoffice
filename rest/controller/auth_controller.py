@@ -16,8 +16,14 @@ router = APIRouter(tags=["Auth"], prefix="/auth")
         500: {"description": "Error interno del servidor"}
     }
 )
-async def get_me():
-    """Verifica credenciales y emite un token JWT."""
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    verif credenciales y emite un token JWT.
+
+   (form-data):
+    - username: Email del usuario
+    - password: Contraseña del usuario
+    """
     pass
 
 
