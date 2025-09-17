@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, HTTPException, status, Depends
 from rest.service.auth_service import get_current_user
 from rest.schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
 
-router = APIRouter(tags=["Usuarios"], prefix="/usuarios")
+router = APIRouter(tags=["Users"], prefix="/users")
 
 @router.get(
     "/",

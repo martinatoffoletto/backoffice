@@ -8,11 +8,11 @@ from rest.controller.auth_controller import router as auth_router
 from rest.controller.jwks_controller import router as jwks_router
 
 app = FastAPI(title="Backoffice API")
-
-app.include_router(usuarios_router)
-app.include_router(roles_router)
-app.include_router(espacios_router)
-app.include_router(parametros_router)
-app.include_router(sueldos_router)
-app.include_router(auth_router)
-app.include_router(jwks_router)
+API_PREFIX = "/api/v1"
+app.include_router(usuarios_router, prefix=API_PREFIX)
+app.include_router(roles_router, prefix=API_PREFIX)
+app.include_router(espacios_router, prefix=API_PREFIX)
+app.include_router(parametros_router, prefix=API_PREFIX)
+app.include_router(sueldos_router, prefix=API_PREFIX)
+app.include_router(auth_router, prefix=API_PREFIX)
+app.include_router(jwks_router, prefix=API_PREFIX)

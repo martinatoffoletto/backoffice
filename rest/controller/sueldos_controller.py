@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from rest.schemas.sueldo_schema import SueldoCreate, SueldoUpdate
 
 
-router = APIRouter(prefix="/sueldos", tags=["Sueldos"])
+router = APIRouter(prefix="/salaries", tags=["Salaries"])
 
 @router.get(
 	"/",

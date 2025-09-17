@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, status, Depends
 from rest.service.auth_service import get_current_user
 from rest.schemas.parametro_schema import ParametroCreate, ParametroUpdate
 
-router = APIRouter(tags=["Parámetros"], prefix="/parametros")
+router = APIRouter(tags=["Parameters"], prefix="/parameters")
 
 @router.get(
     "/",

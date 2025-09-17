@@ -1,19 +1,19 @@
 from pydantic import BaseModel
 
 class UsuarioCreate(BaseModel):
-    email_universitario: str
+    email: str
     password: str
-    nombre: str
-    apellido: str
+    firstName: str
+    lastName: str
     dni: str
-    estado: str
-    role_id: str
+    state: str
+    roleId: str
 
 class UsuarioUpdate(BaseModel):
-    email_universitario: str
+    email: str
     password: str
-    nombre: str
-    apellido: str
+    firstName: str
+    lastName: str
     dni: str
-    estado: str
-    role_id: str
+    state: str
+    roleId: str

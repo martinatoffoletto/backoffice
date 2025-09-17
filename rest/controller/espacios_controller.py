@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, status, Depends
 from rest.service.auth_service import get_current_user
 from rest.schemas.espacio_schema import EspacioCreate, EspacioUpdate
 
-router = APIRouter(tags=["Espacios"], prefix="/espacios")
+router = APIRouter(tags=["Spaces"], prefix="/spaces")
 
 @router.get(
     "/",

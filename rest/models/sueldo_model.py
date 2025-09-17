@@ -6,7 +6,7 @@ import uuid
 Base = declarative_base()
 
 class Sueldo(Base):
-    __tablename__ = "sueldos"
+    __tablename__ = "salaries"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    monto = Column(Numeric(12,2), nullable=False)
+    userId = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    amount = Column(Numeric(12,2), nullable=False)

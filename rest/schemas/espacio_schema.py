@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 class EspacioCreate(BaseModel):
-    tipo: str
-    nombre: str
-    descripcion: str
+    type: str
+    name: str
+    description: str
 
 class EspacioUpdate(BaseModel):
-    tipo: str
-    nombre: str
-    descripcion: str
+    type: str
+    name: str
+    description: str
