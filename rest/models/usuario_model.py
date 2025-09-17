@@ -8,7 +8,7 @@ Base = declarative_base()
 class Usuario(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    emailUniversity = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     firstName = Column(String)
     lastName = Column(String)
