@@ -16,9 +16,7 @@ router = APIRouter(tags=["Auth"], prefix="/auth")
         500: {"description": "Error interno del servidor"}
     }
 )
-async def get_me(user=Depends(get_current_user)):
-    """Devuelve los datos del usuario autenticado."""
-    pass
+async def get_me():
     """Verifica credenciales y emite un token JWT."""
     pass
 
