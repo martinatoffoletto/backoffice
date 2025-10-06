@@ -1,29 +1,34 @@
-from fastapi import APIRouter, Depends, status
-from rest.service.auth_service import get_current_user
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException, status
+from ..schemas.auth_schema import LoginRequest, AuthPayload
+from ..models.usuario_model import Usuario
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 router = APIRouter(tags=["Auth"], prefix="/auth")
 
 @router.post(
-    "/token",
-    summary="Emitir token JWT",
-        description="Verifica credenciales y emite un token JWT para autenticación.\n\nEl token contiene la identidad del usuario (quién es) y su rol, permitiendo a los servicios validar permisos y autenticidad en cada petición sin consultar la base de datos.\n\nTodas las funciones protegidas del sistema requieren que el usuario envíe el token JWT en la cabecera Authorization",
-    response_description="Token JWT emitido",
+    "/login",
+    response_model=AuthPayload,
+    summary="Autenticar usuario",
+    description="Verifica credenciales y devuelve información del usuario autenticado.\n\nDevuelve un payload con la identidad del usuario (quién es), su rol y estado, permitiendo a los servicios conocer los permisos y datos relevantes del usuario.\n\nNo emite tokens JWT, sino que devuelve directamente la información del usuario para su uso en la aplicación.",
+    response_description="Información del usuario autenticado",
     responses={
-        200: {"description": "Token emitido exitosamente"},
+        200: {"description": "Usuario autenticado exitosamente"},
         400: {"description": "Datos inválidos"},
         401: {"description": "Credenciales incorrectas"},
         500: {"description": "Error interno del servidor"}
     }
 )
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """
-    verif credenciales y emite un token JWT.
-
-   (form-data):
-    - username: Email del usuario
-    - password: Contraseña del usuario
-    """
-    pass
+async def login(login_data: LoginRequest):
+    return AuthPayload(
+        userId="placeholder-id",
+        email=login_data.email,
+        firstName="Placeholder",
+        lastName="User",
+        dni="12345678",
+        role="ALUMNO",
+        state="ACTIVO",
+        message="Authentication successful"
+    )
 
 

@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, Enum, ForeignKey, Text
+from sqlalchemy import Column, String, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 import uuid
+from .enums import UserRole, UserState
 
 Base = declarative_base()
 
@@ -13,5 +14,5 @@ class Usuario(Base):
     firstName = Column(String)
     lastName = Column(String)
     dni = Column(String, unique=True)
-    state = Column(Enum("ACTIVO", "INACTIVO", "SUSPENDIDO", name="user_state"), nullable=False, default="ACTIVO")
-    roleId = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
+    state = Column(Enum(UserState), nullable=False, default=UserState.ACTIVO)
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.ALUMNO)

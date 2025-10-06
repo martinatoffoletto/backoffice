@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from ..models.enums import UserRole, UserState
 
 class UsuarioCreate(BaseModel):
     email: str
@@ -6,8 +7,8 @@ class UsuarioCreate(BaseModel):
     firstName: str
     lastName: str
     dni: str
-    state: str
-    roleId: str
+    state: UserState = UserState.ACTIVO
+    role: UserRole = UserRole.ALUMNO
 
 class UsuarioUpdate(BaseModel):
     email: str
@@ -15,5 +16,5 @@ class UsuarioUpdate(BaseModel):
     firstName: str
     lastName: str
     dni: str
-    state: str
-    roleId: str
+    state: UserState
+    role: UserRole
