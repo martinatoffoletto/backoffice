@@ -15,7 +15,7 @@ export default function Inicio(second) {
                     onSelect={setDate}
                     className="rounded-lg border"
                     />
-                    <div className='container-list-disc bg-blue-400 p-4 rounded-lg flex flex-col text-white px-6 mb-4 mt-4'>
+                    <div className='container-list-disc bg-sky-900 p-4 rounded-lg flex flex-col text-white px-6 mb-4 mt-4'>
                         <p className='mt-4 justify-start'>Comienzo 2do Cuatrimestre:</p>
                         <p className='mt-4 justify-start'>Evento Sede:</p>
                         <p className='mt-4 justify-start'>Reunión:</p>
@@ -24,7 +24,7 @@ export default function Inicio(second) {
                 </div>
                 <div className='flex flex-col ml-10'>
                     <h2 className="m-4 font-bold">Herramientas de Gestión</h2>
-                    <div className='container-list-disc bg-blue-400 p-4 rounded-lg flex flex-col text-white px-6'>
+                    <div className='container-list-disc bg-sky-900 p-4 rounded-lg flex flex-col text-white px-6'>
                         <a href="/usuarios" className='font-bold m-2' >Gestión de Usuarios</a>
                         <ul className='list-disc list-inside'>
                             <li className='mb-2'>Alta de Usuario</li>
