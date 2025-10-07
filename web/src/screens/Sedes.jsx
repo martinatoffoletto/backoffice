@@ -1,0 +1,1 @@
+export default function Sedes(second) {third}
