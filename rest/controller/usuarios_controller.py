@@ -1,55 +1,46 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query, Depends
 from typing import List, Optional
-from ..schemas.usuario_schema import Usuario
+from ..schemas.usuario_schema import Usuario, UsuarioCreate, UsuarioUpdate
 from ..schemas.usuario_rol_schema import UsuarioConRoles
+from ..database import get_db
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=Usuario, status_code=status.HTTP_201_CREATED)
-async def create_usuario(usuario: Usuario):
+async def create_user(usuario: UsuarioCreate, db = Depends(get_db)):
     """
     Crear un nuevo usuario.
+    Requiere: nombre, apellido, legajo, dni, correo_personal, telefono_personal
     """
     try:
         # TODO: Implementar lógica de creación en base de datos
         # Validar que legajo y DNI sean únicos
-        # db_usuario = create_usuario_in_db(usuario)
-        # return db_usuario
+        pass
         
-        # Ejemplo temporal
-        usuario.id_usuario = 1  # Simular ID generado
-        usuario.fecha_alta = "2025-10-09T10:00:00"
-        return usuario
-        
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error al crear el usuario: {str(e)}"
+            detail=f"Datos inválidos: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
         )
 
 @router.get("/", response_model=List[Usuario])
-async def get_all_usuarios():
+async def get_all_users(
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Límite de registros a retornar"),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db = Depends(get_db)
+):
     """
-    Obtener todos los usuarios activos.
+    Obtener todos los usuarios con paginación.
     """
     try:
         # TODO: Implementar consulta a base de datos
-        # usuarios = get_all_usuarios_from_db()
-        # return usuarios
-        
-        # Ejemplo temporal
-        return [
-            Usuario(
-                id_usuario=1,
-                nombre="Juan",
-                apellido="Pérez",
-                legajo="12345",
-                dni="12345678",
-                correo_personal="juan.perez@email.com",
-                telefono_personal="1234567890",
-                status=True
-            )
-        ]
+        pass
         
     except Exception as e:
         raise HTTPException(
@@ -57,33 +48,41 @@ async def get_all_usuarios():
             detail=f"Error al obtener los usuarios: {str(e)}"
         )
 
+@router.get("/search", response_model=List[Usuario])
+async def search_users(
+    nombre: Optional[str] = Query(None, description="Buscar por nombre (coincidencia parcial)"),
+    apellido: Optional[str] = Query(None, description="Buscar por apellido (coincidencia parcial)"),
+    legajo: Optional[str] = Query(None, description="Buscar por legajo exacto"),
+    dni: Optional[str] = Query(None, description="Buscar por DNI exacto"),
+    rol: Optional[str] = Query(None, description="Buscar por rol"),
+    correo: Optional[str] = Query(None, description="Buscar por correo (coincidencia parcial)"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db = Depends(get_db)
+):
+    """
+    Buscar usuarios con múltiples filtros opcionales.
+    Puede buscar por nombre, apellido, legajo, DNI, rol o correo.
+    """
+    try:
+        # TODO: Implementar búsqueda en base de datos
+        pass
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al buscar usuarios: {str(e)}"
+        )
+
 @router.get("/{id_usuario}", response_model=Usuario)
-async def get_usuario_by_id(id_usuario: int):
+async def get_user_by_id(id_usuario: int, db = Depends(get_db)):
     """
     Obtener un usuario por su ID.
     """
     try:
         # TODO: Implementar consulta a base de datos
-        # usuario = get_usuario_by_id_from_db(id_usuario)
-        # if not usuario:
-        #     raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # return usuario
+        pass
         
-        # Ejemplo temporal
-        if id_usuario == 1:
-            return Usuario(
-                id_usuario=1,
-                nombre="Juan",
-                apellido="Pérez",
-                legajo="12345",
-                dni="12345678",
-                correo_personal="juan.perez@email.com",
-                telefono_personal="1234567890",
-                status=True
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
     except HTTPException:
         raise
     except Exception as e:
@@ -92,109 +91,15 @@ async def get_usuario_by_id(id_usuario: int):
             detail=f"Error al obtener el usuario: {str(e)}"
         )
 
-@router.get("/search/nombre/{nombre}", response_model=List[Usuario])
-async def get_usuarios_by_name(nombre: str):
-    """
-    Buscar usuarios por nombre o apellido (coincidencia parcial).
-    """
-    try:
-        # TODO: Implementar búsqueda en base de datos
-        # usuarios = search_usuarios_by_name_from_db(nombre)
-        # return usuarios
-        
-        # Ejemplo temporal
-        usuarios_ejemplo = [
-            Usuario(
-                id_usuario=1,
-                nombre="Juan",
-                apellido="Pérez",
-                legajo="12345",
-                dni="12345678",
-                correo_personal="juan.perez@email.com",
-                telefono_personal="1234567890",
-                status=True
-            ),
-            Usuario(
-                id_usuario=2,
-                nombre="Juan Carlos",
-                apellido="González",
-                legajo="54321",
-                dni="87654321",
-                correo_personal="juan.gonzalez@email.com",
-                telefono_personal="0987654321",
-                status=True
-            )
-        ]
-        
-        # Filtrar por nombre o apellido que contenga la búsqueda
-        return [u for u in usuarios_ejemplo 
-                if nombre.lower() in u.nombre.lower() or nombre.lower() in u.apellido.lower()]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar usuarios: {str(e)}"
-        )
-
-@router.get("/search/legajo/{legajo}", response_model=Usuario)
-async def get_usuario_by_legajo(legajo: str):
-    """
-    Buscar usuario por legajo.
-    """
-    try:
-        # TODO: Implementar búsqueda en base de datos
-        # usuario = get_usuario_by_legajo_from_db(legajo)
-        # if not usuario:
-        #     raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # return usuario
-        
-        # Ejemplo temporal
-        if legajo == "12345":
-            return Usuario(
-                id_usuario=1,
-                nombre="Juan",
-                apellido="Pérez",
-                legajo="12345",
-                dni="12345678",
-                correo_personal="juan.perez@email.com",
-                telefono_personal="1234567890",
-                status=True
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar usuario: {str(e)}"
-        )
-
 @router.get("/{id_usuario}/roles", response_model=UsuarioConRoles)
-async def get_usuario_with_roles(id_usuario: int):
+async def get_user_with_roles(id_usuario: int, db = Depends(get_db)):
     """
-    Obtener usuario con sus roles.
+    Obtener usuario con sus roles asignados.
     """
     try:
         # TODO: Implementar consulta con JOIN a base de datos
-        # usuario_con_roles = get_usuario_with_roles_from_db(id_usuario)
-        # if not usuario_con_roles:
-        #     raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # return usuario_con_roles
+        pass
         
-        # Ejemplo temporal
-        if id_usuario == 1:
-            return UsuarioConRoles(
-                id_usuario=1,
-                nombre="Juan",
-                apellido="Pérez",
-                legajo="12345",
-                roles=["docente", "administrativo"]
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
     except HTTPException:
         raise
     except Exception as e:
@@ -204,26 +109,21 @@ async def get_usuario_with_roles(id_usuario: int):
         )
 
 @router.put("/{id_usuario}", response_model=Usuario)
-async def update_usuario(id_usuario: int, usuario_update: Usuario):
+async def update_user(id_usuario: int, usuario_update: UsuarioUpdate, db = Depends(get_db)):
     """
     Actualizar un usuario por su ID.
+    Permite actualizar uno, varios o todos los campos en una sola petición.
+    Solo se actualizan los campos que se envían (no nulos).
     """
     try:
         # TODO: Implementar actualización en base de datos
-        # existing_usuario = get_usuario_by_id_from_db(id_usuario)
-        # if not existing_usuario:
-        #     raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # 
-        # updated_usuario = update_usuario_in_db(id_usuario, usuario_update)
-        # return updated_usuario
+        pass
         
-        # Ejemplo temporal
-        if id_usuario == 1:
-            usuario_update.id_usuario = id_usuario
-            return usuario_update
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Datos inválidos: {str(e)}"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -233,24 +133,15 @@ async def update_usuario(id_usuario: int, usuario_update: Usuario):
         )
 
 @router.delete("/{id_usuario}", response_model=dict)
-async def soft_delete_usuario(id_usuario: int):
+async def delete_user(id_usuario: int, db = Depends(get_db)):
     """
-    Soft delete: marcar usuario como inactivo.
+    Soft delete: cambiar estado del usuario a inactivo.
+    No elimina físicamente el registro, solo cambia status a False.
     """
     try:
         # TODO: Implementar soft delete en base de datos
-        # existing_usuario = get_usuario_by_id_from_db(id_usuario)
-        # if not existing_usuario:
-        #     raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # 
-        # soft_delete_usuario_in_db(id_usuario)
+        pass
         
-        # Ejemplo temporal
-        if id_usuario == 1:
-            return {"message": f"Usuario con ID {id_usuario} marcado como inactivo"}
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-            
     except HTTPException:
         raise
     except Exception as e:

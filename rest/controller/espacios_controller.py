@@ -143,38 +143,7 @@ async def get_espacios_by_name(nombre: str):
             detail=f"Error al buscar espacios: {str(e)}"
         )
 
-@router.get("/sede/{id_sede}", response_model=List[Espacio])
-async def get_espacios_by_sede(id_sede: int):
-    """
-    Obtener todos los espacios de una sede específica.
-    """
-    try:
-        # TODO: Implementar consulta a base de datos
-        # espacios = get_espacios_by_sede_from_db(id_sede)
-        # return espacios
-        
-        # Ejemplo temporal
-        if id_sede == 1:
-            return [
-                Espacio(
-                    id_espacio=1,
-                    nombre="Aula 203",
-                    tipo=TipoEspacio.AULA,
-                    capacidad=30,
-                    ubicacion="2° piso, ala norte",
-                    estado=EstadoEspacio.DISPONIBLE,
-                    id_sede=1,
-                    status=True
-                )
-            ]
-        else:
-            return []
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener espacios de la sede: {str(e)}"
-        )
+
 
 @router.get("/tipo/{tipo}", response_model=List[Espacio])
 async def get_espacios_by_tipo(tipo: TipoEspacio):
@@ -252,41 +221,6 @@ async def get_espacios_by_estado(estado: EstadoEspacio):
             detail=f"Error al obtener espacios por estado: {str(e)}"
         )
 
-@router.get("/{id_espacio}/con-sede", response_model=EspacioConSede)
-async def get_espacio_with_sede(id_espacio: int):
-    """
-    Obtener espacio con información de la sede.
-    """
-    try:
-        # TODO: Implementar consulta con JOIN a base de datos
-        # espacio_con_sede = get_espacio_with_sede_from_db(id_espacio)
-        # if not espacio_con_sede:
-        #     raise HTTPException(status_code=404, detail="Espacio no encontrado")
-        # return espacio_con_sede
-        
-        # Ejemplo temporal
-        if id_espacio == 1:
-            return EspacioConSede(
-                id_espacio=1,
-                nombre="Aula 203",
-                tipo=TipoEspacio.AULA,
-                capacidad=30,
-                ubicacion="2° piso, ala norte",
-                estado=EstadoEspacio.DISPONIBLE,
-                status=True,
-                sede_nombre="Sede Central",
-                sede_ubicacion="Av. Rivadavia 1234, CABA"
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Espacio no encontrado")
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener espacio con sede: {str(e)}"
-        )
 
 @router.put("/{id_espacio}", response_model=Espacio)
 async def update_espacio(id_espacio: int, espacio_update: Espacio):
