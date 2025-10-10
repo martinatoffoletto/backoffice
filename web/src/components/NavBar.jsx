@@ -14,7 +14,7 @@ export default function NavBar(second) {
             <div className="flex-grow flex flex-col justify-center items-center">   
                 <h1 className="text-lg font-bold m-4">Portal Administrativo</h1>
                 <div className="flex justify-between"> 
-                    <Link to="/inicio" title="Inicio" />
+                    <Link to="/" title="Inicio" />
                     <Link to="/usuarios" title="Gestión de Usuarios" />
                     <Link to="/precios" title="Listado de Precios" />
                     <Link to="/cursos" title="Gestión de Cursos" />

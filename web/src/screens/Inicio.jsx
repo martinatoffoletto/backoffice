@@ -1,5 +1,6 @@
 import {Calendar} from '@/components/ui/calendar.jsx';
 import { useState } from 'react';
+import Link from '../components/Link';
 
 export default function Inicio(second) {
     const [date, setDate] = useState(new Date());
@@ -25,7 +26,7 @@ export default function Inicio(second) {
                 <div className='flex flex-col ml-10'>
                     <h2 className="m-4 font-bold">Herramientas de Gestión</h2>
                     <div className='container-list-disc bg-sky-900 p-4 rounded-lg flex flex-col text-white px-6'>
-                        <a href="/usuarios" className='font-bold m-2' >Gestión de Usuarios</a>
+                        <Link to="/usuarios" title="Gestión de Usuarios" className='font-bold m-2' />
                         <ul className='list-disc list-inside'>
                             <li className='mb-2'>Alta de Usuario</li>
                             <li className='mb-2'>Baja de Usuario</li>
@@ -33,9 +34,9 @@ export default function Inicio(second) {
                             <li className='mb-2'>Búsqueda de Usuario</li>
 
                         </ul>
-                        <a href="/precios"  className='font-bold m-2'>Lisatdo de Precios</a>
-                        <a href="/cursos"  className='font-bold m-2'>Gestión de Cursos</a>
-                        <a href="/sedes"  className='font-bold m-2' >Sedes</a>
+                        <Link to="/precios" title="Listado de Precios" className='font-bold m-2'/>
+                        <Link to="/cursos" title="Gestión de Cursos" className='font-bold m-2'/>
+                        <Link href="/sedes" title="Sedes" className='font-bold m-2'/>
                     </div>
                 </div>
                 
