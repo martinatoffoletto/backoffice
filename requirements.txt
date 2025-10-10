@@ -8,6 +8,15 @@ gunicorn==23.0.0
 h11==0.16.0
 idna==3.10
 packaging==25.0
+pydantic[email]==2.10.2
+python-dotenv==1.0.1
+python-multipart==0.0.12
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.9
+alembic==1.14.0
+bcrypt==4.2.1
+uvicorn[standard]==0.30.3
+email-validator==2.2.0
 pydantic==2.11.9
 pydantic_core==2.33.2
 python-multipart==0.0.20

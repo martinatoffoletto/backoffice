@@ -1,34 +1,47 @@
-from fastapi import APIRouter, HTTPException, status
-from ..schemas.auth_schema import LoginRequest, AuthPayload
-from ..models.usuario_model import Usuario
+from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
-from fastapi import Depends
+from ..database import get_db
+from ..service.auth_service import AuthService
+from ..schemas.auth_schema import LoginRequest, AuthResponse
+from typing import List
 
-router = APIRouter(tags=["Auth"], prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post(
-    "/login",
-    response_model=AuthPayload,
-    summary="Autenticar usuario",
-    description="Verifica credenciales y devuelve información del usuario autenticado.\n\nDevuelve un payload con la identidad del usuario (quién es), su rol y estado, permitiendo a los servicios conocer los permisos y datos relevantes del usuario.\n\nNo emite tokens JWT, sino que devuelve directamente la información del usuario para su uso en la aplicación.",
-    response_description="Información del usuario autenticado",
-    responses={
-        200: {"description": "Usuario autenticado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        401: {"description": "Credenciales incorrectas"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def login(login_data: LoginRequest):
-    return AuthPayload(
-        userId="placeholder-id",
-        email=login_data.email,
-        firstName="Placeholder",
-        lastName="User",
-        dni="12345678",
-        role="ALUMNO",
-        state="ACTIVO",
-        message="Authentication successful"
-    )
+@router.post("/login", response_model=AuthResponse)
+async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Endpoint para autenticación de usuarios.
+    Recibe email y password, retorna legajo, nombre y roles asociados.
+    """
+    try:
+        # Usar el service para autenticación
+        auth_service = AuthService(db)
+        user_payload = auth_service.authenticate_user(credentials)
+        
+        return user_payload
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
 
-
+@router.get("/validate/{email}")
+async def validate_user_access(email: str, db: Session = Depends(get_db)):
+    """
+    Validar acceso de usuario y obtener sus permisos
+    """
+    try:
+        auth_service = AuthService(db)
+        permissions = auth_service.get_user_permissions(email)
+        return permissions
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )

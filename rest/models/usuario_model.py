@@ -1,18 +1,28 @@
-from sqlalchemy import Column, String, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
-import uuid
-from .enums import UserRole, UserState
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
 class Usuario(Base):
-    __tablename__ = "users"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
-    firstName = Column(String)
-    lastName = Column(String)
-    dni = Column(String, unique=True)
-    state = Column(Enum(UserState), nullable=False, default=UserState.ACTIVO)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.ALUMNO)
+    __tablename__ = "usuarios"
+    
+    id_usuario = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre = Column(String(100), nullable=False)
+    apellido = Column(String(100), nullable=False)
+    legajo = Column(String(50), unique=True, nullable=False, index=True)
+    dni = Column(String(20), unique=True, nullable=False, index=True)
+    correo_institucional = Column(String(255), nullable=True)
+    correo_personal = Column(String(255), nullable=False, index=True)
+    telefono_laboral = Column(String(20), nullable=True)
+    telefono_personal = Column(String(20), nullable=False)
+    fecha_alta = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(Boolean, default=True, nullable=False)
+    
+    # Relaciones
+    roles = relationship("UsuarioRol", back_populates="usuario")
+    sueldos = relationship("Sueldo", back_populates="usuario")
+    
+    def __repr__(self):
+        return f"<Usuario(id_usuario={self.id_usuario}, legajo='{self.legajo}', nombre='{self.nombre} {self.apellido}')>"

@@ -1,82 +1,345 @@
-from fastapi import APIRouter, Query, status, Depends
-from rest.service.auth_service import get_current_user
-from rest.schemas.espacio_schema import EspacioCreate, EspacioUpdate
+from fastapi import APIRouter, HTTPException, status
+from typing import List, Optional
+from ..schemas.espacio_schema import Espacio, EspacioConSede, TipoEspacio, EstadoEspacio
 
-router = APIRouter(tags=["Spaces"], prefix="/spaces")
+router = APIRouter(prefix="/espacios", tags=["Espacios"])
 
-@router.get(
-    "/",
-    summary="Listar espacios",
-    description="Obtiene una lista de todos los espacios registrados.",
-    response_description="Lista de espacios",
-    responses={
-        200: {"description": "Lista de espacios encontrada"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def listar_espacios(user=Depends(get_current_user)):
-    """Obtiene una lista de espacios """
-    pass
+@router.post("/", response_model=Espacio, status_code=status.HTTP_201_CREATED)
+async def create_espacio(espacio: Espacio):
+    """
+    Crear un nuevo espacio.
+    """
+    try:
+        # TODO: Implementar lógica de creación en base de datos
+        # Validar que el nombre sea único y que la sede exista
+        # db_espacio = create_espacio_in_db(espacio)
+        # return db_espacio
+        
+        # Ejemplo temporal
+        espacio.id_espacio = 1  # Simular ID generado
+        return espacio
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al crear el espacio: {str(e)}"
+        )
 
-@router.post(
-    "/",
-    summary="Crear espacio",
-    description="Crea un nuevo espacio (sede, edificio, aula, sala, espacio común) con jerarquía.",
-    response_description="Espacio creado",
-    responses={
-        201: {"description": "Espacio creado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        409: {"description": "Espacio ya existe"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def crear_espacio(espacio: EspacioCreate, user=Depends(get_current_user)):
-    """Crea un nuevo espacio (sede, edificio, aula, sala, espacio común) con jerarquía."""
-    pass
+@router.get("/", response_model=List[Espacio])
+async def get_all_espacios():
+    """
+    Obtener todos los espacios activos.
+    """
+    try:
+        # TODO: Implementar consulta a base de datos
+        # espacios = get_all_espacios_from_db()
+        # return espacios
+        
+        # Ejemplo temporal
+        return [
+            Espacio(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            ),
+            Espacio(
+                id_espacio=2,
+                nombre="Lab Informática 1",
+                tipo=TipoEspacio.LABORATORIO,
+                capacidad=25,
+                ubicacion="1° piso, ala este",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            )
+        ]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener los espacios: {str(e)}"
+        )
 
-@router.get(
-    "/{espacio_id}",
-    summary="Obtener espacio por ID",
-    description="Obtiene los datos de un espacio específico por su ID.",
-    response_description="Datos del espacio",
-    responses={
-        200: {"description": "Espacio encontrado"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def obtener_espacio(espacio_id: int, user=Depends(get_current_user)):
-    """Obtiene los datos de un espacio por su ID."""
-    pass
+@router.get("/{id_espacio}", response_model=Espacio)
+async def get_espacio_by_id(id_espacio: int):
+    """
+    Obtener un espacio por su ID.
+    """
+    try:
+        # TODO: Implementar consulta a base de datos
+        # espacio = get_espacio_by_id_from_db(id_espacio)
+        # if not espacio:
+        #     raise HTTPException(status_code=404, detail="Espacio no encontrado")
+        # return espacio
+        
+        # Ejemplo temporal
+        if id_espacio == 1:
+            return Espacio(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Espacio no encontrado")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el espacio: {str(e)}"
+        )
 
-@router.put(
-    "/{espacio_id}",
-    summary="Actualizar espacio por ID",
-    description="Actualiza los datos de un espacio existente por su ID.",
-    response_description="Espacio actualizado",
-    responses={
-        200: {"description": "Espacio actualizado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def actualizar_espacio(espacio_id: int, espacio: EspacioUpdate, user=Depends(get_current_user)):
-    """Actualiza los datos de un espacio por su ID."""
-    pass
+@router.get("/search/nombre/{nombre}", response_model=List[Espacio])
+async def get_espacios_by_name(nombre: str):
+    """
+    Buscar espacios por nombre (coincidencia parcial).
+    """
+    try:
+        # TODO: Implementar búsqueda en base de datos
+        # espacios = search_espacios_by_name_from_db(nombre)
+        # return espacios
+        
+        # Ejemplo temporal
+        espacios_ejemplo = [
+            Espacio(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            ),
+            Espacio(
+                id_espacio=2,
+                nombre="Aula 204",
+                tipo=TipoEspacio.AULA,
+                capacidad=35,
+                ubicacion="2° piso, ala sur",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            )
+        ]
+        
+        # Filtrar por nombre que contenga la búsqueda
+        return [e for e in espacios_ejemplo if nombre.lower() in e.nombre.lower()]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al buscar espacios: {str(e)}"
+        )
 
-@router.delete(
-    "/{espacio_id}",
-    summary="Eliminar espacio (soft delete)",
-    description="Marca un espacio como eliminado (soft delete), sin borrar físicamente.",
-    response_description="Espacio eliminado",
-    responses={
-        200: {"description": "Espacio eliminado exitosamente"},
-        403: {"description": "No tienes permisos para eliminar este espacio"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def eliminar_espacio(espacio_id: int, user=Depends(get_current_user)):
-    """Marca un espacio como eliminado (soft delete)."""
-    pass
+@router.get("/sede/{id_sede}", response_model=List[Espacio])
+async def get_espacios_by_sede(id_sede: int):
+    """
+    Obtener todos los espacios de una sede específica.
+    """
+    try:
+        # TODO: Implementar consulta a base de datos
+        # espacios = get_espacios_by_sede_from_db(id_sede)
+        # return espacios
+        
+        # Ejemplo temporal
+        if id_sede == 1:
+            return [
+                Espacio(
+                    id_espacio=1,
+                    nombre="Aula 203",
+                    tipo=TipoEspacio.AULA,
+                    capacidad=30,
+                    ubicacion="2° piso, ala norte",
+                    estado=EstadoEspacio.DISPONIBLE,
+                    id_sede=1,
+                    status=True
+                )
+            ]
+        else:
+            return []
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener espacios de la sede: {str(e)}"
+        )
+
+@router.get("/tipo/{tipo}", response_model=List[Espacio])
+async def get_espacios_by_tipo(tipo: TipoEspacio):
+    """
+    Obtener espacios por tipo.
+    """
+    try:
+        # TODO: Implementar consulta a base de datos
+        # espacios = get_espacios_by_tipo_from_db(tipo)
+        # return espacios
+        
+        # Ejemplo temporal
+        espacios_ejemplo = [
+            Espacio(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            ),
+            Espacio(
+                id_espacio=2,
+                nombre="Lab Informática 1",
+                tipo=TipoEspacio.LABORATORIO,
+                capacidad=25,
+                ubicacion="1° piso, ala este",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            )
+        ]
+        
+        # Filtrar por tipo
+        return [e for e in espacios_ejemplo if e.tipo == tipo]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener espacios por tipo: {str(e)}"
+        )
+
+@router.get("/estado/{estado}", response_model=List[Espacio])
+async def get_espacios_by_estado(estado: EstadoEspacio):
+    """
+    Obtener espacios por estado.
+    """
+    try:
+        # TODO: Implementar consulta a base de datos
+        # espacios = get_espacios_by_estado_from_db(estado)
+        # return espacios
+        
+        # Ejemplo temporal
+        espacios_ejemplo = [
+            Espacio(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                id_sede=1,
+                status=True
+            )
+        ]
+        
+        # Filtrar por estado
+        return [e for e in espacios_ejemplo if e.estado == estado]
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener espacios por estado: {str(e)}"
+        )
+
+@router.get("/{id_espacio}/con-sede", response_model=EspacioConSede)
+async def get_espacio_with_sede(id_espacio: int):
+    """
+    Obtener espacio con información de la sede.
+    """
+    try:
+        # TODO: Implementar consulta con JOIN a base de datos
+        # espacio_con_sede = get_espacio_with_sede_from_db(id_espacio)
+        # if not espacio_con_sede:
+        #     raise HTTPException(status_code=404, detail="Espacio no encontrado")
+        # return espacio_con_sede
+        
+        # Ejemplo temporal
+        if id_espacio == 1:
+            return EspacioConSede(
+                id_espacio=1,
+                nombre="Aula 203",
+                tipo=TipoEspacio.AULA,
+                capacidad=30,
+                ubicacion="2° piso, ala norte",
+                estado=EstadoEspacio.DISPONIBLE,
+                status=True,
+                sede_nombre="Sede Central",
+                sede_ubicacion="Av. Rivadavia 1234, CABA"
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Espacio no encontrado")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener espacio con sede: {str(e)}"
+        )
+
+@router.put("/{id_espacio}", response_model=Espacio)
+async def update_espacio(id_espacio: int, espacio_update: Espacio):
+    """
+    Actualizar un espacio por su ID.
+    """
+    try:
+        # TODO: Implementar actualización en base de datos
+        # existing_espacio = get_espacio_by_id_from_db(id_espacio)
+        # if not existing_espacio:
+        #     raise HTTPException(status_code=404, detail="Espacio no encontrado")
+        # 
+        # updated_espacio = update_espacio_in_db(id_espacio, espacio_update)
+        # return updated_espacio
+        
+        # Ejemplo temporal
+        if id_espacio == 1:
+            espacio_update.id_espacio = id_espacio
+            return espacio_update
+        else:
+            raise HTTPException(status_code=404, detail="Espacio no encontrado")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el espacio: {str(e)}"
+        )
+
+@router.delete("/{id_espacio}", response_model=dict)
+async def soft_delete_espacio(id_espacio: int):
+    """
+    Soft delete: marcar espacio como inactivo.
+    """
+    try:
+        # TODO: Implementar soft delete en base de datos
+        # existing_espacio = get_espacio_by_id_from_db(id_espacio)
+        # if not existing_espacio:
+        #     raise HTTPException(status_code=404, detail="Espacio no encontrado")
+        # 
+        # soft_delete_espacio_in_db(id_espacio)
+        
+        # Ejemplo temporal
+        if id_espacio == 1:
+            return {"message": f"Espacio con ID {id_espacio} marcado como inactivo"}
+        else:
+            raise HTTPException(status_code=404, detail="Espacio no encontrado")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar el espacio: {str(e)}"
+        )

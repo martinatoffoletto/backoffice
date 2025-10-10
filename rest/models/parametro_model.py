@@ -1,14 +1,19 @@
-from sqlalchemy import Column, String, Boolean, JSON, Enum, Text, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Numeric
 from sqlalchemy.ext.declarative import declarative_base
-import uuid
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
 class Parametro(Base):
-    __tablename__ = "parameters"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    scope = Column(Enum("MultaBiblioteca", "MultaComedor", "General", name="parameter_scope"), nullable=False)
-    key = Column(String, nullable=False)
-    valueJson = Column(JSON, nullable=False)
-    isActive = Column(Boolean, nullable=False, default=True)
+    __tablename__ = "parametros"
+    
+    id_parametro = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    nombre = Column(String(100), unique=True, nullable=False, index=True)
+    tipo = Column(String(50), nullable=False, index=True)
+    valor_numerico = Column(Numeric(15, 2), nullable=True)
+    valor_texto = Column(Text, nullable=True)
+    fecha_modificacion = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    status = Column(Boolean, default=True, nullable=False)
+    
+    def __repr__(self):
+        return f"<Parametro(id_parametro={self.id_parametro}, nombre='{self.nombre}', tipo='{self.tipo}')>"

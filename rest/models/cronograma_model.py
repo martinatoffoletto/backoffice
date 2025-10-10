@@ -1,47 +1,23 @@
-from sqlalchemy import Column, String, Integer, Text, Date, Time, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-import uuid
-from .enums import DayOfWeek, EvaluationType
+from sqlalchemy.sql import func
 
 Base = declarative_base()
 
 class Cronograma(Base):
-    __tablename__ = "schedules"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    courseId = Column(UUID(as_uuid=True), nullable=False)
-    courseName = Column(String, nullable=False)
+    __tablename__ = "cronogramas"
+    
+    id_cronograma = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    courseId = Column(String(100), nullable=False, index=True)  # ID del curso del módulo CORE
+    courseName = Column(String(255), nullable=False)  # Nombre del curso cacheado
     totalClasses = Column(Integer, nullable=False)
-    startDate = Column(Date, nullable=False)
-    endDate = Column(Date, nullable=False)
-    startTime = Column(Time, nullable=False)
-    endTime = Column(Time, nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(Boolean, default=True, nullable=False)
     
-    classes = relationship("ClaseIndividual", back_populates="cronograma", cascade="all, delete-orphan")
-    evaluations = relationship("Evaluacion", back_populates="cronograma", cascade="all, delete-orphan")
-
-class ClaseIndividual(Base):
-    __tablename__ = "individual_classes"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cronogramaId = Column(UUID(as_uuid=True), ForeignKey("schedules.id", ondelete="CASCADE"), nullable=False)
-    classNumber = Column(Integer, nullable=False)
-    dayOfWeek = Column(Enum(DayOfWeek), nullable=False)
-    classDate = Column(Date, nullable=False)
-    topic = Column(Text)
+    # Relaciones
+    clases = relationship("ClaseIndividual", back_populates="cronograma")
+    evaluaciones = relationship("Evaluacion", back_populates="cronograma")
     
-    cronograma = relationship("Cronograma", back_populates="classes")
-
-class Evaluacion(Base):
-    __tablename__ = "evaluations"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cronogramaId = Column(UUID(as_uuid=True), ForeignKey("schedules.id", ondelete="CASCADE"), nullable=False)
-    name = Column(String, nullable=False)
-    evaluationType = Column(Enum(EvaluationType), nullable=False)
-    evaluationDate = Column(Date, nullable=False)
-    startTime = Column(Time)
-    endTime = Column(Time)
-    description = Column(Text)
-    weight = Column(Integer, default=100)
-    
-    cronograma = relationship("Cronograma", back_populates="evaluations")
+    def __repr__(self):
+        return f"<Cronograma(id_cronograma={self.id_cronograma}, courseId='{self.courseId}', courseName='{self.courseName}')>"

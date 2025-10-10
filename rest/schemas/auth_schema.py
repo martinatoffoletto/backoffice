@@ -1,16 +1,12 @@
 from pydantic import BaseModel
-from ..models.enums import UserRole, UserState
+from typing import Optional
 
 class LoginRequest(BaseModel):
-    email: str
+    username: str
     password: str
 
-class AuthPayload(BaseModel):
-    userId: str
-    email: str
-    firstName: str
-    lastName: str
-    dni: str
-    role: UserRole
-    state: UserState
-    message: str = "Authentication successful"
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: Optional[int] = None
+    username: Optional[str] = None
