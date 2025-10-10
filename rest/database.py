@@ -1,6 +1,7 @@
 import asyncpg
 import os
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 # Cargar variables de entorno
 load_dotenv()
@@ -19,6 +20,11 @@ async def init_database():
     DATABASE_USER = os.getenv('DATABASE_USER', 'postgres')
     DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', '')
     
+    # Si no hay configuración de DB en producción, no intentar conectar
+    if not DATABASE_PASSWORD and os.getenv('ENVIRONMENT') == 'production':
+        print("⚠️ Base de datos no configurada en producción. Ejecutando sin DB.")
+        return
+    
     try:
         connection_pool = await asyncpg.create_pool(
             host=DATABASE_HOST,
@@ -30,13 +36,23 @@ async def init_database():
             max_size=10
         )
         print(f"✓ Conexión exitosa a la base de datos: {DATABASE_NAME}")
-        
-        # Listar tablas existentes después de conectar
         await list_existing_tables()
         
     except Exception as e:
-        print(f"✗ Error al conectar a la base de datos: {e}")
-        raise
+        print(f"⚠️ No se pudo conectar a la base de datos: {e}")
+        print("📱 La aplicación seguirá ejecutándose sin base de datos")
+        # No hacer raise, permitir que la app siga
+
+async def get_db():
+    """Dependency para obtener una conexión a la base de datos"""
+    if connection_pool is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Base de datos no disponible"
+        )
+    
+    async with connection_pool.acquire() as connection:
+        yield connection
 
 async def list_existing_tables():
     """Lista todas las tablas existentes en la base de datos"""
@@ -82,10 +98,3 @@ def get_connection_pool():
     print( "Returning connection pool:", connection_pool)
     return connection_pool
 
-async def get_db():
-    """Dependency para obtener una conexión a la base de datos"""
-    if connection_pool is None:
-        raise Exception("Database pool not initialized")
-    
-    async with connection_pool.acquire() as connection:
-        yield connection
