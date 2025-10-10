@@ -3,7 +3,7 @@ from typing import List, Optional
 from ..schemas.usuario_schema import Usuario
 from ..schemas.usuario_rol_schema import UsuarioConRoles
 
-router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=Usuario, status_code=status.HTTP_201_CREATED)
 async def create_usuario(usuario: Usuario):

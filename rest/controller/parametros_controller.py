@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from ..schemas.parametro_schema import Parametro
 
-router = APIRouter(prefix="/parametros", tags=["Parámetros"])
+router = APIRouter(prefix="/parameters", tags=["Parameters"])
 
 @router.post("/", response_model=Parametro, status_code=status.HTTP_201_CREATED)
 async def create_parametro(parametro: Parametro):

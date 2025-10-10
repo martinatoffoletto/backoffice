@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from ..schemas.sueldo_schema import Sueldo, SueldoDetallado
 
-router = APIRouter(prefix="/sueldos", tags=["Sueldos"])
+router = APIRouter(prefix="/salaries", tags=["Salaries"])
 
 @router.post("/", response_model=Sueldo, status_code=status.HTTP_201_CREATED)
 async def create_sueldo(sueldo: Sueldo):

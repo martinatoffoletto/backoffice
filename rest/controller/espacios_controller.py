@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from ..schemas.espacio_schema import Espacio, EspacioConSede, TipoEspacio, EstadoEspacio
 
-router = APIRouter(prefix="/espacios", tags=["Espacios"])
+router = APIRouter(prefix="/spaces", tags=["Spaces"])
 
 @router.post("/", response_model=Espacio, status_code=status.HTTP_201_CREATED)
 async def create_espacio(espacio: Espacio):

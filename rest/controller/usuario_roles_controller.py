@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from ..schemas.usuario_rol_schema import UsuarioRol, UsuarioConRoles
 
-router = APIRouter(prefix="/usuario-roles", tags=["Usuario-Roles"])
+router = APIRouter(prefix="/user-roles", tags=["User Roles"])
 
 @router.post("/", response_model=UsuarioRol, status_code=status.HTTP_201_CREATED)
 async def assign_rol_to_usuario(usuario_rol: UsuarioRol):

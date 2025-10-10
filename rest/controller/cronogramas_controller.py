@@ -5,7 +5,7 @@ from ..schemas.cronograma_schema import Cronograma
 from ..schemas.clase_individual_schema import ClaseIndividual, ClaseConCronograma, EstadoClase
 from ..schemas.evaluacion_schema import Evaluacion, EvaluacionConCronograma, TipoEvaluacion
 
-router = APIRouter(prefix="/cronogramas", tags=["Cronogramas, Clases y Evaluaciones"])
+router = APIRouter(prefix="/schedules", tags=["Schedules"])
 
 # ========== CRONOGRAMAS ==========
 
