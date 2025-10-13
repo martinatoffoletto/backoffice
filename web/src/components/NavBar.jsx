@@ -16,9 +16,11 @@ export default function NavBar(second) {
                 <div className="flex justify-between"> 
                     <Link to="/" title="Inicio" />
                     <Link to="/usuarios" title="Gestión de Usuarios" />
-                    <Link to="/precios" title="Listado de Precios" />
                     <Link to="/cursos" title="Gestión de Cursos" />
+                    <Link to="/materias" title="Gestión de Materias" />
+                    <Link to="/precios" title="Listado de Precios" />
                     <Link to="/sedes" title="Sedes" />
+                    
                 </div>
             </div>
            <div className="flex flex-col items-center ml-4">

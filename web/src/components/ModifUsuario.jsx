@@ -53,20 +53,41 @@ export default function ModifUsuario(second) {
     });
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
-    const handleSearch = () => {
-        // Lógica de búsqueda aquí
-        console.log("Buscando usuario con legajo:", value);
-        setShowForm(true);
+    const [value, setValue] = useState("");
+    const [showForm, setShowForm] = useState(false);
+
+    const handleSearch = async() => {
+        try{
+            if(!value.trim()) return;
+            const response = await fetch(`https://api.example.com/usuarios/${value}`);
+            if(!response.ok) throw new Error("Usuario no encontrado");
+            const data = await response.json();
+            setForm(data);
+            setShowForm(true);
+        }catch(err){
+            setError(err.message);
+            setShowForm(false);
+        }
     };
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Aquí iría la lógica para enviar el formulario
-        setCompleted(true);
-        setError(null); // O setError("Mensaje de error") si hay un error
+    const handleSubmit = async(e) => {
+        try{
+            e.preventDefault();
+            const response = await fetch(`https://api.example.com/usuarios/${value}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(form)  
+            });
+            if(!response.ok) throw new Error("Error al modificar el usuario");
+            setCompleted(true);
+        }catch(err){
+            setError(err.message);
+        }
     } 
 
     return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="flex min-h-screen min-w-2xl flex-col items-center justify-start bg-gray-50 my-4">
             <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
                 <h1 className="font-bold text-center text-xl mb-6">Modificación de Usuario</h1>
                 <h3 className="text-sm mb-2">
@@ -91,8 +112,8 @@ export default function ModifUsuario(second) {
                 </Button>
             </div>
             { showForm &&( 
-                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-                    <h1 className="font-bold text-center text-xl mb-6">Modificación de Curso</h1>
+                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
+                    <h1 className="font-bold text-center text-xl mb-6">Modificación de Usuario</h1>
 
                     <FieldSet>
                     <FieldGroup>

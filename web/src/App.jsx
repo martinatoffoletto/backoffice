@@ -10,10 +10,11 @@ import ModifCurso from "./screens/ModifCurso"
 import BajaCurso from "./screens/BajaCurso"
 import AltaCurso from "./screens/AltaCurso"
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom"
-import AltaUsuario from "./screens/AltaUsuario"
-import BajaUsuario from "./screens/BajaUsuario"
-import ModifUsuario from "./screens/ModifUsuario"
-import BusquedaUsuario from "./screens/BusquedaUsuario"
+import AltaUsuario from "./components/AltaUsuario"
+import BajaUsuario from "./components/BajaUsuario"
+import ModifUsuario from "./components/ModifUsuario"
+import BusquedaUsuario from "./components/BusquedaUsuario"
+import Materias from "./screens/Materias"
 
 
 function App() {
@@ -31,10 +32,7 @@ function App() {
         <Route path="/modifcurso" element={<ModifCurso />} />
         <Route path="/bajacurso" element={<BajaCurso />} />
         <Route path="/altacurso" element={<AltaCurso />} />
-        <Route path="/altausuario" element={<AltaUsuario />} />
-        <Route path="/bajausuario" element={<BajaUsuario />} />
-        <Route path="/modifusuario" element={<ModifUsuario />} />
-        <Route path="/busquedausuario" element={<BusquedaUsuario />} />
+        <Route path="/materias" element={<Materias />} />
       </Routes>
     </BrowserRouter>
   )

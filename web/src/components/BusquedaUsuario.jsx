@@ -22,10 +22,30 @@ import {
   SelectLabel,
   SelectSeparator
 } from "@/components/ui/select.jsx";
+import { useState } from "react"
 
-export default function BuscarUsuario(second) {
+export default function BusquedaUsuario(second) {
+
+    const [name, setName] = useState("");
+    const [found, setFound] = useState(false);
+    const [value, setValue] = useState("");
+
+    const handleBaja=()=>{ 
+        setFound(false);
+        setName("");
+        setValue("");
+    }
+ 
+    const handleSearch=()=>{
+        if(!value.trim()) return;
+        console.log("Buscando usuario con legajo:", value);
+        setFound(true);
+        // Aquí podrías agregar lógica para buscar el usuario en una base de datos o API
+
+    }
     return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+
+        <div className="flex min-h-screen items-start justify-center bg-gray-50 my-4">
             <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
             <h1>Buscar Usuario</h1>
             <h3 className="text-sm mb-2">
@@ -51,8 +71,8 @@ export default function BuscarUsuario(second) {
             <Input
                 className="mb-4"
                 placeholder="Ingrese nombre y/o apellido"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 />
             <h3 className="text-sm mb-2">
                 Buscar por legajo
@@ -61,6 +81,7 @@ export default function BuscarUsuario(second) {
                 className="mb-4"
                 placeholder="Ingrese legajo"
                 value={value}
+                number
                 onChange={(e) => setValue(e.target.value)}
                 />
             <Button

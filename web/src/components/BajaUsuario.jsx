@@ -24,6 +24,7 @@ import {
   SelectSeparator
 } from "@/components/ui/select.jsx";
 import PopUp from "@/components/PopUp";
+import { useState } from "react";
 
 export default function BajaUsuario(second) {
     const [value, setValue] = useState("");
@@ -40,8 +41,8 @@ export default function BajaUsuario(second) {
         setShowPopup(true);
     }
     return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+        <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 my-4">
+            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
                 <h1 className="font-bold text-center text-xl mb-6">Baja de Usuario</h1>
                 <h3 className="text-sm mb-2">
                     Ingrese el legajo del usuario para proceder a la baja

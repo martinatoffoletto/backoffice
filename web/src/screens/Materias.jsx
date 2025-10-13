@@ -12,36 +12,38 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import SelectForm from "@/components/SelectForm";
-import AltaUsuario from "@/components/AltaUsuario";
-import ModifUsuario from "@/components/ModifUsuario";
-import BajaUsuario from "@/components/BajaUsuario";
-import BusquedaUsuario from "@/components/BusquedaUsuario";
+import AltaMateria from "@/components/AltaMateria";
+import BusquedaMateria from "@/components/BusquedaMateria";
+import BajaMateria from "@/components/BajaMateria";
+import ModifMateria from "@/components/ModifMateria";
+// import AltaUsuario from "@/components/AltaUsuario";
+// import ModifUsuario from "@/components/ModifUsuario";
+// import BajaUsuario from "@/components/BajaUsuario";
 
-export default function Usuarios() {
+export default function Materias() {
 
   const navigate=useNavigate();
 
   const [value, setValue] = useState("");
   const opciones = [
-    { value: "alta", label: "Alta de Usuario" },
-    { value: "baja", label: "Baja de Usuario" },
-    { value: "modif", label: "Modificación de Usuario" },
-    { value: "busqueda", label: "Búsqueda de Usuario" }
+    { value: "alta", label: "Alta de Materia" },
+    { value: "baja", label: "Baja de Materia" },
+    { value: "modif", label: "Modificación de Materia" },
+    { value: "busqueda", label: "Búsqueda de Materia" }
   ];
 
   
 
   const handleChoice=()=>{
-    if(!value) return;
-    console.log("Opción seleccionada:", value);
-    // Aquí podrías agregar lógica para redirigir o mostrar formularios según la opción
-    navigate("/" + value + "usuario");
+    // if(!value) return;
+    // console.log("Opción seleccionada:", value);
+    // navigate("/" + value + "materia");
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 mt-4">
+    <div className="flex min-h-screen min-w-2xl items-start justify-center bg-gray-50 mt-4">
       { value=== "" && (<div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-        <h1 className="font-bold text-center text-xl mb-4">Gestión de Usuarios</h1>
+        <h1 className="font-bold text-center text-xl mb-4">Gestión de Materias</h1>
     
         <h3 className="text-sm mb-2">Elija qué tipo de operación desea realizar</h3>
 
@@ -60,19 +62,19 @@ export default function Usuarios() {
       </div>)}
 
       {value==="alta" && (
-        <AltaUsuario/>
+        <AltaMateria/>
       )}
 
       {value==="baja" && (
-        <BajaUsuario/>
+        <BajaMateria/>
       )}
 
       {value==="modif" && (
-        <ModifUsuario/>
+        <ModifMateria/>
       )}
 
       {value==="busqueda" && (
-        <BusquedaUsuario/>
+        <BusquedaMateria/>
       )}
 
     </div>
