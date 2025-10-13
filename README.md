@@ -79,10 +79,10 @@ cp .env.example .env
 # DATABASE_URL=sqlite:///./backoffice.db
 ```
 
-### 5. Inicializar el sistema
+### 5. Inicializar el sistema desde root
 
 ```bash
-python setup.py
+uvicorn rest.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Este script:
