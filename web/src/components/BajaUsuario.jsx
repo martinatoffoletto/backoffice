@@ -31,14 +31,28 @@ export default function BajaUsuario(second) {
     const [found, setFound] = useState(false);
     const [showPopup, setShowPopup] = useState(false);
 
-    const handleSearch = () => {
-        // Simula búsqueda del usuario
-        if (value.trim() !== "") setFound(true);
+    const handleSearch = async() => {
+        try{
+            if (!value.trim()) return;
+            const response = await fetch(`http://localhost:8080/usuarios/${value}`); 
+            if (!response.ok){
+                throw new Error("")
+            }
+            const data= await response.json()
+            setFound(true)
+        }catch(error){
+            console.log("Error al buscar materia", error.message)
+        }
     };
 
-    const handleBaja=()=>{
-        // Lógica para confirmar la baja del usuario
-        setShowPopup(true);
+    const handleBaja=async()=>{
+
+        try{
+           
+        }catch(err){
+
+        }
+        
     }
     return(
         <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 my-4">
