@@ -25,38 +25,41 @@ import {
 } from "@/components/ui/select.jsx";
 import PopUp from "@/components/PopUp";
 import { useState } from "react";
+import { bajaUsuario, usuarioPorId } from "@/api/usuariosApi";
 
 export default function BajaUsuario(second) {
     const [value, setValue] = useState("");
     const [found, setFound] = useState(false);
-    const [showPopup, setShowPopup] = useState(false);
+    const [error, setError] = useState(null);
+    const [completed, setCompleted]=useState(false)
+    const [user, setUser]= useState(null)
 
     const handleSearch = async() => {
         try{
             if (!value.trim()) return;
-            const response = await fetch(`http://localhost:8080/usuarios/${value}`); 
-            if (!response.ok){
-                throw new Error("")
-            }
-            const data= await response.json()
+            const response = await usuarioPorId(value)
+            console.log(`Usuario con id: ${value}  encontrado: ${response}`)
+            setUser(response)
             setFound(true)
         }catch(error){
-            console.log("Error al buscar materia", error.message)
+            console.log("Error al buscar usuario", error.message)
+            setError(error.message)
         }
     };
 
     const handleBaja=async()=>{
-
         try{
-           
+           const response= await bajaUsuario(value)
+           console.log("Usuario dado de baja exitosamente")
         }catch(err){
-
+            console.log("Error al dar de baja usuario:", err.message)
+            setError(err.message)
         }
         
     }
     return(
         <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 my-4">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
+            { !completed && (<div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
                 <h1 className="font-bold text-center text-xl mb-6">Baja de Usuario</h1>
                 <h3 className="text-sm mb-2">
                     Ingrese el legajo del usuario para proceder a la baja
@@ -78,7 +81,12 @@ export default function BajaUsuario(second) {
                 >
                 Buscar
                 </Button>
-            </div>
+            </div>)}
+
+            {completed && (
+                <CardUsuario title={"Se ha dado de baja exitosamente"} user={user}/>
+            
+            )}
 
             {/* Resultado simulado */}
             {found && (
@@ -95,8 +103,11 @@ export default function BajaUsuario(second) {
             )}
 
             {/* Popup de confirmación */}
-            {showPopup && (
-                <PopUp title={"Se ha dado de baja al usuario solicitado"} message={"Se enviara una notificación de la misma al usuario"} onClose={() => setShowPopup(false)}/>
+            {found && (
+                <PopUp title={"Se ha dado de baja al usuario solicitado"} message={"Se enviara una notificación de la misma al usuario"} onClose={() => setCompleted(false)}/>
+            )}
+            {error !== null && (
+                <PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>
             )}
         </div>
     );

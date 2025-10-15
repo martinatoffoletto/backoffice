@@ -3,22 +3,38 @@ import PopUp from "../components/PopUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { bajaCurso, cursoPorId } from "@/api/cursosApi";
 
 export default function BajaCurso() {
   const [value, setValue] = useState("");
   const [found, setFound] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [cursoData, setCursoData]=useState(null)
+  const [error, setError]=useState(null)
 
-  const handleSearch = () => {
-    // Simula búsqueda del curso
-    if (value.trim() !== "") setFound(true);
+  const handleSearch = async() => {
+      try{
+          if (!value.trim()) return;
+          const response = await cursoPorId(value)
+          console.log(`Curso con id: ${value}  encontrado: ${response}`)
+          setCursoData(response)
+          setFound(true)
+      }catch(error){
+          console.log("Error al buscar curso:", error.message)
+          setError(error.message)
+      }
   };
 
-  const handleBaja=()=>{
-    // Lógica para confirmar la baja del curso
-    setShowPopup(true);
+  const handleBaja=async()=>{
+      try{
+          const response= await bajaCurso()
+          console.log("Curso dado de baja exitosamente")
+      }catch(err){
+          console.log("Error al dar de baja curso:", err.message)
+          setError(err.message)
+      }
+      
   }
-
   return (
     <div className="flex min-h-screen items-start justify-center bg-gray-50 mt-4">
       {/* Sección de búsqueda */}
@@ -64,6 +80,8 @@ export default function BajaCurso() {
       {showPopup && (
         <PopUp title={"Se ha dado de baja el curso solicitado"} message={"se pasara el objeto curso"} onClose={() => setShowPopup(false)}/>
       )}
+
+      { error && (<PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>)}
     </div>
   );
 }

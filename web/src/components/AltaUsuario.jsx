@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/popover"
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
+import { altaUsuario } from "@/api/usuariosApi";
+import CardUsuario from "./CardUsuario";
 
 
 export default function AltaUsuario(second) {
@@ -52,33 +54,28 @@ export default function AltaUsuario(second) {
         carrera: "",
         fechaInscripcion: ""
     });
-    const [completed, setCompleted] = useState(false);
+    const [showPopUp, setShowPopUp] = useState(false);
     const [error, setError] = useState(null);
+    const [completed, setCompleted]=useState(false)
+    const [userData, setUserData]=useState(null)
     
-    const handleSubmit = async(e) => {
-       try{
-        e.preventDefault();
-        const response = await fetch("/api/usuarios", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(form)
-        });
-        if (!response.ok) {
-            throw new Error("Error en la solicitud");
-        }
-        const data = await response.json();
-        console.log("Usuario dado de alta:", data);
-        setCompleted(true);
-       }  catch(err){
-        setError(err.message);
-       }
-    } 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await altaUsuario(form);
+      console.log("Usuario dado de alta:", response);
+      setUserData(response)
+      setShowPopUp(true);
+      setCompleted(true)
+    } catch (err) {
+      console.error("Error al dar de alta el usuario:", err);
+      setError(err.message);
+    }
+  };
 
     return(
     <div className="flex min-h-screen min-w-2xl  items-center justify-center bg-gray-50 mt-4">
-      <div className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-md">
+      { !completed && (<div className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-md">
         <h1 className="font-bold text-center text-2xl mb-8">Alta de Usuario</h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -220,14 +217,18 @@ export default function AltaUsuario(second) {
             </FieldGroup>
           </FieldSet>
         </form>
-      </div>
+      </div>)}
 
-      {completed && (
+      {showPopUp && (
         <PopUp
           title="Usuario dado de alta exitosamente"
           message="Se pasará el objeto usuario."
-          onClose={() => setCompleted(false)}
+          onClose={() => setShowPopUp(false)}
         />
+      )}
+
+      {completed && (
+        <CardUsuario title={"Se ha dado de alta exitosamente"} user={userData}/>
       )}
 
       {error && (
@@ -237,6 +238,7 @@ export default function AltaUsuario(second) {
           onClose={() => setError(null)}
         />
       )}
+
     </div>
   );
 }

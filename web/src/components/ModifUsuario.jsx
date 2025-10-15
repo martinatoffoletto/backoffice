@@ -31,6 +31,9 @@ import {
 } from "@/components/ui/popover"
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
+import { modificarUsuario, usuarioPorId } from "@/api/usuariosApi";
+import { data } from "react-router-dom";
+import CardUsuario from "./CardUsuario";
 
 export default function ModifUsuario(second) {
     const [date, setDate] = useState();
@@ -54,15 +57,15 @@ export default function ModifUsuario(second) {
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
     const [value, setValue] = useState("");
+    const [userData, setUserData]=useState(null)
     const [showForm, setShowForm] = useState(false);
 
     const handleSearch = async() => {
         try{
             if(!value.trim()) return;
-            const response = await fetch(`https://api.example.com/usuarios/${value}`);
-            if(!response.ok) throw new Error("Usuario no encontrado");
-            const data = await response.json();
-            setForm(data);
+            const response = await usuarioPorId(value)
+            console.log("Usuario encontrado exitosamente")
+            setUserData(response)
             setShowForm(true);
         }catch(err){
             setError(err.message);
@@ -70,19 +73,16 @@ export default function ModifUsuario(second) {
         }
     };
     const handleSubmit = async(e) => {
+        e.preventDefault();
         try{
-            e.preventDefault();
-            const response = await fetch(`https://api.example.com/usuarios/${value}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(form)  
-            });
-            if(!response.ok) throw new Error("Error al modificar el usuario");
+            
+            const response = await modificarUsuario(value, form)
+            console.log("Usuario modificado exitosamente")
+            setUserData(response)
             setCompleted(true);
         }catch(err){
             setError(err.message);
+            console.error(err.message)
         }
     } 
 
@@ -265,7 +265,7 @@ export default function ModifUsuario(second) {
             )}
 
             {completed && (
-                <PopUp title={"Información modificada exitosamente"} onClose={() => setCompleted(false)}/>
+                <CardUsuario title={"Usuario modificado exitosamente"} user={userData}/>
             )}
 
             {error && (

@@ -32,6 +32,7 @@ import {
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
+import { altaMateria } from "@/api/materiasApi";
 
 
 export default function AltaMateria(second) {
@@ -58,18 +59,10 @@ export default function AltaMateria(second) {
     
     const handleSubmit = async(e) => {
        try{
-            e.preventDefault();
-            const response= await fetch('/api/materias', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(form),
-            });
-            if(!response.ok){
-                throw new Error('Error al dar de alta la materia');
-            }
-            setCompleted(true);
+          e.preventDefault();
+          const response= await altaMateria(form)
+          console.log("Materia dada de alta exitosamente")
+          setCompleted(true);
         } catch (err){
             setError(err.message);  
         }

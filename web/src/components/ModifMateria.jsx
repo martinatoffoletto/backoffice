@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/popover"
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
+import { materiaPorId, modificarMateria } from "@/api/materiasApi";
 
 export default function ModifMateria(second) {
     const [date, setDate] = useState();
@@ -59,34 +60,25 @@ export default function ModifMateria(second) {
 
     const handleSearch = async() => {
         try{
-            const response = await fetch(`/api/materias/${value}`);
-            if (!response.ok) {
-                throw new Error('Error al buscar la materia');
-            }
-            const data = await response.json();
-            console.log("Materia encontrada:", data);
+            if(!value.trim()) return;
+            const response = await materiaPorId(value)
+            console.log("materia encontrado exitosamente")
             setShowForm(true);
-        }catch (error) {
-            console.error("Error al buscar la materia:", error);
-            setSearchError("Error al buscar la materia");
+        }catch(err){
+            setError(err.message);
+            setShowForm(false);
         }
     };
     const handleSubmit = async(e) => {
-        try{
-            e.preventDefault();
-            const response= await fetch('/api/materias', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(form),
-            });
-            if(!response.ok){
-                throw new Error('Error al modificar la materia');
-            }
+        e.preventDefault();
+        try{            
+            const response = await modificarMateria(value, form)
+            console.log("materia modificada exitosamente")
+            setUserData(response)
             setCompleted(true);
-        } catch (err){
-            setAddError(err.message);  
+        }catch(err){
+            setError(err.message);
+            console.error(err.message)
         }
 
     } 

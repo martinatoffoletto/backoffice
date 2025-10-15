@@ -1,3 +1,4 @@
+import { materiaPorId } from "@/api/materiasApi";
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -40,15 +41,13 @@ export default function BusquedaMateria(second) {
     const handleSearch= async()=>{
         if(!value.trim()) return;
         try{
-            const response= await fetch(`/api/materias/${value}`);
-            console.log("Buscando materia:", value);
-            if(!response.ok) throw new Error("Error en la búsqueda");
-            const data= await response.json();
-            console.log("Materia encontrada:", data);   
-            setFound(true);
-        } catch(error){
-            console.error("Error al buscar la materia:", error);
-            setFound(false);
+            const response= await materiaPorId(value)
+            console.log("Materia encontrado")
+            setFound(true)
+        }catch(err){
+            console.error(`Error al buscar materia: ${value}: ${err.message}`)
+            setError(err.message)
+            setFound(false)
         }
     }
 

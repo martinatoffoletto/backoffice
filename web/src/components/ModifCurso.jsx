@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/popover"
 import  {format, set} from "date-fns"
 import PopUp from "@/components/PopUp";
+import { cursoPorId, modificarCurso } from "@/api/cursosApi";
+import CardCurso from "@/components/CardCurso";
 
 
 export default function ModifCurso(second) {
@@ -48,21 +50,33 @@ export default function ModifCurso(second) {
         sede: "",
         aula: ""
     });
+    const [cursoData, setCursoData]=useState(null)
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
 
     
-    const handleSearch = () => {
-        // Lógica de búsqueda aquí
-        console.log("Buscando curso con número:", value);
-        setShowForm(true);
+    const handleSearch = async() => {
+        try{
+            if(!value.trim()) return;
+            const response = await cursoPorId(value)
+            console.log("Curso encontrado exitosamente")
+            setShowForm(true);
+        }catch(err){
+            setError(err.message);
+            setShowForm(false);
+        }
     };
-    
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Aquí iría la lógica para enviar el formulario
-        setCompleted(true);
-        setError(null); // O setError("Mensaje de error") si hay un error
+    const handleSubmit = async(e) => {
+        try{
+            e.preventDefault();
+            const response = await modificarCurso(value, form)
+            console.log("Curso modificado exitosamente")
+            setCursoData(response)
+            setCompleted(true);
+        }catch(err){
+            setError(err.message);
+            console.error(err.message)
+        }
     } 
 
     return(
@@ -222,7 +236,7 @@ export default function ModifCurso(second) {
             )}
 
             {completed && (
-                <PopUp title={"Curso modificado exitosamente"} message={"se pasara el objeto curso"} onClose={() => setCompleted(false)}/>
+                <CardCurso title={"Curso modificado exitosamente"} curso={cursoData}/>
             )}
 
             {error && (

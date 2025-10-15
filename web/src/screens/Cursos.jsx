@@ -1,3 +1,6 @@
+import AltaCurso from "@/components/AltaCurso";
+import BajaCurso from "@/components/BajaCurso";
+import ModifCurso from "@/components/ModifCurso";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -18,12 +21,12 @@ export default function Cursos() {
   const handleChoice = () => {
     if (!value) return;
     console.log("Opción seleccionada:", value);
-    navigate("/" + value + "curso"); 
+
   };
 
   return (
     <div className="flex min-h-screen items-start justify-center bg-gray-50 mt-4">
-      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+      { value==="" && (<div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
         <h1 className="font-bold text-center text-xl mb-4">Gestión de Cursos</h1>
         <h3 className="text-sm mb-2">Elija qué tipo de operación desea realizar</h3>
 
@@ -49,7 +52,20 @@ export default function Cursos() {
         >
           Ir
         </Button>
-      </div>
+      </div>)}
+      
+      {value==="alta" && (
+        <AltaCurso/>
+      )}
+
+      {value==="baja" && (
+        <BajaCurso/>
+      )}
+
+      {value==="modif" && (
+        <ModifCurso/>
+      )}
+
     </div>
   );
 }

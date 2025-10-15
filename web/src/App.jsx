@@ -6,14 +6,9 @@ import Usuarios from "./screens/Usuarios"
 import Cursos from "./screens/Cursos"
 import Sedes from "./screens/Sedes"
 import Sede from "./screens/Sede"
-import ModifCurso from "./screens/ModifCurso"
-import BajaCurso from "./screens/BajaCurso"
-import AltaCurso from "./screens/AltaCurso"
+
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom"
-import AltaUsuario from "./components/AltaUsuario"
-import BajaUsuario from "./components/BajaUsuario"
-import ModifUsuario from "./components/ModifUsuario"
-import BusquedaUsuario from "./components/BusquedaUsuario"
+
 import Materias from "./screens/Materias"
 
 
@@ -29,9 +24,6 @@ function App() {
         <Route path="/cursos" element={<Cursos />} />
         <Route path="/sedes" element={<Sedes />} />
         <Route path="/sede" element={<Sede />} />
-        <Route path="/modifcurso" element={<ModifCurso />} />
-        <Route path="/bajacurso" element={<BajaCurso />} />
-        <Route path="/altacurso" element={<AltaCurso />} />
         <Route path="/materias" element={<Materias />} />
       </Routes>
     </BrowserRouter>

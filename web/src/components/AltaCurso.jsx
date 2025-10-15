@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/popover"
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
+import { altaCurso } from "@/api/cursosApi";
+import CardCurso from "@/components/CardCurso";
 
 
 export default function AltaCurso(second) {
@@ -45,19 +47,27 @@ export default function AltaCurso(second) {
         sede: "",
         aula: ""
     });
-    const [completed, setCompleted] = useState(false);
+    const [showPopUp, setShowPopUp] = useState(false);
+    const [completed, setCompleted]=useState(false)
     const [error, setError] = useState(null);
+    const [cursoData, setCursoData]=useState(null)
     
-    const handleSubmit = (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
-        // Aquí iría la lógica para enviar el formulario
-        setCompleted(true);
-        setError(null); // O setError("Mensaje de error") si hay un error
+        try{
+            const response= await altaCurso(form)
+            console.log("Curso dado de alta exitosamente")
+            setCursoData(response)
+            setShowPopUp(true)
+        }catch(err){
+            console.error(`Error al dar de alta el curso: ${err.message}`)
+            setError(err.message)
+        }
     } 
 
     return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 mt-4">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+        <div className="flex min-h-screen min-w-2xl  items-center justify-center bg-gray-50 mt-4">
+           { !completed && ( <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
                 <h1 className="font-bold text-center text-xl mb-6">Alta Curso</h1>
 
                 <FieldSet>
@@ -183,11 +193,17 @@ export default function AltaCurso(second) {
                     </div>
                 </FieldGroup>
                 </FieldSet>
-            </div>
+            </div>)}
+
+            {showPopUp && (
+                <PopUp title={"Curso dado de alta exitosamente"} message={"se pasara el objeto curso"} onClose={() => setShowPopUp(false)}/>
+            )}
 
             {completed && (
-                <PopUp title={"Curso dado de alta exitosamente"} message={"se pasara el objeto curso"} onClose={() => setCompleted(false)}/>
-            )}
+                <CardCurso title={"El curso se ha dado de alta exitosamente"} curso={cursoData}/>
+            )
+            }
+        
 
             {error && (
                 <PopUp title={"Error al dar de alta el curso"} message={error} onClose={() => setError(null)}/>

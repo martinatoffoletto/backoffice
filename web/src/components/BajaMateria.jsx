@@ -3,6 +3,7 @@ import PopUp from "../components/PopUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { bajaMateria, materiaPorId } from "@/api/materiasApi";
 
 export default function BajaMateria() {
   const [value, setValue] = useState("");
@@ -12,11 +13,8 @@ export default function BajaMateria() {
   const handleSearch = async() => {
     try{
       if (!value.trim()) return;
-      const response = await fetch(`http://localhost:8080/materias/${value}`); 
-      if (!response.ok){
-        throw new Error("")
-      }
-      const data= await response.json()
+      const response = await materiaPorId(value);
+      console.log("Materia encontrada exitosamente") 
       setFound(true)
     }catch(error){
       console.log("Error al buscar materia", error.message)
@@ -24,7 +22,13 @@ export default function BajaMateria() {
   };
 
   const handleBaja=async()=>{
-    
+    try{
+      const response= await bajaMateria(value)
+      console.log("Materia dado de baja exitosamente")
+    }catch(err){
+        console.log("Error al dar de baja materia:", err.message)
+        setError(err.message)
+    }
   }
 
   return (
