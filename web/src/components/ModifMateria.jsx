@@ -84,10 +84,12 @@ export default function ModifMateria(second) {
     } 
 
     return(
-        <div className="flex min-h-screen min-w-2xl flex-col items-center justify-start bg-gray-50 my-4">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-                <h1 className="font-bold text-center text-xl mb-6">Modificación de Materia</h1>
-                <h3 className="text-sm mb-2">
+        <div className="flex min-h-screen min-w-2xl flex-col items-start justify-start  my-4">
+            <div className="w-full max-w-md p-6 ">
+                <h1 className="font-bold text-xl mb-4">Modificación de Materia</h1>
+                        <span className="block w-full h-[2px] bg-sky-950"></span>
+
+                <h3 className="text-sm mb-2 mt-8">
                 Ingrese el numero de materia a modificar
                 </h3>
 

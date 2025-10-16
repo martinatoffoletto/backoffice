@@ -32,11 +32,13 @@ export default function BajaMateria() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 mt-4">
+    <div className="flex min-h-screen flex-col items-start justify-start bg-gray-50 mt-4">
       {/* Sección de búsqueda */}
-      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
-        <h1 className="font-bold text-center text-xl mb-4">Baja de Materia</h1>
-        <h3 className="text-sm mb-2">
+      <div className="w-full max-w-md  p-6">
+        <h1 className="font-bold text-xl mb-4">Baja de Materia</h1>
+        <span className="block w-full h-[2px] bg-sky-950"></span>
+
+        <h3 className="text-sm mb-2 mt-8">
           Ingrese el número de materia para proceder a la baja
         </h3>
 

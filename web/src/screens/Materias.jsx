@@ -34,32 +34,39 @@ export default function Materias() {
 
   
 
-  const handleChoice=()=>{
-    // if(!value) return;
-    // console.log("Opción seleccionada:", value);
-    // navigate("/" + value + "materia");
-  }
+  // const handleChoice=()=>{
+  //   // if(!value) return;
+  //   // console.log("Opción seleccionada:", value);
+  //   // navigate("/" + value + "materia");
+  // }
 
   return (
-    <div className="flex min-h-screen min-w-2xl items-start justify-center bg-gray-50 mt-4">
-      { value=== "" && (<div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-        <h1 className="font-bold text-center text-xl mb-4">Gestión de Materias</h1>
-    
-        <h3 className="text-sm mb-2">Elija qué tipo de operación desea realizar</h3>
+    <div className="flex flex-col min-h-screen items-start justify-start mt-4 space-y-6">
+      
+      <div className="w-full max-w-2xl  p-6 ">
+        <h1 className="font-bold text-xl mb-4">Gestión de Materias</h1>
+        <span className="block w-full h-[2px] bg-sky-950"></span>
+        <div className="flex items-center gap-4 min-w-xl mt-8">
+          <h3 className="text-sm flex-shrink-0">Elija qué tipo de operación desea realizar</h3>
 
-        <SelectForm
-          title="Operaciones"
-          options={opciones}
-          value={value}
-          onValueChange={setValue}
-        />
-        <Button 
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
-          onClick={handleChoice}
-          disabled={!value}>
-            Ir
-        </Button>
-      </div>)}
+          <SelectForm
+            title="Operaciones"
+            options={opciones}
+            value={value}
+            onValueChange={setValue}
+          />
+          {/* <Button 
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+            onClick={handleChoice}
+            disabled={!value}>
+              Ir
+          </Button> */}
+        </div>
+        
+      </div>
+
+      {/* <span className="block w-full h-[1px] bg-neutral-400"></span> */}
+
 
       {value==="alta" && (
         <AltaMateria/>

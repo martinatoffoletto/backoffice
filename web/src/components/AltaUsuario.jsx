@@ -1,244 +1,242 @@
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSeparator,
   FieldSet,
-  FieldTitle,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator
-} from "@/components/ui/select.jsx";
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover"
-import  {format} from "date-fns"
+import { Checkbox } from "@/components/ui/checkbox";
 import PopUp from "@/components/PopUp";
-import { altaUsuario } from "@/api/usuariosApi";
 import CardUsuario from "./CardUsuario";
+import SueldoForm from "./SueldosForm";
+import { useState } from "react";
 
+export default function AltaUsuario() {
+  const [form, setForm] = useState({
+    tipoUsuario: [],
+    nombre: "",
+    apellido: "",
+    nroDocumento: "",
+    correoElectronico: "",
+    telefonoPersonal: "",
+    telefonoLaboral: "",
+    carrera: "",
+  });
+  const [selectedValues, setSelectedValues] = useState([]);
+  const [showPopUp, setShowPopUp] = useState(false);
+  const [error, setError] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const [userData, setUserData] = useState(null);
 
-export default function AltaUsuario(second) {
-    const [date, setDate] = useState();
-    const [form, setForm] = useState({
-        tipoUsuario: "",
-        nombre: "",
-        apellido: "",
-        fechaNacimiento: "",
-        tipoDocumento: "",
-        nroDocumento: "",
-        correoElectronico: "",
-        telefono: "",
-        direccion: "",
-        localidad: "",
-        provincia: "",
-        paisResidencia: "",
-        nacionalidad: "",
-        carrera: "",
-        fechaInscripcion: ""
+  const options = ["Administrador", "Docente", "Alumno"];
+
+  const toggleValue = (value) => {
+    setSelectedValues((prev) =>
+      prev.includes(value)
+        ? prev.filter((v) => v !== value)
+        : [...prev, value]
+    );
+  };
+
+  const cleanForm = () => {
+    setForm({
+      tipoUsuario: [],
+      nombre: "",
+      apellido: "",
+      nroDocumento: "",
+      correoElectronico: "",
+      telefonoPersonal: "",
+      telefonoLaboral: "",
+      carrera: "",
     });
-    const [showPopUp, setShowPopUp] = useState(false);
-    const [error, setError] = useState(null);
-    const [completed, setCompleted]=useState(false)
-    const [userData, setUserData]=useState(null)
-    
+    setSelectedValues([]);
+    setError(null);
+    setCompleted(false);
+    setShowPopUp(false);
+    setUserData(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.nombre || !form.apellido || !form.nroDocumento || !form.correoElectronico || !form.telefonoPersonal) {
+      setError("Por favor, completá todos los campos obligatorios.")
+      return
+    }
     try {
-      const response = await altaUsuario(form);
-      console.log("Usuario dado de alta:", response);
-      setUserData(response)
+      // const response = await altaUsuario(form);
+      // setUserData(response);
+      setCompleted(true);
       setShowPopUp(true);
-      setCompleted(true)
     } catch (err) {
       console.error("Error al dar de alta el usuario:", err);
       setError(err.message);
     }
   };
 
-    return(
-    <div className="flex min-h-screen min-w-2xl  items-center justify-center bg-gray-50 mt-4">
-      { !completed && (<div className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-md">
-        <h1 className="font-bold text-center text-2xl mb-8">Alta de Usuario</h1>
+  return (
+    <div className="flex min-h-screen items-center justify-start bg-gray-50 mt-4">
+      {!completed && (
+        <div className="w-full min-w-2xl bg-white p-8 rounded-xl shadow-md">
+          <h1 className="font-bold text-start text-xl mb-4">Alta de Usuario</h1>
+          <span className="block w-full h-[2px] bg-sky-950"></span>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <FieldSet>
-            <FieldGroup className="space-y-5">
-              <Field>
-                <FieldLabel htmlFor="tipoUsuario">Tipo de Usuario</FieldLabel>
-                <Input id="tipoUsuario" placeholder="Tipo de Usuario" />
-              </Field>
+          <form onSubmit={handleSubmit} className="space-y-5 mt-8">
+            <FieldSet>
+              <FieldGroup className="space-y-5">
+                <Field>
+                  <FieldLabel>Tipo de Usuario <span className="text-red-500">*</span></FieldLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        {selectedValues.length > 0
+                          ? selectedValues.join(", ")
+                          : "Seleccioná tipo(s) de usuario"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[250px] p-2">
+                      {options.map((opt) => (
+                        <div
+                          key={opt}
+                          className="flex items-center space-x-2 py-1 cursor-pointer"
+                          onClick={() => toggleValue(opt)}
+                        >
+                          <Checkbox checked={selectedValues.includes(opt)} />
+                          <label>{opt}</label>
+                        </div>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
+                </Field>
 
-              <Field>
-                <FieldLabel htmlFor="nombre">Nombre/s</FieldLabel>
-                <Input id="nombre" placeholder="Nombre/s" />
-              </Field>
+                <Field>
+                  <FieldLabel htmlFor="nombre">Nombre/s <span className="text-red-500">*</span></FieldLabel>
+                  <Input
+                    id="nombre"
+                    placeholder="Nombre/s"
+                    value={form.nombre}
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  />
+                </Field>
 
-              <Field>
-                <FieldLabel htmlFor="apellido">Apellido/s</FieldLabel>
-                <Input id="apellido" placeholder="Apellido/s" />
-              </Field>
+                <Field>
+                  <FieldLabel htmlFor="apellido">Apellido/s <span className="text-red-500">*</span></FieldLabel>
+                  <Input
+                    id="apellido"
+                    placeholder="Apellido/s"
+                    value={form.apellido}
+                    onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+                  />
+                </Field>
 
-              <Field>
-                <FieldLabel>Fecha de Nacimiento</FieldLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
+                <Field>
+                  <FieldLabel htmlFor="documento">N° Documento <span className="text-red-500">*</span></FieldLabel>
+                  <Input
+                    id="documento"
+                    placeholder="Documento"
+                    value={form.nroDocumento}
+                    onChange={(e) => setForm({ ...form, nroDocumento: e.target.value })}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="correo">Correo Electrónico <span className="text-red-500">*</span></FieldLabel>
+                  <Input
+                    id="correo"
+                    placeholder="Correo Electrónico"
+                    value={form.correoElectronico}
+                    onChange={(e) => setForm({ ...form, correoElectronico: e.target.value })}
+                  />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <Field>
+                    <FieldLabel>Teléfono Personal <span className="text-red-500">*</span></FieldLabel>
+                    <Input
+                      id="telefonoPersonal"
+                      placeholder="Teléfono/Celular"
+                      value={form.telefonoPersonal}
+                      onChange={(e) =>
+                        setForm({ ...form, telefonoPersonal: e.target.value })
+                      }
                     />
-                  </PopoverContent>
-                </Popover>
-              </Field>
+                  </Field>
 
-              <Field>
-                <FieldLabel>Tipo de Documento</FieldLabel>
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccione una opción" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="dni">DNI</SelectItem>
-                      <SelectItem value="pasaporte">Pasaporte</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <Field>
-                <FieldLabel>N° Documento</FieldLabel>
-                <Input id="documento" placeholder="Documento" />
-              </Field>
-
-              <Field>
-                <FieldLabel>Correo Electrónico</FieldLabel>
-                <Input id="correo" placeholder="Correo Electrónico" />
-              </Field>
-
-              <Field>
-                <FieldLabel>Teléfono/Celular</FieldLabel>
-                <Input id="telefono" placeholder="Teléfono/Celular" />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-5">
-                <Field>
-                  <FieldLabel>Dirección</FieldLabel>
-                  <Input id="direccion" placeholder="Dirección" />
-                </Field>
-
-                <Field>
-                  <FieldLabel>Localidad</FieldLabel>
-                  <Input id="localidad" placeholder="Localidad" />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <Field>
-                  <FieldLabel>Provincia</FieldLabel>
-                  <Input id="provincia" placeholder="Provincia" />
-                </Field>
-
-                <Field>
-                  <FieldLabel>País de residencia</FieldLabel>
-                  <Input id="pais" placeholder="País de residencia" />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <Field>
-                  <FieldLabel>Nacionalidad</FieldLabel>
-                  <Input id="nacionalidad" placeholder="Nacionalidad" />
-                </Field>
-
-                <Field>
-                  <FieldLabel>Carrera</FieldLabel>
-                  <Input id="carrera" placeholder="Carrera" />
-                </Field>
-              </div>
-
-              <Field>
-                <FieldLabel>Fecha de Inscripción</FieldLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
+                  <Field>
+                    <FieldLabel>Teléfono Laboral</FieldLabel>
+                    <Input
+                      id="telefonoLaboral"
+                      placeholder="Teléfono/Celular"
+                      value={form.telefonoLaboral}
+                      onChange={(e) =>
+                        setForm({ ...form, telefonoLaboral: e.target.value })
+                      }
                     />
-                  </PopoverContent>
-                </Popover>
-              </Field>
+                  </Field>
+                </div>
 
-              <div className="flex justify-center pt-4">
-                <Button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
-                >
-                  Guardar
-                </Button>
-                <Button
-                  type="reset"
-                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md ml-4"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </FieldGroup>
-          </FieldSet>
-        </form>
-      </div>)}
+                {selectedValues.includes("Alumno") && (
+                  <Field>
+                    <FieldLabel>Carrera</FieldLabel>
+                    <Input
+                      id="carrera"
+                      placeholder="Carrera"
+                      value={form.carrera}
+                      onChange={(e) => setForm({ ...form, carrera: e.target.value })}
+                    />
+                  </Field>
+                )}
 
-      {showPopUp && (
-        <PopUp
-          title="Usuario dado de alta exitosamente"
-          message="Se pasará el objeto usuario."
-          onClose={() => setShowPopUp(false)}
+                {/* {error && (
+                  <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+                )} */}
+
+                <div className="flex justify-center pt-4">
+                  <Button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+                  >
+                    Guardar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={cleanForm}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md ml-4"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </FieldGroup>
+            </FieldSet>
+
+          </form>
+        </div>
+      )}
+
+      {completed && selectedValues.includes("Alumno") && (
+        <CardUsuario
+          title="Se ha dado de alta exitosamente"
+          user={userData}
+          onClose={cleanForm}
         />
       )}
 
-      {completed && (
-        <CardUsuario title={"Se ha dado de alta exitosamente"} user={userData}/>
-      )}
+      {completed &&
+        (selectedValues.includes("Administrador") ||
+          selectedValues.includes("Docente")) && <SueldoForm onClose={cleanForm} />}
 
       {error && (
         <PopUp
           title="Error al dar de alta al usuario"
           message={error}
-          onClose={() => setError(null)}
+          onClose={cleanForm}
         />
       )}
-
     </div>
   );
 }

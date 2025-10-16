@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import PopUp from "@/components/PopUp";
+import { bajaPrecio } from "@/api/preciosApi";
 
 export default function Precios() {
   const params = [
@@ -28,6 +29,10 @@ export default function Precios() {
   const[error, setError]= useState(null);
   
 const savePrice = async () => {
+  if(!form.title || !form.price){
+    setError("Por favor, completá todos los campos obligatorios.")
+    return
+  }
   try {
     const method = editing ? 'PUT' : 'POST';
     const url = editing ? `/api/precios/${encodeURIComponent(form.title)}` : '/api/precios';
@@ -58,12 +63,7 @@ const savePrice = async () => {
 
 const deletePrice = async (title) => {
   try {
-    const response = await fetch(`/api/precios/${encodeURIComponent(title)}`, {
-      method: 'DELETE'
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await bajaPrecio(title)
     console.log(`Precio ${title} eliminado`);
   } catch (err) {
     console.error("Error al eliminar el precio:", err);
@@ -84,12 +84,12 @@ const deletePrice = async (title) => {
   // }, [])
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-gray-50 mt-4">
-      <div className="w-full max-w-3xl bg-white p-8 rounded-xl shadow-md">
-        <h1 className="font-bold text-center text-2xl mb-6">Listado de Precios</h1>
+    <div className="flex min-h-screen items-start justify-start mt-4">
+      <div className="w-full max-w-3xl p-8 ">
+        <h1 className="font-bold text-2xl mb-6">Listado de Precios</h1>
 
-        <Table className="w-full text-left border border-gray-200">
-          <TableCaption className="text-gray-500 text-sm mt-2">
+        <Table className="w-full text-left border border-gray-200 my-2">
+          <TableCaption className="text-gray-500 text-sm mt-4">
             Valores actualizados al mes vigente
           </TableCaption>
 
@@ -144,7 +144,7 @@ const deletePrice = async (title) => {
             </h2>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="title">
-                Concepto
+                Concepto <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -158,7 +158,7 @@ const deletePrice = async (title) => {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="price">
-              Precio
+              Precio <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"

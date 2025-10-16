@@ -66,17 +66,20 @@ export default function AltaCurso(second) {
     } 
 
     return(
-        <div className="flex min-h-screen min-w-2xl  items-center justify-center bg-gray-50 mt-4">
-           { !completed && ( <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-                <h1 className="font-bold text-center text-xl mb-6">Alta Curso</h1>
+        <div className="flex min-h-screen min-w-2xl  items-center justify-start ">
+           { !completed && ( 
+            <div className="w-full max-w-md p-6 ">
+                <h1 className="font-bold text-xl mb-4">Alta Curso</h1>
+                <span className="block w-full h-[3px] bg-sky-950"></span>
 
-                <FieldSet>
+
+                <FieldSet className={"mt-8"}>
                 <FieldGroup>
                     <Field>
                         <FieldLabel htmlFor="name">Fecha Inicio</FieldLabel>
                         <Popover>
                             <PopoverTrigger asChild>
-                            <Button className="w-full">
+                            <Button className="w-full bg-blue-500 hover:bg-blue-700">
                                 {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
                             </Button>
                             </PopoverTrigger>
@@ -186,7 +189,7 @@ export default function AltaCurso(second) {
                         <Input id="aula" placeholder="Aula" />
 
                     </Field>
-                    <div className="flex justify-center">
+                    <div className="flex justify-start">
                     <Button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded mt-4" onClick={handleSubmit}>
                         Guardar
                     </Button>

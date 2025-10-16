@@ -80,31 +80,38 @@ export default function ModifCurso(second) {
     } 
 
     return(
-        <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 mt-4">
+        <div className="flex min-h-screen flex-col items-start justify-start ">
             {/*Secciom de busqueda*/}
-            {!showForm &&(<div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
-                <h1 className="font-bold text-center text-xl mb-4">Modificación de Curso</h1>
-                <h3 className="text-sm mb-2">
-                Ingrese el número de curso para proceder a la modificación
-                </h3>
+            {!showForm &&(
+                <div className="w-full max-w-md  p-6">
+                    <h1 className="font-bold text-xl mb-4">Modificación de Curso</h1>
+                    <span className="block w-full h-[3px] bg-sky-950"></span>
 
-                {/* Input controlado */}
-                <Input
-                className="mb-4"
-                placeholder="Número de Curso"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                />
+                    <h3 className="text-sm mb-4 mt-8">
+                    Ingrese el número de curso para proceder a la modificación
+                    </h3>
 
-                {/* Botón de búsqueda */}
-                <Button
-                disabled={!value.trim()}
-                onClick={handleSearch}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                >
-                Buscar
-                </Button>
-            </div>)}
+                    <div className="flex items-center gap-4 min-w-xl">        
+
+                        {/* Input controlado */}
+                        <Input
+                            className="mb-4"
+                            placeholder="Número de Curso"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                        />
+
+                        {/* Botón de búsqueda */}
+                        <Button
+                            disabled={!value.trim()}
+                            onClick={handleSearch}
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+                        >
+                            Buscar
+                        </Button>
+
+                        </div>
+                </div>)}
             { showForm &&( 
                 <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
                     <h1 className="font-bold text-center text-xl mb-6">Modificación de Curso</h1>
