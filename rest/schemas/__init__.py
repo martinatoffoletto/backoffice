@@ -39,6 +39,21 @@ from .evaluacion_schema import (
     TipoEvaluacion
 )
 
+from .evaluacion_schema import (
+    Evaluacion,
+    EvaluacionConCronograma,
+    TipoEvaluacion
+)
+
+from .carrera_schema import (
+    Carrera,
+    CarreraCreate,
+    CarreraUpdate,
+    NivelCarrera
+)
+from .usuario_carrera_schema import UsuarioCarrera as SchemaUsuarioCarrera
+
+
 __all__ = [
     # Schemas principales
     "Rol",
@@ -51,7 +66,9 @@ __all__ = [
     "Cronograma",
     "ClaseIndividual",
     "Evaluacion",
-    
+    "Carrera",
+    "UsuarioCarrera"
+
     # Schemas adicionales
     "UsuarioConRoles",
     "EspacioConSede", 
@@ -63,5 +80,6 @@ __all__ = [
     "TipoEspacio",
     "EstadoEspacio",
     "EstadoClase",
-    "TipoEvaluacion"
+    "TipoEvaluacion",
+    "NivelCarrera"
 ]
