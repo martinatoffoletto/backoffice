@@ -17,126 +17,113 @@ import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
 
 import { useState } from "react"
 
-export default function Sede({action, Sede, onClose}) {
+export default function Sede({ action, Sede, onClose }) {
+  const actionType = action || "Agregar";
+  const { sede } = Sede || {};
+  const [form, setForm] = useState({
+    denominacion: sede ? sede.name : "",
+    direccion: sede ? sede.address : "",
+    cantidadAulas: sede ? sede.cantidadAulas : "",
+    tieneComedor: sede ? sede.tieneComedor : "",
+    tieneBiblioteca: sede ? sede.tieneBiblioteca : ""
+  });
+  const [error, setError] = useState(null);
 
-    const actionType = action || "Agregar"; // "create" o "view"
-    const {sede} = Sede || {}; // Datos de la sede si action es "view"
-    const[form, setForm] = useState({
-        denominacion: sede ? sede.name : "",
-        direccion: sede ? sede.address : "",
-        cantidadAulas: sede ? sede.cantidadAulas : "",
-        tieneComedor: sede ? sede.tieneComedor : "",
-        tieneBiblioteca: sede ? sede.tieneBiblioteca : ""
-    });
-    const [error, setError] = useState(null);
-    
-    const handleSubmit = async(e) => {
-        try{
-            e.preventDefault();
-            const response = await fetch('/api/sedes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(form),
-            });
-            if (!response.ok) {
-                throw new Error('Error en la solicitud');
-            }
-            const data = await response.json();
-            console.log('Éxito:', data);
-            alert("Sede creada con éxito");
-
-        } catch (error) {
-            console.error('Error:', error);
-            setError(error.message);
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/sedes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) throw new Error('Error en la solicitud');
+      const data = await response.json();
+      alert("Sede creada con éxito");
+      if (onClose) onClose();
+    } catch (err) {
+      setError(err.message);
     }
+  };
 
-    return(
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-                <h1 className="font-bold text-center text-xl mb-6">{actionType} Sede</h1>
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 p-4">
+      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
+        <h1 className="font-bold text-center text-xl mb-6">{actionType} Sede</h1>
 
-                <FieldSet>
-                <FieldGroup>
-                    <Field>
-                    <FieldLabel htmlFor="name">Denominación</FieldLabel>
-                    <Input id="name" placeholder="Denominación" value={form.denominacion} onChange={(e)=>setForm({...form, denominacion: e.target.value})}/>
-                    </Field>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Campos alineados en columna por defecto, fila en md */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <InputField label="Denominación" value={form.denominacion} onChange={(v) => setForm({ ...form, denominacion: v })} />
+            <InputField label="Dirección" value={form.direccion} onChange={(v) => setForm({ ...form, direccion: v })} />
+          </div>
 
-                    <Field>
-                    <FieldLabel htmlFor="address">Dirección</FieldLabel>
-                    <Input id="address" placeholder="Dirección"  value={form.direccion} onChange={(e)=>setForm({...form, direccion: e.target.value})}/>
-                    </Field>
+          <div className="flex flex-col md:flex-row gap-4">
+            <InputField label="Cantidad de aulas" type="number" value={form.cantidadAulas} onChange={(v) => setForm({ ...form, cantidadAulas: v })} />
 
-                    <Field>
-                    <FieldLabel htmlFor="aulas">Cantidad de aulas</FieldLabel>
-                    <Input id="aulas" placeholder="500"  value={form.cantidadAulas} onChange={(e)=>setForm({...form, cantidadAulas: e.target.value})}/>
-                    </Field>
+            <RadioGroupField
+              label="¿Tiene comedor?"
+              value={form.tieneComedor}
+              options={[{ label: "Sí", value: "si" }, { label: "No", value: "no" }]}
+              onChange={(v) => setForm({ ...form, tieneComedor: v })}
+            />
 
-                    <Field>
-                    <FieldLabel>¿Tiene comedor?</FieldLabel>
-                    <RadioGroup
-                    className="flex flex-row gap-4"
-                    value={form.tieneComedor}
-                    onValueChange={(value) => setForm({ ...form, tieneComedor: value })}
-                    >
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="si" id="comedor-si" />
-                        <label htmlFor="comedor-si">Sí</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="comedor-no" />
-                        <label htmlFor="comedor-no">No</label>
-                    </div>
-                    </RadioGroup>
+            <RadioGroupField
+              label="¿Tiene biblioteca?"
+              value={form.tieneBiblioteca}
+              options={[{ label: "Sí", value: "si" }, { label: "No", value: "no" }]}
+              onChange={(v) => setForm({ ...form, tieneBiblioteca: v })}
+            />
+          </div>
 
-                    </Field>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+            <Button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Guardar
+            </Button>
+            <Button type="button" variant="outline" className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onClick={onClose}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
 
-                    <Field>
-                    <FieldLabel >¿Tiene biblioteca?</FieldLabel>
-                    <RadioGroup
-                    className="flex flex-row gap-4"
-                    value={form.tieneBiblioteca}
-                    onValueChange={(value) => setForm({ ...form, tieneBiblioteca: value })}
-                    >
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="si" id="biblioteca-si" />
-                        <label htmlFor="biblioteca-si">Sí</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="biblioteca-no" />
-                        <label htmlFor="biblioteca-no">No</label>
-                    </div>
-                    </RadioGroup>
+        {error && <PopUp title="Error" message={error} onClose={() => setError(null)} />}
+      </div>
+    </div>
+  );
+}
 
-                    </Field>
+// Componentes auxiliares para inputs y radios
+function InputField({ label, value, onChange, type = "text" }) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <label className="text-sm font-medium mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  );
+}
 
-                    <div className="flex justify-center">
-                    <Button
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded mt-4"
-                    onClick={async (e) => {
-                        await handleSubmit(e);
-                        if (onClose) onClose();
-                    }}
-                    >
-                    Guardar
-                    </Button>
-                    <Button
-                    variant="outline"
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mt-4 ml-2"
-                    onClick={onClose}
-                    >
-                    Cancelar
-                    </Button>
-                    </div>
-                </FieldGroup>
-                </FieldSet>
-            </div>
-            {
-                error && <PopUp title="Error" message={error} onClose={() => setError(null)}/>
-            }
-        </div>
-    )
+function RadioGroupField({ label, value, options, onChange }) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <span className="text-sm font-medium mb-1">{label}</span>
+      <div className="flex flex-row gap-4">
+        {options.map(opt => (
+          <label key={opt.value} className="flex items-center gap-1">
+            <input
+              type="radio"
+              value={opt.value}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }

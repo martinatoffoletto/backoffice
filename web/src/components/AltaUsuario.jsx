@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import PopUp from "@/components/PopUp";
 import CardUsuario from "./CardUsuario";
@@ -64,9 +64,15 @@ export default function AltaUsuario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nombre || !form.apellido || !form.nroDocumento || !form.correoElectronico || !form.telefonoPersonal) {
-      setError("Por favor, completá todos los campos obligatorios.")
-      return
+    if (
+      !form.nombre ||
+      !form.apellido ||
+      !form.nroDocumento ||
+      !form.correoElectronico ||
+      !form.telefonoPersonal
+    ) {
+      setError("Por favor, completá todos los campos obligatorios.");
+      return;
     }
     try {
       // const response = await altaUsuario(form);
@@ -80,20 +86,28 @@ export default function AltaUsuario() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-start bg-gray-50 mt-4">
+    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 px-4 sm:px-8">
       {!completed && (
-        <div className="w-full min-w-2xl bg-white p-8 rounded-xl shadow-md">
-          <h1 className="font-bold text-start text-xl mb-4">Alta de Usuario</h1>
-          <span className="block w-full h-[2px] bg-sky-950"></span>
+        <div className="w-full max-w-3xl">
+          <h1 className="font-bold text-start text-2xl mb-4 text-sky-950">
+            Alta de Usuario
+          </h1>
+          <span className="block w-full h-[2px] bg-sky-950 mb-6"></span>
 
-          <form onSubmit={handleSubmit} className="space-y-5 mt-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <FieldSet>
               <FieldGroup className="space-y-5">
+                {/* Tipo de usuario */}
                 <Field>
-                  <FieldLabel>Tipo de Usuario <span className="text-red-500">*</span></FieldLabel>
+                  <FieldLabel>
+                    Tipo de Usuario <span className="text-red-500">*</span>
+                  </FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start">
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-[80%] md:w-[70%] justify-start"
+                      >
                         {selectedValues.length > 0
                           ? selectedValues.join(", ")
                           : "Seleccioná tipo(s) de usuario"}
@@ -114,55 +128,82 @@ export default function AltaUsuario() {
                   </Popover>
                 </Field>
 
-                <Field>
-                  <FieldLabel htmlFor="nombre">Nombre/s <span className="text-red-500">*</span></FieldLabel>
-                  <Input
-                    id="nombre"
-                    placeholder="Nombre/s"
-                    value={form.nombre}
-                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  />
-                </Field>
+                {/* Datos personales */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Field>
+                    <FieldLabel>
+                      Nombre/s <span className="text-red-500">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="nombre"
+                      placeholder="Nombre/s"
+                      value={form.nombre}
+                      onChange={(e) =>
+                        setForm({ ...form, nombre: e.target.value })
+                      }
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>
+                      Apellido/s <span className="text-red-500">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="apellido"
+                      placeholder="Apellido/s"
+                      value={form.apellido}
+                      onChange={(e) =>
+                        setForm({ ...form, apellido: e.target.value })
+                      }
+                    />
+                  </Field>
+                </div>
 
                 <Field>
-                  <FieldLabel htmlFor="apellido">Apellido/s <span className="text-red-500">*</span></FieldLabel>
-                  <Input
-                    id="apellido"
-                    placeholder="Apellido/s"
-                    value={form.apellido}
-                    onChange={(e) => setForm({ ...form, apellido: e.target.value })}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="documento">N° Documento <span className="text-red-500">*</span></FieldLabel>
+                  <FieldLabel>
+                    N° Documento <span className="text-red-500">*</span>
+                  </FieldLabel>
                   <Input
                     id="documento"
                     placeholder="Documento"
                     value={form.nroDocumento}
-                    onChange={(e) => setForm({ ...form, nroDocumento: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, nroDocumento: e.target.value })
+                    }
                   />
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="correo">Correo Electrónico <span className="text-red-500">*</span></FieldLabel>
+                  <FieldLabel>
+                    Correo Electrónico <span className="text-red-500">*</span>
+                  </FieldLabel>
                   <Input
                     id="correo"
                     placeholder="Correo Electrónico"
                     value={form.correoElectronico}
-                    onChange={(e) => setForm({ ...form, correoElectronico: e.target.value })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        correoElectronico: e.target.value,
+                      })
+                    }
                   />
                 </Field>
 
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <Field>
-                    <FieldLabel>Teléfono Personal <span className="text-red-500">*</span></FieldLabel>
+                    <FieldLabel>
+                      Teléfono Personal <span className="text-red-500">*</span>
+                    </FieldLabel>
                     <Input
                       id="telefonoPersonal"
                       placeholder="Teléfono/Celular"
                       value={form.telefonoPersonal}
                       onChange={(e) =>
-                        setForm({ ...form, telefonoPersonal: e.target.value })
+                        setForm({
+                          ...form,
+                          telefonoPersonal: e.target.value,
+                        })
                       }
                     />
                   </Field>
@@ -174,7 +215,10 @@ export default function AltaUsuario() {
                       placeholder="Teléfono/Celular"
                       value={form.telefonoLaboral}
                       onChange={(e) =>
-                        setForm({ ...form, telefonoLaboral: e.target.value })
+                        setForm({
+                          ...form,
+                          telefonoLaboral: e.target.value,
+                        })
                       }
                     />
                   </Field>
@@ -187,37 +231,36 @@ export default function AltaUsuario() {
                       id="carrera"
                       placeholder="Carrera"
                       value={form.carrera}
-                      onChange={(e) => setForm({ ...form, carrera: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, carrera: e.target.value })
+                      }
                     />
                   </Field>
                 )}
 
-                {/* {error && (
-                  <p className="text-red-500 text-sm text-center mt-2">{error}</p>
-                )} */}
-
-                <div className="flex justify-center pt-4">
+                {/* Botones */}
+                <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
                   <Button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md w-full sm:w-auto"
                   >
                     Guardar
                   </Button>
                   <Button
                     type="button"
                     onClick={cleanForm}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md ml-4"
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md w-full sm:w-auto"
                   >
                     Cancelar
                   </Button>
                 </div>
               </FieldGroup>
             </FieldSet>
-
           </form>
         </div>
       )}
 
+      {/* Resultado */}
       {completed && selectedValues.includes("Alumno") && (
         <CardUsuario
           title="Se ha dado de alta exitosamente"
@@ -228,7 +271,9 @@ export default function AltaUsuario() {
 
       {completed &&
         (selectedValues.includes("Administrador") ||
-          selectedValues.includes("Docente")) && <SueldoForm onClose={cleanForm} />}
+          selectedValues.includes("Docente")) && (
+          <SueldoForm onClose={cleanForm} />
+        )}
 
       {error && (
         <PopUp

@@ -42,6 +42,7 @@ export default function BajaMateria() {
           Ingrese el número de materia para proceder a la baja
         </h3>
 
+        <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
         {/* Input controlado */}
         <Input
           className="mb-4"
@@ -58,6 +59,7 @@ export default function BajaMateria() {
         >
           Buscar
         </Button>
+        </div>
       </div>
 
       {/* Resultado simulado */}

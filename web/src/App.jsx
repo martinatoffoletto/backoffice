@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useState } from "react"
 
 import NavBar from "./components/NavBar"
 import Inicio from "./screens/Inicio"
@@ -10,14 +11,16 @@ import Sede from "./screens/Sede"
 import Materias from "./screens/Materias"
 
 function App() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <BrowserRouter>
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <NavBar />
+      <div className="flex h-screen flex-col md:flex-row">
+        {/* Navbar */}
+        <NavBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
         {/* Contenido principal */}
-        <main className="flex-grow bg-white overflow-auto p-8">
+        <main className="flex-grow bg-gray-50 overflow-auto p-6 md:p-8">
           <Routes>
             <Route path="/" element={<Inicio />} />
             <Route path="/usuarios" element={<Usuarios />} />
@@ -28,6 +31,14 @@ function App() {
             <Route path="/materias" element={<Materias />} />
           </Routes>
         </main>
+
+        {/* Botón hamburguesa (solo visible en móvil) */}
+        <button
+          className="fixed top-4 left-4 z-50 md:hidden bg-sky-900 text-white p-2 rounded-lg shadow-md"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? "✖" : "☰"}
+        </button>
       </div>
     </BrowserRouter>
   )

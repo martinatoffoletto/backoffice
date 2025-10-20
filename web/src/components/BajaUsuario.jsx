@@ -67,9 +67,10 @@ export default function BajaUsuario(second) {
                     Ingrese el legajo del usuario para proceder a la baja
                 </h3>
 
+                <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
                 {/* Input controlado */}
                 <Input
-                className="mb-4"
+                className="lg:mb-4"
                 placeholder="Legajo"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
@@ -83,6 +84,7 @@ export default function BajaUsuario(second) {
                 >
                 Buscar
                 </Button>
+                </div>
             </div>)}
 
             {completed && (

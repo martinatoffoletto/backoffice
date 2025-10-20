@@ -92,7 +92,7 @@ export default function ModifMateria(second) {
                 <h3 className="text-sm mb-2 mt-8">
                 Ingrese el numero de materia a modificar
                 </h3>
-
+                <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
                 {/* Input controlado */}
                 <Input
                 className="mb-4"
@@ -109,6 +109,7 @@ export default function ModifMateria(second) {
                 >
                 Buscar
                 </Button>
+                </div>
                 {searchError && <p className="text-red-500 mt-2">{searchError}</p>}
             </div>
             { showForm &&( 

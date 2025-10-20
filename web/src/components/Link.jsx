@@ -7,7 +7,7 @@ export default function Link({ to, title }) {
   return (
     <a
       href={to}
-      className={`relative text-sm font-medium px-4 py-2 mr-4 transition-colors duration-300 
+      className={`relative text-md font-medium px-4 py-2 mr-4 transition-colors duration-300 
       ${isActive ? "text-sky-950" : "text-neutral-950 hover:text-sky-800"}`}
     >
       {title}

@@ -91,11 +91,11 @@ export default function ModifCurso(second) {
                     Ingrese el número de curso para proceder a la modificación
                     </h3>
 
-                    <div className="flex items-center gap-4 min-w-xl">        
+                    <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">       
 
                         {/* Input controlado */}
                         <Input
-                            className="mb-4"
+                            className="lg:mb-4"
                             placeholder="Número de Curso"
                             value={value}
                             onChange={(e) => setValue(e.target.value)}
