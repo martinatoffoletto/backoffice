@@ -25,12 +25,15 @@ import {
 } from "@/components/ui/select.jsx";
 import { ca } from "date-fns/locale";
 import { useState } from "react"
+import CardUsuario from "./CardUsuario";
+import PopUp from "./PopUp";
 
 export default function BusquedaMateria(second) {
 
     const [name, setName] = useState("");
     const [found, setFound] = useState(false);
     const [value, setValue] = useState("");
+    const [error, setError]=useState(null)
 
     const handleBaja=()=>{ 
         setFound(false);
@@ -40,58 +43,79 @@ export default function BusquedaMateria(second) {
  
     const handleSearch= async()=>{
         if(!value.trim()) return;
-        try{
-            const response= await materiaPorId(value)
-            console.log("Materia encontrado")
-            setFound(true)
-        }catch(err){
-            console.error(`Error al buscar materia: ${value}: ${err.message}`)
-            setError(err.message)
-            setFound(false)
-        }
+        
+        // NO BORRAR
+        // try{
+        //     const response= await materiaPorId(value)
+        //     console.log("Materia encontrado")
+        //     setFound(true)
+        // }catch(err){
+        //     console.error(`Error al buscar materia: ${value}: ${err.message}`)
+        //     setError(err.message)
+        //     setFound(false)
+        // }
     }
 
     return(
 
-        <div className="flex min-h-screen flex-col items-center justify-start bg-gray-50 my-4">
-            <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-            <h1>Buscar Usuario</h1>
-            <h3 className="text-sm mb-2">
-                Indique rol
-            </h3>
-            <Select>
-                <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccione una opción" />
-                </SelectTrigger>
+        <div className="flex min-h-screen flex-col items-center justify-start my-4">
+            <div className="w-full max-w-md  p-6 r">
+            <h1 className="font-bold text-xl mb-4">Buscar Usuario</h1>
+            <span className="block w-full h-[3px] bg-sky-950"></span>
 
-                <SelectContent>            
-                    <SelectGroup>
-                    <SelectLabel>Opciones</SelectLabel>
-                    <SelectItem value="alumno">Alumno</SelectItem>
-                    <SelectItem value="docente">Docente</SelectItem>          
+            <div className="flex flex-row items-center justify-between my-4 gap-2">
+                <h3 className="text-sm mb-2 shrink-0">
+                    Indique carrera
+                </h3>
+                <Select>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione una opción" />
+                    </SelectTrigger>
 
-                    </SelectGroup>
-                </SelectContent>            
-            </Select>
-            <h3 className="text-sm mb-2">
-                Buscar por nombre y apellido
-            </h3>
-            <Input
-                className="mb-4"
-                placeholder="Ingrese nombre y/o apellido"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                />
-            <h3 className="text-sm mb-2">
-                Buscar por legajo
-            </h3>
-            <Input
-                className="mb-4"
-                placeholder="Ingrese legajo"
-                value={value}
-                number
-                onChange={(e) => setValue(e.target.value)}
-                />
+                    <SelectContent>            
+                        <SelectGroup>
+                        <SelectLabel>Opciones</SelectLabel>
+                        <SelectItem value="alumno">Alumno</SelectItem>
+                        <SelectItem value="docente">Docente</SelectItem>          
+
+                        </SelectGroup>
+                    </SelectContent>            
+                </Select>
+            </div>
+            
+            <div className="flex flex-row items-center justify-between my-4 gap-2">
+                <h3 className="text-sm mb-2 shrink-0">
+                    Buscar por nombre
+                </h3>
+                <Select>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione una opción" />
+                    </SelectTrigger>
+
+                    <SelectContent>            
+                        <SelectGroup>
+                        <SelectLabel>Opciones</SelectLabel>
+                        <SelectItem value="alumno">Alumno</SelectItem>
+                        <SelectItem value="docente">Docente</SelectItem>          
+
+                        </SelectGroup>
+                    </SelectContent>            
+                </Select>
+            </div>
+            
+            <div className="flex flex-row items-center justify-between my-4 gap-2">
+                <h3 className="text-sm mb-2 shrink-0">
+                    Buscar por legajo
+                </h3>
+                <Input
+                    className="mb-4"
+                    placeholder="Ingrese legajo"
+                    value={value}
+                    number
+                    onChange={(e) => setValue(e.target.value)}
+                    />
+            </div>
+            
             <Button
                 disabled={!value.trim()}
                 onClick={handleSearch}
@@ -101,24 +125,17 @@ export default function BusquedaMateria(second) {
             </Button>
             </div>
             {found ? (
-                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md ml-6 my-4">
-                <h3 className="text-sm mb-2">
-                    Usuario: lmartinezp
-                </h3>
-                <h3 className="text-sm mb-2">
-                    Correo electronico: lmartinezp@uade.edu.ar
-                </h3>
-                <Button
-                    variant="destructive"
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
-                    onClick={handleBaja}
-                >Volver
-                </Button>
+                <div className="w-full max-w-md  p-6 ml-6 my-4">
+                <CardUsuario title={"Materia encontrado"} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardUsuario>
+                
                 </div>
             ):
             (<div>
                 <p className="text-sm text-gray-500 mt-4">No se han encontrado resultados</p>  {/* desp lo cprrijo*/ }
             </div>)}
+            {error !== null && (
+                <PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>
+            )}
             
         </div>
     )
