@@ -1,330 +1,139 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.usuario_dao import UsuarioDAO
-from ..dao.usuario_rol_dao import UsuarioRolDAO
-from ..dao.rol_dao import RolDAO
-from ..schemas.usuario_schema import Usuario as UsuarioSchema
-from ..schemas.usuario_rol_schema import UsuarioRol as UsuarioRolSchema
-from typing import List, Optional
-from fastapi import HTTPException, status
+from ..schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
+from typing import List, Optional, Dict, Any, Tuple
+from ..models.usuario_model import Usuario
+import string
+import random
 import bcrypt
+import uuid
 
 class UsuarioService:
     
-    def __init__(self, db: Session):
-        self.db = db
-        self.usuario_dao = UsuarioDAO()
-        self.usuario_rol_dao = UsuarioRolDAO()
-        self.rol_dao = RolDAO()
-    
-    def create_usuario(self, usuario: UsuarioSchema, created_by: str) -> dict:
-        """Crear un nuevo usuario con validaciones de negocio"""
-        # Validaciones de unicidad
-        if self.usuario_dao.exists_by_legajo(self.db, usuario.legajo):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un usuario con el legajo '{usuario.legajo}'"
-            )
+    @staticmethod
+    async def _generate_unique_email(db: AsyncSession, nombre: str, apellido: str) -> str:
+        base_email = f"{apellido.lower()}.{nombre.lower()}"
+        counter = 1
         
-        if self.usuario_dao.exists_by_dni(self.db, usuario.dni):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un usuario con el DNI '{usuario.dni}'"
-            )
-        
-        if self.usuario_dao.exists_by_email(self.db, usuario.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un usuario con el email '{usuario.email}'"
-            )
-        
-        # Encriptar password si se proporciona
-        if usuario.password:
-            hashed_password = bcrypt.hashpw(usuario.password.encode('utf-8'), bcrypt.gensalt())
-            usuario.password = hashed_password.decode('utf-8')
-        
-        # Asignar created_by
-        usuario.created_by = created_by
-        
-        # Crear el usuario
-        new_usuario = self.usuario_dao.create(self.db, usuario)
-        
-        return {
-            "message": "Usuario creado exitosamente",
-            "usuario": {
-                "id_usuario": new_usuario.id_usuario,
-                "legajo": new_usuario.legajo,
-                "nombre": new_usuario.nombre,
-                "apellido": new_usuario.apellido,
-                "email": new_usuario.email,
-                "dni": new_usuario.dni
-            },
-            "created_by": created_by
-        }
-    
-    def get_usuario_by_id(self, id_usuario: int, include_roles: bool = False) -> dict:
-        """Obtener usuario por ID con opción de incluir roles"""
-        usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el usuario con ID {id_usuario}"
-            )
-        
-        result = {"usuario": usuario}
-        
-        if include_roles:
-            usuario_con_roles = self.usuario_rol_dao.get_usuario_with_roles_detailed(self.db, id_usuario)
-            if usuario_con_roles:
-                result["roles"] = usuario_con_roles.roles
-        
-        return result
-    
-    def get_all_usuarios(self, skip: int = 0, limit: int = 100, include_roles: bool = False) -> dict:
-        """Obtener todos los usuarios activos"""
-        usuarios = self.usuario_dao.get_all(self.db, skip, limit)
-        
-        result = {
-            "usuarios": usuarios,
-            "total": len(usuarios),
-            "skip": skip,
-            "limit": limit
-        }
-        
-        if include_roles:
-            usuarios_with_roles = []
-            for usuario in usuarios:
-                usuario_con_roles = self.usuario_rol_dao.get_usuario_with_roles_detailed(self.db, usuario.id_usuario)
-                usuarios_with_roles.append({
-                    "usuario": usuario,
-                    "roles": usuario_con_roles.roles if usuario_con_roles else []
-                })
-            result["usuarios_with_roles"] = usuarios_with_roles
-        
-        return result
-    
-    def search_usuarios(self, search_term: str, skip: int = 0, limit: int = 100) -> dict:
-        """Buscar usuarios por nombre, apellido, legajo, DNI o email"""
-        usuarios = self.usuario_dao.search_by_nombre(self.db, search_term, skip, limit)
-        
-        # También buscar por legajo, DNI o email si no se encontraron por nombre
-        if not usuarios:
-            usuario_by_legajo = self.usuario_dao.get_by_legajo(self.db, search_term)
-            if usuario_by_legajo:
-                usuarios = [usuario_by_legajo]
+        while True:
+            if counter == 1:
+                email = f"{base_email}@campusconnect.edu.ar"
             else:
-                usuario_by_dni = self.usuario_dao.get_by_dni(self.db, search_term)
-                if usuario_by_dni:
-                    usuarios = [usuario_by_dni]
-                else:
-                    usuario_by_email = self.usuario_dao.get_by_email(self.db, search_term)
-                    if usuario_by_email:
-                        usuarios = [usuario_by_email]
-        
-        return {
-            "usuarios": usuarios,
-            "search_term": search_term,
-            "total_found": len(usuarios),
-            "skip": skip,
-            "limit": limit
-        }
+                email = f"{base_email}{counter}@campusconnect.edu.ar"
+            
+            existing = await UsuarioDAO.get_by_email(db, email)
+            if not existing:
+                return email
+            counter += 1
     
-    def update_usuario(self, id_usuario: int, usuario_update: UsuarioSchema, updated_by: str) -> dict:
-        """Actualizar usuario con validaciones"""
-        # Verificar que el usuario existe
-        existing_usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        if not existing_usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el usuario con ID {id_usuario}"
-            )
-        
-        # Validaciones de unicidad para campos que cambian
-        if usuario_update.legajo and usuario_update.legajo != existing_usuario.legajo:
-            if self.usuario_dao.exists_by_legajo(self.db, usuario_update.legajo):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Ya existe un usuario con el legajo '{usuario_update.legajo}'"
-                )
-        
-        if usuario_update.dni and usuario_update.dni != existing_usuario.dni:
-            if self.usuario_dao.exists_by_dni(self.db, usuario_update.dni):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Ya existe un usuario con el DNI '{usuario_update.dni}'"
-                )
-        
-        if usuario_update.email and usuario_update.email != existing_usuario.email:
-            if self.usuario_dao.exists_by_email(self.db, usuario_update.email):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Ya existe un usuario con el email '{usuario_update.email}'"
-                )
-        
-        # Encriptar nueva password si se proporciona
-        if usuario_update.password:
-            hashed_password = bcrypt.hashpw(usuario_update.password.encode('utf-8'), bcrypt.gensalt())
-            usuario_update.password = hashed_password.decode('utf-8')
-        
-        # Asignar updated_by
-        usuario_update.updated_by = updated_by
-        
-        # Actualizar
-        updated_usuario = self.usuario_dao.update(self.db, id_usuario, usuario_update)
-        
-        return {
-            "message": "Usuario actualizado exitosamente",
-            "usuario": {
-                "id_usuario": updated_usuario.id_usuario,
-                "legajo": updated_usuario.legajo,
-                "nombre": updated_usuario.nombre,
-                "apellido": updated_usuario.apellido,
-                "email": updated_usuario.email,
-                "dni": updated_usuario.dni
-            },
-            "updated_by": updated_by
-        }
+    @staticmethod
+    async def _generate_unique_legajo(db: AsyncSession) -> str:
+        while True:
+            legajo = "USR" + ''.join(random.choices(string.digits, k=6))
+            existing = await UsuarioDAO.get_by_legajo(db, legajo)
+            if not existing:
+                return legajo
     
-    def change_password(self, id_usuario: int, old_password: str, new_password: str, updated_by: str) -> dict:
-        """Cambiar password del usuario"""
-        usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el usuario con ID {id_usuario}"
-            )
-        
-        # Verificar password actual
-        if not bcrypt.checkpw(old_password.encode('utf-8'), usuario.password.encode('utf-8')):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La contraseña actual es incorrecta"
-            )
-        
-        # Encriptar nueva password
-        hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Crear objeto para actualizar solo la password
-        usuario_update = UsuarioSchema()
-        usuario_update.password = hashed_password.decode('utf-8')
-        usuario_update.updated_by = updated_by
-        
-        # Actualizar
-        self.usuario_dao.update(self.db, id_usuario, usuario_update)
-        
-        return {
-            "message": "Contraseña actualizada exitosamente",
-            "updated_by": updated_by
-        }
+    @staticmethod
+    def _generate_password() -> str:
+        chars = string.ascii_letters + string.digits + "!@#$%&*"
+        return ''.join(random.choices(chars, k=8))
     
-    def assign_role(self, id_usuario: int, id_rol: int, assigned_by: str) -> dict:
-        """Asignar rol a usuario"""
-        # Verificar que el usuario existe
-        usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el usuario con ID {id_usuario}"
-            )
-        
-        # Verificar que el rol existe
-        rol = self.rol_dao.get_by_id(self.db, id_rol)
-        if not rol:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el rol con ID {id_rol}"
-            )
-        
-        # Verificar que no esté ya asignado
-        if self.usuario_rol_dao.exists(self.db, id_usuario, id_rol):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"El usuario ya tiene asignado el rol '{rol.nombre_rol}'"
-            )
-        
-        # Crear la asignación
-        usuario_rol = UsuarioRolSchema(id_usuario=id_usuario, id_rol=id_rol)
-        new_assignment = self.usuario_rol_dao.create(self.db, usuario_rol)
-        
-        return {
-            "message": f"Rol '{rol.nombre_rol}' asignado exitosamente al usuario '{usuario.nombre} {usuario.apellido}'",
-            "assignment": new_assignment,
-            "assigned_by": assigned_by
-        }
+    @staticmethod
+    def _hash_password(password: str) -> str:
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
-    def remove_role(self, id_usuario: int, id_rol: int, removed_by: str) -> dict:
-        """Remover rol de usuario"""
-        # Verificar que la asignación existe
-        if not self.usuario_rol_dao.exists(self.db, id_usuario, id_rol):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No se encontró la asignación de rol especificada"
-            )
+    @staticmethod
+    async def create_user(db: AsyncSession, usuario: UsuarioCreate) -> Tuple[Optional[Dict[str, Any]], str]:
+        if await UsuarioDAO.get_by_dni(db, usuario.dni):
+            return None, "User with this DNI already exists"
         
-        # Obtener información para el mensaje
-        usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        rol = self.rol_dao.get_by_id(self.db, id_rol)
+        email = await UsuarioService._generate_unique_email(db, usuario.nombre, usuario.apellido)
+        legajo = await UsuarioService._generate_unique_legajo(db)
+        password = UsuarioService._generate_password()
+        hashed_password = UsuarioService._hash_password(password)
         
-        # Remover la asignación
-        success = self.usuario_rol_dao.delete(self.db, id_usuario, id_rol)
+        created_user = await UsuarioDAO.create(db, usuario, hashed_password, legajo, email)
         
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al remover el rol del usuario"
-            )
-        
-        return {
-            "message": f"Rol '{rol.nombre_rol}' removido exitosamente del usuario '{usuario.nombre} {usuario.apellido}'",
-            "removed_by": removed_by
+        user_dict = {
+            "id_usuario": str(created_user.id_usuario),
+            "nombre": created_user.nombre,
+            "apellido": created_user.apellido,
+            "legajo": created_user.legajo,
+            "dni": created_user.dni,
+            "correo_institucional": created_user.correo_institucional,
+            "correo_personal": created_user.correo_personal,
+            "telefono_personal": created_user.telefono_personal,
+            "fecha_alta": created_user.fecha_alta.isoformat() if created_user.fecha_alta else None,
+            "status": created_user.status
         }
+        
+        return user_dict, password
     
-    def authenticate_user(self, email: str, password: str) -> dict:
-        """Autenticar usuario por email y password"""
-        usuario = self.usuario_dao.get_by_email(self.db, email)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales incorrectas"
-            )
-        
-        # Verificar password
-        if not bcrypt.checkpw(password.encode('utf-8'), usuario.password.encode('utf-8')):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales incorrectas"
-            )
-        
-        # Obtener roles del usuario
-        usuario_con_roles = self.usuario_rol_dao.get_usuario_with_roles_detailed(self.db, usuario.id_usuario)
-        
-        return {
-            "legajo": usuario.legajo,
-            "nombre": f"{usuario.nombre} {usuario.apellido}",
-            "roles": usuario_con_roles.roles if usuario_con_roles else []
-        }
+    @staticmethod
+    async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None):
+        return await UsuarioDAO.get_all(db, skip, limit, status_filter)
     
-    def delete_usuario(self, id_usuario: int, deleted_by: str) -> dict:
-        """Eliminar usuario lógicamente"""
-        usuario = self.usuario_dao.get_by_id(self.db, id_usuario)
-        if not usuario:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el usuario con ID {id_usuario}"
-            )
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100):
+        param_lower = param.lower()
         
-        # Remover todos los roles del usuario primero
-        self.usuario_rol_dao.delete_all_roles_from_usuario(self.db, id_usuario)
+        if param_lower in ["id", "id_usuario"]:
+            try:
+                user_uuid = uuid.UUID(value)
+                user = await UsuarioDAO.get_by_id(db, user_uuid)
+                return [user] if user else []
+            except ValueError:
+                return []
         
-        # Eliminar lógicamente el usuario
-        success = self.usuario_dao.soft_delete(self.db, id_usuario, deleted_by)
+        elif param_lower == "legajo":
+            user = await UsuarioDAO.get_by_legajo(db, value)
+            return [user] if user else []
         
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al eliminar el usuario"
-            )
+        elif param_lower == "dni":
+            user = await UsuarioDAO.get_by_dni(db, value)
+            return [user] if user else []
         
+        elif param_lower in ["email", "correo_institucional"]:
+            user = await UsuarioDAO.get_by_email(db, value)
+            return [user] if user else []
+        
+        elif param_lower in ["name", "nombre_apellido", "search"]:
+            return await UsuarioDAO.search_by_name(db, value, skip, limit)
+        
+        elif param_lower == "status":
+            status_bool = value.lower() in ["true", "1", "active"]
+            return await UsuarioDAO.get_all(db, skip, limit, status_bool)
+        
+        return []
+    
+    @staticmethod
+    async def update_user(db: AsyncSession, user_id: uuid.UUID, usuario_update: UsuarioUpdate):
+        if usuario_update.dni:
+            existing = await UsuarioDAO.get_by_dni(db, usuario_update.dni)
+            if existing and existing.id_usuario != user_id:
+                return None
+        
+        if usuario_update.contraseña:
+            usuario_update.contraseña = UsuarioService._hash_password(usuario_update.contraseña)
+        
+        return await UsuarioDAO.update(db, user_id, usuario_update)
+    
+    @staticmethod
+    async def delete_user(db: AsyncSession, user_id: uuid.UUID) -> bool:
+        return await UsuarioDAO.delete(db, user_id)
+    
+    @staticmethod
+    def _user_to_dict(user) -> Dict[str, Any]:
         return {
-            "message": f"Usuario '{usuario.nombre} {usuario.apellido}' eliminado exitosamente",
-            "deleted_by": deleted_by
+            "id_usuario": str(user.id_usuario),
+            "nombre": user.nombre,
+            "apellido": user.apellido,
+            "legajo": user.legajo,
+            "dni": user.dni,
+            "correo_institucional": user.correo_institucional,
+            "correo_personal": user.correo_personal,
+            "telefono_personal": user.telefono_personal,
+            "fecha_alta": user.fecha_alta.isoformat() if user.fecha_alta else None,
+            "status": user.status
         }

@@ -1,386 +1,327 @@
-from sqlalchemy.orm import Session
-from models.clase_individual_model import ClaseIndividual
-from models.usuario_model import Usuario
-from models.espacio_model import Espacio
-from models.sede_model import Sede
-from schemas.clase_individual_schema import ClaseIndividual as ClaseIndividualSchema
-from typing import List, Optional
-from decimal import Decimal
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import update, and_, or_, func
+from ..models.clase_individual_model import ClaseIndividual, EstadoClase
+from ..schemas.clase_individual_schema import ClaseIndividualCreate, ClaseIndividualUpdate
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date, time
 
 class ClaseIndividualDAO:
     
     @staticmethod
-    def create(db: Session, clase: ClaseIndividualSchema) -> ClaseIndividual:
+    async def create(db: AsyncSession, clase: ClaseIndividualCreate) -> ClaseIndividual:
         """Crear una nueva clase individual"""
-        db_clase = ClaseIndividual(
-            id_profesor=clase.id_profesor,
-            id_estudiante=clase.id_estudiante,
-            id_espacio=clase.id_espacio,
-            fecha=clase.fecha,
-            hora_inicio=clase.hora_inicio,
-            hora_fin=clase.hora_fin,
-            materia=clase.materia,
-            tema=clase.tema,
-            descripcion=clase.descripcion,
-            precio_hora=clase.precio_hora,
-            horas_clase=clase.horas_clase,
-            total_cobrar=clase.total_cobrar,
-            estado=clase.estado,
-            observaciones=clase.observaciones,
-            created_by=clase.created_by
-        )
+        clase_data = clase.model_dump()
+        db_clase = ClaseIndividual(**clase_data)
         db.add(db_clase)
-        db.commit()
-        db.refresh(db_clase)
+        await db.commit()
+        await db.refresh(db_clase)
         return db_clase
     
     @staticmethod
-    def get_by_id(db: Session, id_clase: int) -> Optional[ClaseIndividual]:
+    async def get_by_id(db: AsyncSession, id_clase: int) -> Optional[ClaseIndividual]:
         """Obtener clase individual por ID"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_clase == id_clase,
-            ClaseIndividual.status == True
-        ).first()
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.id_clase == id_clase,
+                ClaseIndividual.status == True
+            )
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener todas las clases individuales activas"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_profesor(db: Session, id_profesor: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por profesor"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_profesor == id_profesor,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_estudiante(db: Session, id_estudiante: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por estudiante"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_estudiante == id_estudiante,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_espacio(db: Session, id_espacio: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por espacio"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_espacio == id_espacio,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_fecha(db: Session, fecha: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por fecha específica"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.fecha == fecha,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.hora_inicio).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_fecha_range(db: Session, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por rango de fechas"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.fecha >= fecha_inicio,
-            ClaseIndividual.fecha <= fecha_fin,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha, ClaseIndividual.hora_inicio).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_materia(db: Session, materia: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por materia"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.materia.ilike(f"%{materia}%"),
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_estado(db: Session, estado: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales por estado"""
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.estado == estado,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha.desc(), ClaseIndividual.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_proximas(db: Session, fecha_desde: date = None, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases individuales próximas (desde hoy o fecha específica)"""
-        if fecha_desde is None:
-            fecha_desde = date.today()
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividual]:
+        """Obtener todas las clases individuales"""
+        query = select(ClaseIndividual)
         
-        return db.query(ClaseIndividual).filter(
-            ClaseIndividual.fecha >= fecha_desde,
-            ClaseIndividual.status == True
-        ).order_by(ClaseIndividual.fecha, ClaseIndividual.hora_inicio).offset(skip).limit(limit).all()
+        if status_filter is not None:
+            query = query.where(ClaseIndividual.status == status_filter)
+        else:
+            query = query.where(ClaseIndividual.status == True)
+        
+        query = query.order_by(ClaseIndividual.fecha_clase.desc(), ClaseIndividual.hora_inicio.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def get_conflictos_espacio(db: Session, id_espacio: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> List[ClaseIndividual]:
-        """Verificar conflictos de horario en un espacio"""
-        query = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_espacio == id_espacio,
-            ClaseIndividual.fecha == fecha,
-            ClaseIndividual.status == True,
-            # Verificar solapamiento de horarios
-            ClaseIndividual.hora_inicio < hora_fin,
-            ClaseIndividual.hora_fin > hora_inicio
+    async def get_by_cronograma(db: AsyncSession, id_cronograma: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases por cronograma"""
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.id_cronograma == id_cronograma,
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.asc(), ClaseIndividual.hora_inicio.asc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_by_estado(db: AsyncSession, estado: EstadoClase, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases por estado"""
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.estado == estado,
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.desc(), ClaseIndividual.hora_inicio.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_by_fecha(db: AsyncSession, fecha_clase: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases por fecha"""
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.fecha_clase == fecha_clase,
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.hora_inicio.asc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_by_fecha_range(db: AsyncSession, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases por rango de fechas"""
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.fecha_clase >= fecha_inicio,
+                ClaseIndividual.fecha_clase <= fecha_fin,
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.asc(), ClaseIndividual.hora_inicio.asc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_by_titulo(db: AsyncSession, titulo: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases por título"""
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.titulo.ilike(f"%{titulo}%"),
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_proximas_clases(db: AsyncSession, dias: int = 7, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases próximas en los próximos N días"""
+        from datetime import timedelta
+        fecha_limite = date.today() + timedelta(days=dias)
+        
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.fecha_clase >= date.today(),
+                ClaseIndividual.fecha_clase <= fecha_limite,
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.asc(), ClaseIndividual.hora_inicio.asc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_clases_pasadas(db: AsyncSession, dias: int = 30, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Obtener clases pasadas en los últimos N días"""
+        from datetime import timedelta
+        fecha_limite = date.today() - timedelta(days=dias)
+        
+        query = select(ClaseIndividual).where(
+            and_(
+                ClaseIndividual.fecha_clase >= fecha_limite,
+                ClaseIndividual.fecha_clase < date.today(),
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.desc(), ClaseIndividual.hora_inicio.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def update(db: AsyncSession, id_clase: int, clase: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
+        """Actualizar clase individual"""
+        # Obtener la clase existente
+        existing_clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
+        if not existing_clase:
+            return None
+        
+        # Actualizar solo los campos proporcionados
+        update_data = clase.model_dump(exclude_unset=True)
+        if not update_data:
+            return existing_clase
+        
+        # Actualizar fecha_modificacion
+        update_data['fecha_modificacion'] = datetime.now()
+        
+        # Ejecutar actualización
+        stmt = update(ClaseIndividual).where(
+            ClaseIndividual.id_clase == id_clase
+        ).values(**update_data)
+        
+        await db.execute(stmt)
+        await db.commit()
+        
+        # Retornar la clase actualizada
+        return await ClaseIndividualDAO.get_by_id(db, id_clase)
+    
+    @staticmethod
+    async def delete(db: AsyncSession, id_clase: int) -> bool:
+        """Eliminar clase individual (soft delete)"""
+        stmt = update(ClaseIndividual).where(
+            ClaseIndividual.id_clase == id_clase
+        ).values(
+            status=False,
+            fecha_modificacion=datetime.now()
         )
         
-        if excluir_id:
-            query = query.filter(ClaseIndividual.id_clase != excluir_id)
+        result = await db.execute(stmt)
+        await db.commit()
         
-        return query.all()
+        return result.rowcount > 0
     
     @staticmethod
-    def get_conflictos_profesor(db: Session, id_profesor: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> List[ClaseIndividual]:
-        """Verificar conflictos de horario para un profesor"""
-        query = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_profesor == id_profesor,
-            ClaseIndividual.fecha == fecha,
-            ClaseIndividual.status == True,
-            # Verificar solapamiento de horarios
-            ClaseIndividual.hora_inicio < hora_fin,
-            ClaseIndividual.hora_fin > hora_inicio
+    async def hard_delete(db: AsyncSession, id_clase: int) -> bool:
+        """Eliminar clase individual permanentemente"""
+        query = select(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase)
+        result = await db.execute(query)
+        clase = result.scalar_one_or_none()
+        
+        if clase:
+            await db.delete(clase)
+            await db.commit()
+            return True
+        
+        return False
+    
+    @staticmethod
+    async def count(db: AsyncSession, status_filter: Optional[bool] = None) -> int:
+        """Contar clases individuales"""
+        query = select(func.count(ClaseIndividual.id_clase))
+        
+        if status_filter is not None:
+            query = query.where(ClaseIndividual.status == status_filter)
+        else:
+            query = query.where(ClaseIndividual.status == True)
+        
+        result = await db.execute(query)
+        return result.scalar()
+    
+    @staticmethod
+    async def count_by_cronograma(db: AsyncSession, id_cronograma: int) -> int:
+        """Contar clases por cronograma"""
+        query = select(func.count(ClaseIndividual.id_clase)).where(
+            and_(
+                ClaseIndividual.id_cronograma == id_cronograma,
+                ClaseIndividual.status == True
+            )
         )
         
-        if excluir_id:
-            query = query.filter(ClaseIndividual.id_clase != excluir_id)
-        
-        return query.all()
+        result = await db.execute(query)
+        return result.scalar()
     
     @staticmethod
-    def get_conflictos_estudiante(db: Session, id_estudiante: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> List[ClaseIndividual]:
-        """Verificar conflictos de horario para un estudiante"""
-        query = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_estudiante == id_estudiante,
-            ClaseIndividual.fecha == fecha,
-            ClaseIndividual.status == True,
-            # Verificar solapamiento de horarios
-            ClaseIndividual.hora_inicio < hora_fin,
-            ClaseIndividual.hora_fin > hora_inicio
+    async def count_by_estado(db: AsyncSession, estado: EstadoClase) -> int:
+        """Contar clases por estado"""
+        query = select(func.count(ClaseIndividual.id_clase)).where(
+            and_(
+                ClaseIndividual.estado == estado,
+                ClaseIndividual.status == True
+            )
         )
         
-        if excluir_id:
-            query = query.filter(ClaseIndividual.id_clase != excluir_id)
-        
-        return query.all()
+        result = await db.execute(query)
+        return result.scalar()
     
     @staticmethod
-    def get_with_details(db: Session, id_clase: int) -> Optional[dict]:
-        """Obtener clase individual con información detallada"""
-        result = db.query(
+    async def search(db: AsyncSession, search_term: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Buscar clases por término"""
+        query = select(ClaseIndividual).where(
+            and_(
+                or_(
+                    ClaseIndividual.titulo.ilike(f"%{search_term}%"),
+                    ClaseIndividual.descripcion.ilike(f"%{search_term}%"),
+                    ClaseIndividual.observaciones.ilike(f"%{search_term}%")
+                ),
+                ClaseIndividual.status == True
+            )
+        )
+        query = query.order_by(ClaseIndividual.fecha_clase.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_clases_with_cronograma_info(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+        """Obtener clases con información del cronograma"""
+        from ..models.cronograma_model import Cronograma
+        
+        query = select(
             ClaseIndividual,
-            Usuario.alias('profesor'),
-            Usuario.alias('estudiante'),
-            Espacio,
-            Sede
+            Cronograma.course_id,
+            Cronograma.course_name,
+            Cronograma.total_classes
         ).join(
-            Usuario.alias('profesor'), ClaseIndividual.id_profesor == Usuario.alias('profesor').c.id_usuario
-        ).join(
-            Usuario.alias('estudiante'), ClaseIndividual.id_estudiante == Usuario.alias('estudiante').c.id_usuario
-        ).join(Espacio).join(Sede, Espacio.id_sede == Sede.id_sede).filter(
-            ClaseIndividual.id_clase == id_clase,
+            Cronograma, ClaseIndividual.id_cronograma == Cronograma.id_cronograma
+        ).where(
             ClaseIndividual.status == True
-        ).first()
+        ).order_by(
+            ClaseIndividual.fecha_clase.desc()
+        ).offset(skip).limit(limit)
         
-        if not result:
-            return None
+        result = await db.execute(query)
+        rows = result.all()
         
-        clase, profesor, estudiante, espacio, sede = result
-        return {
-            "clase": clase,
-            "profesor": {
-                "legajo": profesor.legajo,
-                "nombre": profesor.nombre,
-                "apellido": profesor.apellido,
-                "email": profesor.email
-            },
-            "estudiante": {
-                "legajo": estudiante.legajo,
-                "nombre": estudiante.nombre,
-                "apellido": estudiante.apellido,
-                "email": estudiante.email
-            },
-            "espacio": {
-                "nombre_espacio": espacio.nombre_espacio,
-                "tipo_espacio": espacio.tipo_espacio,
-                "capacidad": espacio.capacidad
-            },
-            "sede": {
-                "nombre_sede": sede.nombre_sede,
-                "ciudad": sede.ciudad,
-                "direccion": sede.direccion
+        clases_with_info = []
+        for row in rows:
+            clase_data = {
+                "clase": row[0],
+                "course_id": row[1],
+                "course_name": row[2],
+                "total_classes": row[3]
             }
-        }
+            clases_with_info.append(clase_data)
+        
+        return clases_with_info
     
     @staticmethod
-    def calculate_total_ingresos_by_profesor(db: Session, id_profesor: int, fecha_inicio: date = None, fecha_fin: date = None) -> Decimal:
-        """Calcular total de ingresos por profesor en un período"""
-        query = db.query(db.func.sum(ClaseIndividual.total_cobrar)).filter(
-            ClaseIndividual.id_profesor == id_profesor,
-            ClaseIndividual.status == True
-        )
+    async def get_estadisticas(db: AsyncSession) -> Dict[str, int]:
+        """Obtener estadísticas de clases"""
+        stats = {}
         
-        if fecha_inicio:
-            query = query.filter(ClaseIndividual.fecha >= fecha_inicio)
-        if fecha_fin:
-            query = query.filter(ClaseIndividual.fecha <= fecha_fin)
+        # Total de clases
+        stats['total_clases'] = await ClaseIndividualDAO.count(db)
         
-        result = query.scalar()
-        return result or Decimal('0')
-    
-    @staticmethod
-    def calculate_total_ingresos_by_periodo(db: Session, fecha_inicio: date, fecha_fin: date) -> Decimal:
-        """Calcular total de ingresos por período"""
-        result = db.query(db.func.sum(ClaseIndividual.total_cobrar)).filter(
-            ClaseIndividual.fecha >= fecha_inicio,
-            ClaseIndividual.fecha <= fecha_fin,
-            ClaseIndividual.status == True
-        ).scalar()
-        return result or Decimal('0')
-    
-    @staticmethod
-    def update(db: Session, id_clase: int, clase_update: ClaseIndividualSchema) -> Optional[ClaseIndividual]:
-        """Actualizar una clase individual existente"""
-        db_clase = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_clase == id_clase,
-            ClaseIndividual.status == True
-        ).first()
+        # Clases por estado
+        for estado in EstadoClase:
+            count = await ClaseIndividualDAO.count_by_estado(db, estado)
+            stats[f'clases_{estado.value}'] = count
         
-        if not db_clase:
-            return None
+        # Clases activas/inactivas
+        stats['clases_activas'] = await ClaseIndividualDAO.count(db, status_filter=True)
+        stats['clases_inactivas'] = await ClaseIndividualDAO.count(db, status_filter=False)
         
-        # Solo actualizar campos que no son None
-        if clase_update.id_profesor is not None:
-            db_clase.id_profesor = clase_update.id_profesor
-        if clase_update.id_estudiante is not None:
-            db_clase.id_estudiante = clase_update.id_estudiante
-        if clase_update.id_espacio is not None:
-            db_clase.id_espacio = clase_update.id_espacio
-        if clase_update.fecha is not None:
-            db_clase.fecha = clase_update.fecha
-        if clase_update.hora_inicio is not None:
-            db_clase.hora_inicio = clase_update.hora_inicio
-        if clase_update.hora_fin is not None:
-            db_clase.hora_fin = clase_update.hora_fin
-        if clase_update.materia is not None:
-            db_clase.materia = clase_update.materia
-        if clase_update.tema is not None:
-            db_clase.tema = clase_update.tema
-        if clase_update.descripcion is not None:
-            db_clase.descripcion = clase_update.descripcion
-        if clase_update.precio_hora is not None:
-            db_clase.precio_hora = clase_update.precio_hora
-        if clase_update.horas_clase is not None:
-            db_clase.horas_clase = clase_update.horas_clase
-        if clase_update.total_cobrar is not None:
-            db_clase.total_cobrar = clase_update.total_cobrar
-        if clase_update.estado is not None:
-            db_clase.estado = clase_update.estado
-        if clase_update.observaciones is not None:
-            db_clase.observaciones = clase_update.observaciones
-        if clase_update.updated_by is not None:
-            db_clase.updated_by = clase_update.updated_by
-        
-        db.commit()
-        db.refresh(db_clase)
-        return db_clase
-    
-    @staticmethod
-    def cambiar_estado(db: Session, id_clase: int, nuevo_estado: str, updated_by: str) -> Optional[ClaseIndividual]:
-        """Cambiar el estado de una clase individual"""
-        db_clase = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_clase == id_clase,
-            ClaseIndividual.status == True
-        ).first()
-        
-        if not db_clase:
-            return None
-        
-        db_clase.estado = nuevo_estado
-        db_clase.updated_by = updated_by
-        
-        db.commit()
-        db.refresh(db_clase)
-        return db_clase
-    
-    @staticmethod
-    def soft_delete(db: Session, id_clase: int, deleted_by: str) -> bool:
-        """Eliminación lógica de una clase individual"""
-        db_clase = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_clase == id_clase,
-            ClaseIndividual.status == True
-        ).first()
-        
-        if db_clase:
-            db_clase.status = False
-            db_clase.deleted_by = deleted_by
-            db.commit()
-            return True
-        return False
-    
-    @staticmethod
-    def restore(db: Session, id_clase: int, updated_by: str) -> bool:
-        """Restaurar una clase individual eliminada lógicamente"""
-        db_clase = db.query(ClaseIndividual).filter(
-            ClaseIndividual.id_clase == id_clase,
-            ClaseIndividual.status == False
-        ).first()
-        
-        if db_clase:
-            db_clase.status = True
-            db_clase.deleted_by = None
-            db_clase.updated_by = updated_by
-            db.commit()
-            return True
-        return False
-    
-    @staticmethod
-    def has_conflicts(db: Session, id_espacio: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> bool:
-        """Verificar si hay conflictos de horario"""
-        conflictos = ClaseIndividualDAO.get_conflictos_espacio(db, id_espacio, fecha, hora_inicio, hora_fin, excluir_id)
-        return len(conflictos) > 0
-    
-    @staticmethod
-    def get_estadisticas_por_periodo(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
-        """Obtener estadísticas de clases individuales por período"""
-        clases = db.query(ClaseIndividual).filter(
-            ClaseIndividual.fecha >= fecha_inicio,
-            ClaseIndividual.fecha <= fecha_fin,
-            ClaseIndividual.status == True
-        ).all()
-        
-        if not clases:
-            return {}
-        
-        total_ingresos = sum(c.total_cobrar for c in clases)
-        total_horas = sum(c.horas_clase for c in clases)
-        
-        estados = {}
-        materias = {}
-        for clase in clases:
-            # Contar por estado
-            if clase.estado in estados:
-                estados[clase.estado] += 1
-            else:
-                estados[clase.estado] = 1
-            
-            # Contar por materia
-            if clase.materia in materias:
-                materias[clase.materia] += 1
-            else:
-                materias[clase.materia] = 1
-        
-        return {
-            "periodo": f"{fecha_inicio} - {fecha_fin}",
-            "total_clases": len(clases),
-            "total_ingresos": total_ingresos,
-            "total_horas": total_horas,
-            "promedio_por_clase": total_ingresos / len(clases) if clases else Decimal('0'),
-            "por_estado": estados,
-            "por_materia": materias
-        }
+        return stats

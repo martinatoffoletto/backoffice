@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional
-from datetime import datetime, time
+from datetime import datetime, time, date
 from enum import Enum
 
 
@@ -14,30 +14,154 @@ class EstadoClase(str, Enum):
 class ClaseIndividual(BaseModel):
     id_clase: Optional[int] = Field(None, description="Identificador único de la clase")
     id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
-    titulo: str = Field(..., description="Título del tema de la clase")
-    descripcion: Optional[str] = Field(None, description="Descripción detallada de la clase")
-    fecha: datetime = Field(..., description="Fecha y hora de la clase")
+    titulo: str = Field(..., min_length=3, max_length=200, description="Título del tema de la clase")
+    descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la clase")
+    fecha_clase: date = Field(..., description="Fecha programada de la clase")
     hora_inicio: time = Field(..., description="Hora de inicio de la clase")
     hora_fin: time = Field(..., description="Hora de finalización de la clase")
-    estado: EstadoClase = Field(EstadoClase.PROGRAMADA, description="Estado de la clase")
-    status: bool = Field(True, description="Estado de la clase (activo/inactivo)")
+    estado: EstadoClase = Field(EstadoClase.PROGRAMADA, description="Estado actual de la clase")
+    observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la clase")
+    status: bool = Field(True, description="Estado del registro (activo/inactivo)")
+    fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación del registro")
+    fecha_modificacion: Optional[datetime] = Field(None, description="Fecha de última modificación")
+
+    @validator('hora_fin')
+    def validate_hora_fin(cls, v, values):
+        if v and 'hora_inicio' in values and values['hora_inicio']:
+            if v <= values['hora_inicio']:
+                raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
+        return v
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id_cronograma": 1,
+                "titulo": "Introducción a Bases de Datos",
+                "descripcion": "Conceptos fundamentales de bases de datos relacionales",
+                "fecha_clase": "2024-02-15",
+                "hora_inicio": "09:00:00",
+                "hora_fin": "11:00:00",
+                "estado": "programada",
+                "observaciones": "Traer laptops para práctica"
+            }
+        }
+
+
+class ClaseIndividualCreate(BaseModel):
+    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    titulo: str = Field(..., min_length=3, max_length=200, description="Título del tema de la clase")
+    descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la clase")
+    fecha_clase: date = Field(..., description="Fecha programada de la clase")
+    hora_inicio: time = Field(..., description="Hora de inicio de la clase")
+    hora_fin: time = Field(..., description="Hora de finalización de la clase")
+    estado: EstadoClase = Field(EstadoClase.PROGRAMADA, description="Estado inicial de la clase")
+    observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la clase")
+
+    @validator('hora_fin')
+    def validate_hora_fin(cls, v, values):
+        if v and 'hora_inicio' in values and values['hora_inicio']:
+            if v <= values['hora_inicio']:
+                raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id_cronograma": 1,
+                "titulo": "Introducción a Bases de Datos",
+                "descripcion": "Conceptos fundamentales de bases de datos relacionales",
+                "fecha_clase": "2024-02-15",
+                "hora_inicio": "09:00:00",
+                "hora_fin": "11:00:00",
+                "estado": "programada",
+                "observaciones": "Traer laptops para práctica"
+            }
+        }
+
+
+class ClaseIndividualUpdate(BaseModel):
+    titulo: Optional[str] = Field(None, min_length=3, max_length=200, description="Título del tema de la clase")
+    descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la clase")
+    fecha_clase: Optional[date] = Field(None, description="Fecha programada de la clase")
+    hora_inicio: Optional[time] = Field(None, description="Hora de inicio de la clase")
+    hora_fin: Optional[time] = Field(None, description="Hora de finalización de la clase")
+    estado: Optional[EstadoClase] = Field(None, description="Estado actual de la clase")
+    observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la clase")
+    status: Optional[bool] = Field(None, description="Estado del registro (activo/inactivo)")
+
+    @validator('hora_fin')
+    def validate_hora_fin(cls, v, values):
+        if v and 'hora_inicio' in values and values['hora_inicio']:
+            if v <= values['hora_inicio']:
+                raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "titulo": "Bases de Datos Avanzadas",
+                "descripcion": "Conceptos avanzados y optimización",
+                "fecha_clase": "2024-02-20",
+                "hora_inicio": "10:00:00",
+                "hora_fin": "12:00:00",
+                "estado": "reprogramada",
+                "observaciones": "Cambio de horario por feriado"
+            }
+        }
+
+
+class ClaseIndividualResponse(BaseModel):
+    id_clase: int = Field(..., description="Identificador único de la clase")
+    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    titulo: str = Field(..., description="Título del tema de la clase")
+    descripcion: Optional[str] = Field(None, description="Descripción detallada de la clase")
+    fecha_clase: date = Field(..., description="Fecha programada de la clase")
+    hora_inicio: time = Field(..., description="Hora de inicio de la clase")
+    hora_fin: time = Field(..., description="Hora de finalización de la clase")
+    estado: EstadoClase = Field(..., description="Estado actual de la clase")
+    observaciones: Optional[str] = Field(None, description="Observaciones adicionales sobre la clase")
+    status: bool = Field(..., description="Estado del registro")
+    fecha_creacion: datetime = Field(..., description="Fecha de creación del registro")
+    fecha_modificacion: datetime = Field(..., description="Fecha de última modificación")
 
     class Config:
         from_attributes = True
 
 
-# Schema adicional para mostrar clase con información del cronograma
+# Schema para mostrar clase con información del cronograma
 class ClaseConCronograma(BaseModel):
-    id_clase: int
-    titulo: str
-    descripcion: Optional[str]
-    fecha: datetime
-    hora_inicio: time
-    hora_fin: time
-    estado: EstadoClase
-    status: bool
-    curso_nombre: str = Field(..., description="Nombre del curso")
-    courseId: str = Field(..., description="ID del curso del módulo CORE")
+    id_clase: int = Field(..., description="Identificador único de la clase")
+    id_cronograma: int = Field(..., description="ID del cronograma")
+    titulo: str = Field(..., description="Título de la clase")
+    descripcion: Optional[str] = Field(None, description="Descripción de la clase")
+    fecha_clase: date = Field(..., description="Fecha de la clase")
+    hora_inicio: time = Field(..., description="Hora de inicio")
+    hora_fin: time = Field(..., description="Hora de fin")
+    estado: EstadoClase = Field(..., description="Estado de la clase")
+    observaciones: Optional[str] = Field(None, description="Observaciones")
+    status: bool = Field(..., description="Estado del registro")
+    fecha_creacion: datetime = Field(..., description="Fecha de creación")
+    fecha_modificacion: datetime = Field(..., description="Fecha de modificación")
+    
+    # Información del cronograma
+    course_id: int = Field(..., description="ID del curso")
+    course_name: str = Field(..., description="Nombre del curso")
+    total_classes: int = Field(..., description="Total de clases del cronograma")
+
+    class Config:
+        from_attributes = True
+
+
+# Schema para estadísticas de clases
+class ClaseEstadisticas(BaseModel):
+    total_clases: int = Field(..., description="Total de clases")
+    clases_programadas: int = Field(..., description="Clases programadas")
+    clases_dictadas: int = Field(..., description="Clases dictadas")
+    clases_reprogramadas: int = Field(..., description="Clases reprogramadas")
+    clases_canceladas: int = Field(..., description="Clases canceladas")
+    clases_activas: int = Field(..., description="Clases activas")
+    clases_inactivas: int = Field(..., description="Clases inactivas")
 
     class Config:
         from_attributes = True
