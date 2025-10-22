@@ -36,7 +36,7 @@ export default function BusquedaUsuario(second) {
  
     const handleSearch=async()=>{
        try{
-        const response= await usuarioPorId(value)
+        const response= await usuarioPorId(parseInt(value))
         console.log("Usuario encontrado")
         setFound(true)
        }catch(err){
@@ -118,7 +118,7 @@ export default function BusquedaUsuario(second) {
                     <Button
                         variant="destructive"
                         className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
-                        
+                        onClick={()=>setFound(false)}
                     >Volver
                     </Button>
                     </div>

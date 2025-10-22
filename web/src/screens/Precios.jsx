@@ -8,89 +8,162 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PopUp from "@/components/PopUp";
-import { bajaPrecio } from "@/api/preciosApi";
+import {altaParametro, bajaParametro, modifcarParametro, obtenerParametros } from "@/api/preciosApi";
 
 export default function Precios() {
-  const initialPrices = [
-    { title: "Reserva Comedor", price: 5000 },
-    { title: "Multa por Pérdida", price: 20000 },
-    { title: "Multa por Entrega Tardía", price: 5000 },
-    { title: "Multa por Daño", price: 10000 },
-  ];
 
-  const [prices, setPrices] = useState(initialPrices);
+  const [prices, setPrices] = useState([]);
   const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: "", price: 0 });
+  const [form, setForm] = useState({
+    id: null,
+    nombre: "",
+    tipo: "",
+    valor_numerico: 0,
+    valor_texto: "",
+    fecha_modificacion: null,
+    status: "activo",
+  });
   const [error, setError] = useState(null);
 
   const handleEdit = (price) => {
-    setForm({ title: price.title, price: price.price });
+    setForm({ 
+      id: price.id,
+      nombre: price.nombre,
+      tipo: price.tipo,
+      valor_numerico: price.valor_numerico ?? 0,
+      valor_texto: price.valor_texto ?? "",
+      fecha_modificacion: price.fecha_modificacion ?? null,
+      status: price.status ?? "activo",
+    });
     setEditing(true);
     setShowForm(true);
   };
 
   const handleAdd = () => {
-    setForm({ title: "", price: 0 });
+    setForm({ nombre: "", valor_numerico: 0 });
     setEditing(false);
     setShowForm(true);
   };
 
   const handleCancel = () => {
-    setForm({ title: "", price: 0 });
+    setForm({
+      id: null,
+      nombre: "",
+      tipo: "",
+      valor_numerico: 0,
+      valor_texto: "",
+      fecha_modificacion: null,
+      status: "activo",
+    });
     setEditing(false);
     setShowForm(false);
   };
 
+  // const savePrice = async () => {
+  //   if (!form.nombre || !form.valor) {
+  //     setError("Por favor, completá todos los campos obligatorios.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const method = editing ? "PUT" : "POST";
+  //     const url = editing
+  //       ? `/api/precios/${encodeURIComponent(form.nombre)}`
+  //       : "/api/precios";
+
+  //     console.log("Guardando precio con metodo:", method, "en URL:", url);
+
+  //     const response = await fetch(url, {
+  //       method,
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ title: form.nombre, price: form.valor }),
+  //     });
+
+  //     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  //     const data = await response.json();
+  //     console.log(editing ? "Precio actualizado:" : "Precio agregado:", data);
+
+  //     // Actualizar lista local
+  //     if (editing) {
+  //       setPrices(prices.map(p => p.title === form.nombre ? { ...p, price: form.valor } : p));
+  //     } else {
+  //       setPrices([...prices, { ...form }]);
+  //     }
+
+  //     handleCancel();
+  //   } catch (err) {
+  //     console.error("Error al guardar el precio:", err);
+  //     setError(err.message || "Error desconocido");
+  //   }
+  // };
+
   const savePrice = async () => {
-    if (!form.title || !form.price) {
-      setError("Por favor, completá todos los campos obligatorios.");
-      return;
+  if (!form.nombre || !form.valor_numerico) {
+    setError("Por favor, completá todos los campos obligatorios.");
+    return;
+  }
+
+  try {
+    const payload = {
+      ...form,
+      fecha_modificacion: new Date().toISOString(), // ✅ fecha actual
+    };
+
+    if (editing) {
+      await modifcarParametro(form.id, payload);
+    } else {
+      await altaParametro(payload);
     }
 
-    try {
-      const method = editing ? "PUT" : "POST";
-      const url = editing
-        ? `/api/precios/${encodeURIComponent(form.title)}`
-        : "/api/precios";
+    // recargar lista o actualizar estado local
+    const updatedList = await obtenerParametros();
+    setPrices(updatedList);
 
-      console.log("Guardando precio con metodo:", method, "en URL:", url);
+    handleCancel();
+  } catch (err) {
+    console.error("Error al guardar el precio:", err);
+    setError(err.message || "Error desconocido");
+  }
+};
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title, price: form.price }),
-      });
+const deletePrice = async (id) => {
+  try {
+    await bajaParametro(id);
+    setPrices(prices.filter((p) => p.id !== id));
+  } catch (err) {
+    console.error("Error al eliminar el precio:", err);
+    setError(err.message || "Error desconocido");
+  }
+};
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
-      console.log(editing ? "Precio actualizado:" : "Precio agregado:", data);
 
-      // Actualizar lista local
-      if (editing) {
-        setPrices(prices.map(p => p.title === form.title ? { ...p, price: form.price } : p));
-      } else {
-        setPrices([...prices, { ...form }]);
+
+  // const deletePrice = async (title) => {
+  //   try {
+  //     await bajaPrecio(title);
+  //     setPrices(prices.filter(p => p.title !== title));
+  //   } catch (err) {
+  //     console.error("Error al eliminar el precio:", err);
+  //     setError(err.message || "Error desconocido");
+  //   }
+  // };
+
+  useEffect(()=>{
+    const getParams=async()=>{
+      try{
+        const response= await obtenerParametros()
+        setPrices(response)
+        console.log("precios obtenidos:", response)
+      }catch(err){
+        console,log("Error al obtener precios:", err)
+        setError(err.message)
       }
-
-      handleCancel();
-    } catch (err) {
-      console.error("Error al guardar el precio:", err);
-      setError(err.message || "Error desconocido");
     }
-  };
-
-  const deletePrice = async (title) => {
-    try {
-      await bajaPrecio(title);
-      setPrices(prices.filter(p => p.title !== title));
-    } catch (err) {
-      console.error("Error al eliminar el precio:", err);
-      setError(err.message || "Error desconocido");
-    }
-  };
+    getParams()
+  },[])
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -111,9 +184,9 @@ export default function Precios() {
             </TableHeader>
             <TableBody>
               {prices.map((p) => (
-                <TableRow key={p.title} className="hover:bg-gray-50">
-                  <TableCell>{p.title}</TableCell>
-                  <TableCell>${p.price.toLocaleString()}</TableCell>
+                <TableRow key={p.nombre} className="hover:bg-gray-50">
+                  <TableCell>{p.nombre}</TableCell>
+                  <TableCell>${String(p.valor_numerico)}</TableCell>
                   <TableCell className="text-center">
                     <Button
                       className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 mx-2 rounded"
@@ -123,7 +196,7 @@ export default function Precios() {
                     </Button>
                     <Button
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
-                      onClick={() => deletePrice(p.title)}
+                      onClick={() => deletePrice(p.id)}
                     >
                       Eliminar
                     </Button>
@@ -153,14 +226,19 @@ export default function Precios() {
             <div className="flex flex-col md:flex-row gap-4 mb-4">
               <InputField
                 label="Concepto"
-                value={form.title}
-                onChange={(v) => setForm({ ...form, title: v })}
+                value={form.nombre}
+                onChange={(v) => setForm({ ...form, nombre: v })}
+              />
+              <InputField
+                label="Tipo"
+                value={form.tipo}
+                onChange={(v)=>setForm({...form, tipo:v})}
               />
               <InputField
                 label="Precio"
                 type="number"
-                value={form.price}
-                onChange={(v) => setForm({ ...form, price: parseFloat(v) || 0 })}
+                value={form.valor_numerico}
+                onChange={(v) => setForm({ ...form, valor_numerico: parseFloat(v) || 0 })}
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">

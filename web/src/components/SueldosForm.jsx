@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
+import CardUsuario from "./CardUsuario"
 
 export default function SueldoForm() {
   const [form, setForm] = useState({
@@ -19,7 +20,8 @@ export default function SueldoForm() {
     observaciones: "",
   })
 
-  const [error, setError] = useState("")
+  const [error, setError] = useState(null)
+  const [completed, setCompleted]=useState(false)
 
   const handleChange = (field, value) => {
     let updated = { ...form, [field]: value }
@@ -38,25 +40,39 @@ export default function SueldoForm() {
     e.preventDefault()
 
     // Validación de campos obligatorios
-    if (!form.id_usuario || !form.cbu || !form.sueldo_fijo) {
+    if ( !form.cbu || !form.sueldo_fijo) {
       setError("Por favor, completá todos los campos obligatorios.")
       return
     }
+    try{
+      setCompleted(true)
 
-    setError("")
-    console.log("Formulario enviado:", form)
-    alert("Sueldo registrado con éxito")
+    }catch(err){
+      setError(err)
+    }
+  }
+
+  const clearForm=()=>{
+    setForm({
+      cbu: "",
+      sueldo_fijo: "",
+      sueldo_adicional: 0,
+      sueldo_total: 0,
+      observaciones: "",
+    })
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <form
+    <div className="flex min-h-screen max-w-2xl items-center justify-center ">
+
+      {!completed &&(<form
         onSubmit={handleSubmit}
-        className="w-full min-w-2xl bg-white p-6 rounded-xl shadow-md"
+        className="w-full min-w-2xl py-6 "
       >
-        <h1 className="font-bold text-center text-2xl mb-6">
+        <h1 className="font-bold text-xl mb-6">
           Registrar Sueldo
         </h1>
+        <span className="block w-full h-[3px] bg-sky-950 mb-6"></span>
 
         <FieldSet>
           <FieldGroup>
@@ -123,13 +139,26 @@ export default function SueldoForm() {
             )}
 
             <div className="flex justify-center mt-6">
-              <Button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold">
+              <Button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold" >
                 Guardar Sueldo
               </Button>
             </div>
           </FieldGroup>
         </FieldSet>
-      </form>
+      </form>)}
+      {
+        completed && (
+          <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+              <CardUsuario title={"Sueldo dado de alta exitosamente"} />
+              <Button
+              className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+              onClick={()=>{setCompleted(false); clearForm()}}>
+                OK
+              </Button>
+          </div>
+          
+        )
+      }
     </div>
   )
 }

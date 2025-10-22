@@ -27,8 +27,10 @@ export default function BajaCurso() {
 
   const handleBaja=async()=>{
       try{
-          const response= await bajaCurso()
+          const response= await bajaCurso(value)
           console.log("Curso dado de baja exitosamente")
+          setFound(null)
+          setShowPopup(true)
       }catch(err){
           console.log("Error al dar de baja curso:", err.message)
           setError(err.message)
@@ -66,14 +68,10 @@ export default function BajaCurso() {
           </Button>
 
         </div>
-        
-       
-      </div>
-
-      {/* Resultado simulado */}
+         {/* Resultado simulado */}
       {found && (
-        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md ml-6">
-          <CardCurso />
+        <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
+          <CardCurso title={"Desea eliminar el curso?"} curso={cursoData}/>
           <Button
             variant="destructive"
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
@@ -86,10 +84,22 @@ export default function BajaCurso() {
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <PopUp title={"Se ha dado de baja el curso solicitado"} message={"se pasara el objeto curso"} onClose={() => setShowPopup(false)}/>
+        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+                    <CardCurso title={"Curso eliminado exitosamente"} curso={cursoData} />
+                    <Button
+                    onClick={() => {setShowPopup(false); setValue("")}}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-md"
+                    >
+                    OK
+                    </Button>
+                </div>
       )}
 
       { error && (<PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>)}
+       
+      </div>
+
+     
     </div>
   );
 }

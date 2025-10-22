@@ -1,17 +1,11 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSeparator,
   FieldSet,
-  FieldTitle,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -20,235 +14,323 @@ import {
   SelectItem,
   SelectGroup,
   SelectLabel,
-  SelectSeparator
 } from "@/components/ui/select.jsx";
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover"
-import  {format, set} from "date-fns"
+import { useState, useEffect } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import PopUp from "@/components/PopUp";
-import { cursoPorId, modificarCurso } from "@/api/cursosApi";
 import CardCurso from "@/components/CardCurso";
+import { cursoPorId, modificarCurso } from "@/api/cursosApi";
+import { obtenerMaterias } from "@/api/materiasApi";
+import { obtenerSedes } from "@/api/sedesApi";
 
+export default function ModifCurso() {
+  const [value, setValue] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    uuid_materia: "",
+    comision: "",
+    modalidad: "",
+    sede: "",
+    aula: "",
+    horario: "",
+    periodo: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+    capacidad_max: 0,
+    capacidad_min: 0,
+  });
+  const [filteredSedes, setFilteredSedes] = useState([]);
+  const [filteredMaterias, setFilteredMaterias] = useState([]);
+  const [cursoData, setCursoData] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const [error, setError] = useState(null);
 
-export default function ModifCurso(second) {
-
-    const [value, setValue] = useState("");
-    const [showForm, setShowForm] = useState(false);
-    const [date, setDate] = useState();
-    const [form, setForm] = useState({
-        fechaInicio: "",
-        carrera: "",
-        materia: "",
-        modalidad: "",
-        docente: "",
-        auxiliar: "",
-        sede: "",
-        aula: ""
-    });
-    const [cursoData, setCursoData]=useState(null)
-    const [completed, setCompleted] = useState(false);
-    const [error, setError] = useState(null);
-
-    
-    const handleSearch = async() => {
-        try{
-            if(!value.trim()) return;
-            const response = await cursoPorId(value)
-            console.log("Curso encontrado exitosamente")
-            setShowForm(true);
-        }catch(err){
-            setError(err.message);
-            setShowForm(false);
-        }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const sedes = await obtenerSedes();
+        const materias = await obtenerMaterias();
+        setFilteredSedes(sedes);
+        setFilteredMaterias(materias);
+      } catch (err) {
+        console.error(err);
+      }
     };
-    const handleSubmit = async(e) => {
-        try{
-            e.preventDefault();
-            const response = await modificarCurso(value, form)
-            console.log("Curso modificado exitosamente")
-            setCursoData(response)
-            setCompleted(true);
-        }catch(err){
-            setError(err.message);
-            console.error(err.message)
-        }
-    } 
+    fetchData();
+  }, []);
 
-    return(
-        <div className="flex min-h-screen flex-col items-start justify-start ">
-            {/*Secciom de busqueda*/}
-            {!showForm &&(
-                <div className="w-full max-w-md  p-6">
-                    <h1 className="font-bold text-xl mb-4">Modificación de Curso</h1>
-                    <span className="block w-full h-[3px] bg-sky-950"></span>
+  const handleSearch = async () => {
+    try {
+      if (!value.trim()) return;
+      const response = await cursoPorId(value);
+      setForm({
+        uuid_materia: response.uuid_materia,
+        comision: response.comision,
+        modalidad: response.modalidad,
+        sede: response.sede,
+        aula: response.aula,
+        horario: response.horario,
+        periodo: response.periodo,
+        fecha_inicio: response.fecha_inicio,
+        fecha_fin: response.fecha_fin,
+        capacidad_max: response.capacidad_max,
+        capacidad_min: response.capacidad_min,
+      });
+      setShowForm(true);
+    } catch (err) {
+      setError(err.message);
+      setShowForm(false);
+    }
+  };
 
-                    <h3 className="text-sm mb-4 mt-8">
-                    Ingrese el número de curso para proceder a la modificación
-                    </h3>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await modificarCurso(value, form);
+      setCursoData(response);
+      setValue("")
+      setShowForm(false)
+      setCompleted(true);
 
-                    <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">       
+    } catch (err) {
+      console.error(err.message);
+      setError(err.message);
+    }
+  };
 
-                        {/* Input controlado */}
-                        <Input
-                            className="lg:mb-4"
-                            placeholder="Número de Curso"
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                        />
-
-                        {/* Botón de búsqueda */}
-                        <Button
-                            disabled={!value.trim()}
-                            onClick={handleSearch}
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
-                        >
-                            Buscar
-                        </Button>
-
-                        </div>
-                </div>)}
-            { showForm &&( 
-                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md">
-                    <h1 className="font-bold text-center text-xl mb-6">Modificación de Curso</h1>
-
-                    <FieldSet>
-                    <FieldGroup>
-                        <Field>
-                            <FieldLabel htmlFor="name">Fecha Inicio</FieldLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <Button className="w-full">
-                                    {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
-                                </Button>
-                                </PopoverTrigger>
-
-                                <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                        </Field>
-
-                        <Field>
-                        <FieldLabel htmlFor="address">Carrera/s</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Operaciones</SelectLabel>
-                                    <SelectItem value="alta">Alta de Curso</SelectItem>
-                                    <SelectItem value="baja">Baja de Curso</SelectItem>
-                                    <SelectItem value="modificacion">Modificación de Curso</SelectItem>
-
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field>
-                        <FieldLabel htmlFor="aulas">Materia</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Operaciones</SelectLabel>
-                                    <SelectItem value="alta">Alta de Curso</SelectItem>
-                                    <SelectItem value="baja">Baja de Curso</SelectItem>
-                                    <SelectItem value="modificacion">Modificación de Curso</SelectItem>
-
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field>
-                        <FieldLabel htmlFor="comedor">Modalidad</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Operaciones</SelectLabel>
-                                    <SelectItem value="mañana">Mañana</SelectItem>
-                                    <SelectItem value="tarde">Tarde</SelectItem>
-                                    <SelectItem value="noche">Noche</SelectItem>
-
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Docente</FieldLabel>
-                            <Input id="docente" placeholder="Docente" />
-                        </Field>
-
-                        
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Auxiliar</FieldLabel>
-                            <Input id="auxiliar" placeholder="Auxiliar" />
-                        </Field>
-
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Sede</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Operaciones</SelectLabel>
-                                    <SelectItem value="Montserrat">Montserrat</SelectItem>
-                                    <SelectItem value="Recoleta">Recoleta</SelectItem>
-                                    <SelectItem value="Costa">Costa</SelectItem>
-                                    <SelectItem value="Belgrano">Belgrano</SelectItem>
-
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Aula</FieldLabel>
-                            <Input id="aula" placeholder="Aula" />
-
-                        </Field>
-                        <div className="flex justify-center">
-                        <Button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded mt-4" onClick={handleSubmit}>
-                            Guardar
-                        </Button>
-                        </div>
-                    </FieldGroup>
-                    </FieldSet>
-                </div>
-            )}
-
-            {completed && (
-                <CardCurso title={"Curso modificado exitosamente"} curso={cursoData}/>
-            )}
-
-            {error && (
-                <PopUp title={"Error al modificar el curso"} message={error} onClose={() => setError(null)}/>
-            )}
+  return (
+    <div className="flex min-h-screen min-w-3xl flex-col items-start justify-start py-4">
+      {/* Búsqueda de curso */}
+      {!showForm && (
+        <div className="w-full max-w-md md:max-w-2xl p-6">
+          <h1 className="font-bold text-xl mb-4">Modificar Curso</h1>
+          <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
+          <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
+            <Input
+            className="lg:mb-4"
+                placeholder="Número de Curso"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+            />
+            <Button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold "
+                onClick={handleSearch}
+                disabled={!value.trim()}
+            >
+                Buscar
+            </Button>
+          </div>
+         
         </div>
-    )
+      )}
+
+      {/* Formulario */}
+      {showForm && (
+        <div className="w-full max-w-2xl p-6 mt-4">
+          <h1 className="font-bold text-xl mb-4 ">Modificar Curso</h1>
+           <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
+          <FieldSet className="my-6">
+            <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Modalidad */}
+              <Field>
+                <FieldLabel>Modalidad</FieldLabel>
+                <Select
+                  value={form.modalidad}
+                  onValueChange={(val) => setForm((prev) => ({ ...prev, modalidad: val }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione modalidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Modalidad</SelectLabel>
+                      <SelectItem value="Presencial">Presencial</SelectItem>
+                      <SelectItem value="Virtual">Virtual</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* Sede */}
+              <Field>
+                <FieldLabel>Sede</FieldLabel>
+                <Select
+                  value={form.sede}
+                  onValueChange={(val) => setForm((prev) => ({ ...prev, sede: val }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Sedes</SelectLabel>
+                      {filteredSedes.map((sede) => (
+                        <SelectItem key={sede.id} value={sede.id}>
+                          {sede.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* Materia */}
+              <Field>
+                <FieldLabel>Materia</FieldLabel>
+                <Select
+                  value={form.uuid_materia}
+                  onValueChange={(val) => setForm((prev) => ({ ...prev, uuid_materia: val }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione materia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Materias</SelectLabel>
+                      {filteredMaterias.map((materia) => (
+                        <SelectItem key={materia.id_materia} value={materia.id_materia}>
+                          {materia.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* Comision */}
+              <Field>
+                <FieldLabel>Comisión</FieldLabel>
+                <Input
+                  placeholder="Comisión"
+                  value={form.comision}
+                  onChange={(e) => setForm((prev) => ({ ...prev, comision: e.target.value }))}
+                />
+              </Field>
+
+              {/* Aula */}
+              <Field>
+                <FieldLabel>Aula</FieldLabel>
+                <Input
+                  placeholder="Aula"
+                  value={form.aula}
+                  onChange={(e) => setForm((prev) => ({ ...prev, aula: e.target.value }))}
+                />
+              </Field>
+
+              {/* Horario */}
+              <Field>
+                <FieldLabel>Horario</FieldLabel>
+                <Input
+                  placeholder="Ej: Lunes 8-10"
+                  value={form.horario}
+                  onChange={(e) => setForm((prev) => ({ ...prev, horario: e.target.value }))}
+                />
+              </Field>
+
+              {/* Periodo */}
+              <Field>
+                <FieldLabel>Período</FieldLabel>
+                <Input
+                  placeholder="Ej: 1er Cuatrimestre"
+                  value={form.periodo}
+                  onChange={(e) => setForm((prev) => ({ ...prev, periodo: e.target.value }))}
+                />
+              </Field>
+
+              {/* Fecha Inicio */}
+              <Field>
+                <FieldLabel>Fecha Inicio</FieldLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full text-left">
+                      {form.fecha_inicio
+                        ? new Date(form.fecha_inicio).toLocaleDateString()
+                        : "Seleccione una fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={form.fecha_inicio ? new Date(form.fecha_inicio) : undefined}
+                      onSelect={(date) => setForm((prev) => ({ ...prev, fecha_inicio: date }))}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </Field>
+
+              {/* Fecha Fin */}
+              <Field>
+                <FieldLabel>Fecha Fin</FieldLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full text-left">
+                      {form.fecha_fin
+                        ? new Date(form.fecha_fin).toLocaleDateString()
+                        : "Seleccione una fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={form.fecha_fin ? new Date(form.fecha_fin) : undefined}
+                      onSelect={(date) => setForm((prev) => ({ ...prev, fecha_fin: date }))}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </Field>
+
+              {/* Capacidad Max */}
+              <Field>
+                <FieldLabel>Capacidad Máxima</FieldLabel>
+                <Input
+                  type="number"
+                  value={form.capacidad_max}
+                  onChange={(e) => setForm((prev) => ({ ...prev, capacidad_max: parseInt(e.target.value) }))}
+                />
+              </Field>
+
+              {/* Capacidad Min */}
+              <Field>
+                <FieldLabel>Capacidad Mínima</FieldLabel>
+                <Input
+                  type="number"
+                  value={form.capacidad_min}
+                  onChange={(e) => setForm((prev) => ({ ...prev, capacidad_min: parseInt(e.target.value) }))}
+                />
+              </Field>
+
+            </FieldGroup>
+          </FieldSet>
+
+          <div className="flex justify-end mt-4 gap-4">
+            <Button
+              onClick={handleSubmit}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+            >
+              Guardar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* PopUp de éxito */}
+      {completed && (
+        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+          <CardCurso title={"Curso modificado exitosamente"} curso={cursoData} />
+          <Button
+            onClick={() => setCompleted(false)}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+          >
+            OK
+          </Button>
+        </div>
+      )}
+
+      {error && (
+        <PopUp title={"Error al modificar el curso"} message={error} onClose={() => setError(null)} />
+      )}
+    </div>
+  );
 }

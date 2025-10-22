@@ -16,6 +16,7 @@ import PopUp from "@/components/PopUp";
 import CardUsuario from "./CardUsuario";
 import SueldoForm from "./SueldosForm";
 import { useState } from "react";
+import { altaUsuario } from "@/api/usuariosApi";
 
 export default function AltaUsuario() {
   const [form, setForm] = useState({
@@ -75,8 +76,8 @@ export default function AltaUsuario() {
       return;
     }
     try {
-      // const response = await altaUsuario(form);
-      // setUserData(response);
+      const response = await altaUsuario(form);
+      setUserData(response);
       setCompleted(true);
       setShowPopUp(true);
     } catch (err) {
@@ -86,10 +87,10 @@ export default function AltaUsuario() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 px-4 sm:px-8">
+    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 py-4 sm:px-8">
       {!completed && (
         <div className="w-full max-w-3xl">
-          <h1 className="font-bold text-start text-2xl mb-4 text-sky-950">
+          <h1 className="font-bold text-start text-xl mb-4 text-black">
             Alta de Usuario
           </h1>
           <span className="block w-full h-[2px] bg-sky-950 mb-6"></span>

@@ -1,87 +1,94 @@
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
-  FieldSeparator,
   FieldSet,
-  FieldTitle,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator
-} from "@/components/ui/select.jsx";
 import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover"
-import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
-import { materiaPorId, modificarMateria } from "@/api/materiasApi";
+import { materiaPorId, modificarMateria, obtenerCarreras, obtenerCarrerasPorMateria } from "@/api/materiasApi";
+import { useEffect } from "react";
+import { Checkbox } from "./ui/checkbox";
+import CardMateria from "./CardMateria";
+
 
 export default function ModifMateria(second) {
     const [date, setDate] = useState();
     const [form, setForm] = useState({
-        tipoUsuario: "",
-        nombre: "",
-        apellido: "",
-        fechaNacimiento: "",
-        tipoDocumento: "",
-        nroDocumento: "",
-        correoElectronico: "",
-        telefono: "",
-        direccion: "",
-        localidad: "",
-        provincia: "",
-        paisResidencia: "",
-        nacionalidad: "",
-        carrera: "",
-        fechaInscripcion: ""
+        id:null,
+        nombre:"",
+        status:"activo"
     });
     const [completed, setCompleted] = useState(false);
     const [searchError, setSearchError] = useState(null);
     const [addError, setAddError] = useState(null);
     const [value, setValue] = useState("");
     const [showForm, setShowForm] = useState(false);
+    const [selectedValues, setSelectedValues]=useState([])
+    const [filteredOptions, setFilteredOptions] = useState([]);
+    const [error, setError]=useState(null)
 
-    const handleSearch = async() => {
-        try{
-            if(!value.trim()) return;
-            const response = await materiaPorId(value)
-            console.log("materia encontrado exitosamente")
+
+    const toggleValue = (id) => {
+      setSelectedValues((prev) =>
+        prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      );
+    };
+
+    const handleSearch = async () => {
+        try {
+            if (!value.trim()) return;
+
+            const response = await materiaPorId(value);
+            const carrerasPorMateria = await obtenerCarrerasPorMateria(value);
+
+            setForm(response);
+
+            // Guardar solo los IDs
+            const idsCarreras = carrerasPorMateria.map((c) => c.id_carrera);
+            setSelectedValues(idsCarreras);
+
+            console.log("Materia encontrada. Carreras asociadas:", idsCarreras);
+
             setShowForm(true);
-        }catch(err){
-            setError(err.message);
+        } catch (err) {
+            setSearchError(err.message);
             setShowForm(false);
         }
-    };
+        };
+
     const handleSubmit = async(e) => {
         e.preventDefault();
         try{            
             const response = await modificarMateria(value, form)
             console.log("materia modificada exitosamente")
-            setUserData(response)
+            setShowForm(false)
             setCompleted(true);
         }catch(err){
             setError(err.message);
             console.error(err.message)
         }
 
-    } 
+    }
+    useEffect(()=>{
+        const getCarreras=async()=>{
+        try{
+            const carreras= await obtenerCarreras()
+            console.log("carreras:", carreras)
+            setFilteredOptions(carreras)
+        }catch(err){
+
+        }
+        }
+        getCarreras()
+    }) 
 
     return(
         <div className="flex min-h-screen min-w-2xl flex-col items-start justify-start  my-4">
@@ -96,7 +103,7 @@ export default function ModifMateria(second) {
                 {/* Input controlado */}
                 <Input
                 className="mb-4"
-                placeholder="Legajo"
+                placeholder="ID Materia"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 />
@@ -113,144 +120,44 @@ export default function ModifMateria(second) {
                 {searchError && <p className="text-red-500 mt-2">{searchError}</p>}
             </div>
             { showForm &&( 
-                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md my-4">
-                    <h1 className="font-bold text-center text-xl mb-6">Modificación de Materia</h1>
+                <div className="w-full max-w-md bg-white p-6 my-4">
+                    <h1 className="font-bold text-xl mb-4">Modificación de Materia</h1>
+                    <span className="block w-full h-[2px] bg-sky-950"></span>
 
-                    <FieldSet>
+                    <FieldSet className={"my-4"}>
                     <FieldGroup>
 
                         <Field>
-                        <FieldLabel htmlFor="address">Tipo de Usuario</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Opciones</SelectLabel>
-                                    <SelectItem value="alumno">Alumno</SelectItem>
-                                    <SelectItem value="docente">Docente</SelectItem>
-                                    
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
+                            <FieldLabel htmlFor="biblioteca">Nombre Materia</FieldLabel>
+                            <Input id="nombre" placeholder="Nombre/s" value={form.nombre} onChange={(e)=> setForm((prev) => ({ ...prev, nombre: e.target.value }))} />  
                         </Field>
 
                         <Field>
-                            <FieldLabel htmlFor="biblioteca">Nombre/s</FieldLabel>
-                            <Input id="nombre" placeholder="Nombre/s" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Apellido/s</FieldLabel>
-                            <Input id="apellido" placeholder="Apelido/s" />
-                        </Field>
-
-                        <Field>
-
-                            <FieldLabel htmlFor="name">Fecha de Nacimiento</FieldLabel>
+                            <FieldLabel>
+                                Carrera/s<span className="text-red-500">*</span>
+                            </FieldLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                <Button className="w-full">
-                                    {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
+                                <Button variant="outline" className="w-full sm:w-[80%] md:w-[70%] justify-start">
+                                    {selectedValues.length > 0
+                                    ? filteredOptions
+                                        .filter((c) => selectedValues.includes(c.id_carrera))
+                                        .map((c) => c.nombre)
+                                        .join(", ")
+                                    : "Seleccioná carrera(s) a la(s) que pertenece"}
                                 </Button>
                                 </PopoverTrigger>
-
-                                <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                        </Field>
-
-                        <Field>
-                        <FieldLabel htmlFor="address">Tipo de Documento</FieldLabel>
-                            <Select>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione una opción" />
-                                </SelectTrigger>
-
-                                <SelectContent>
-                                    <SelectGroup>
-                                    <SelectLabel>Operaciones</SelectLabel>
-                                    <SelectItem value="alta">DNI</SelectItem>
-                                    <SelectItem value="baja">Pasaporte</SelectItem>
-                                    <SelectItem value="modificacion">Modificación de Curso</SelectItem>
-
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">N° Documento</FieldLabel>
-                            <Input id="documento" placeholder="Documento" />
-                        </Field>
-
-                        
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Correo Electrónico</FieldLabel>
-                            <Input id="correo" placeholder="Correo Electronico" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Teléfono/Celular</FieldLabel>
-                            <Input id="telefono" placeholder="Telefono/Celular" />
-                        </Field>
-
-                        
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Dirección</FieldLabel>
-                            <Input id="direccion" placeholder="Direccion" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Localidad</FieldLabel>
-                            <Input id="localidad" placeholder="Localidad" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Provincia</FieldLabel>
-                            <Input id="provincia" placeholder="Provincia" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">País de residencia</FieldLabel>
-                            <Input id="pais" placeholder="Pais de residencia" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Nacionalidad</FieldLabel>
-                            <Input id="nacionalidad" placeholder="Nacionalidad" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Carrera</FieldLabel>
-                            <Input id="carrera" placeholder="Carrera" />
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="biblioteca">Fecha de Inscripción</FieldLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <Button className="w-full">
-                                    {date ? format(date, "dd/MM/yyyy") : "Seleccione una fecha"}
-                                </Button>
-                                </PopoverTrigger>
-
-                                <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                />
+                                <PopoverContent className="w-[250px] p-2">
+                                {filteredOptions.map((opt) => (
+                                    <div
+                                    key={opt.id_carrera}
+                                    className="flex items-center space-x-2 py-1 cursor-pointer"
+                                    onClick={() => toggleValue(opt.id_carrera)}
+                                    >
+                                    <Checkbox checked={selectedValues.includes(opt.id_carrera)} />
+                                    <label>{opt.nombre}</label>
+                                    </div>
+                                ))}
                                 </PopoverContent>
                             </Popover>
                         </Field>
@@ -269,10 +176,21 @@ export default function ModifMateria(second) {
             )}
 
             {completed && (
-                <PopUp title={"Información modificada exitosamente"} onClose={() => setCompleted(false)}/>
+                <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+                    <CardMateria title={"Información modificada exitosamente"} materia={form} />
+                    <Button
+                    onClick={() => {setCompleted(false); setValue("")}}
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                    >
+                    OK
+                    </Button>
+                </div>
             )}
             {addError && (
                 <PopUp title="Error" message={addError} onClose={() => setAddError(null)} />
+            )}
+            {error!==null && (
+                <PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>
             )}
 
             

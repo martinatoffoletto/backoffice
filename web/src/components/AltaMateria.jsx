@@ -22,7 +22,7 @@ import {
   SelectLabel,
   SelectSeparator
 } from "@/components/ui/select.jsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -32,7 +32,7 @@ import {
 import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
-import { altaMateria } from "@/api/materiasApi";
+import { altaMateria, obtenerCarreras } from "@/api/materiasApi";
 import { Checkbox } from "./ui/checkbox";
 
 export default function AltaMateria(second) {
@@ -40,44 +40,48 @@ export default function AltaMateria(second) {
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
     const [selectedValues, setSelectedValues]=useState([])
+    
+    const [filteredOptions, setFilteredOptions] = useState([]);
 
-    const options=["Carrera 1", "Carrera 2", "Carrera 3", "Carrera 4"]
 
-    const toggleValue = (value) => {
+    const toggleValue = (id) => {
       setSelectedValues((prev) =>
-        prev.includes(value)
-          ? prev.filter((v) => v !== value)
-          : [...prev, value]
+        prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
       );
     };
 
     const [form, setForm] = useState({
-        nombre: "",
-        apellido: "",
-        fechaNacimiento: "",
-        tipoDocumento: "",
-        nroDocumento: "",
-        correoElectronico: "",
-        telefono: "",
-        direccion: "",
-        localidad: "",
-        provincia: "",
-        paisResidencia: "",
-        nacionalidad: "",
-        carrera: "",
-        fechaInscripcion: ""
+        id:null,
+        nombre:"",
+        status:"activo"
     });
     
     const handleSubmit = async(e) => {
        try{
           e.preventDefault();
-          const response= await altaMateria(form)
+          console.log("Selected values:",selectedValues)
+          const response= await altaMateria(form, selectedValues)
           console.log("Materia dada de alta exitosamente")
           setCompleted(true);
+          setForm({ id: null, nombre: "", status: "activo" });
+          setSelectedValues([]);
         } catch (err){
             setError(err.message);  
         }
-    } 
+    }
+    
+    useEffect(()=>{
+      const getCarreras=async()=>{
+        try{
+          const carreras= await obtenerCarreras()
+          console.log("carreras:", carreras)
+          setFilteredOptions(carreras)
+        }catch(err){
+
+        }
+      }
+      getCarreras()
+    })
 
     return(
     <div className="flex min-h-screen min-w-2xl  items-start justify-start">
@@ -90,8 +94,15 @@ export default function AltaMateria(second) {
             <FieldGroup className="space-y-5">
 
               <Field>
-                <FieldLabel htmlFor="nombre">Nombre de Materia</FieldLabel>
-                <Input id="nombre" placeholder="Nombre de Materia" />
+                <FieldLabel htmlFor="nombre">Nombre de Materia<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="nombre"
+                  placeholder="Nombre de Materia"
+                  value={form.nombre}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, nombre: e.target.value }))
+                  } 
+                />
               </Field>
 
               <Field>
@@ -100,24 +111,24 @@ export default function AltaMateria(second) {
                   </FieldLabel>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full sm:w-[80%] md:w-[70%] justify-start"
-                      >
+                      <Button variant="outline" className="w-full sm:w-[80%] md:w-[70%] justify-start">
                         {selectedValues.length > 0
-                          ? selectedValues.join(", ")
+                          ? filteredOptions
+                              .filter((c) => selectedValues.includes(c.id_carrera))
+                              .map((c) => c.nombre)
+                              .join(", ")
                           : "Seleccioná carrera(s) a la(s) que pertenece"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[250px] p-2">
-                      {options.map((opt) => (
+                      {filteredOptions.map((opt) => (
                         <div
-                          key={opt}
+                          key={opt.id_carrera}
                           className="flex items-center space-x-2 py-1 cursor-pointer"
-                          onClick={() => toggleValue(opt)}
+                          onClick={() => toggleValue(opt.id_carrera)}
                         >
-                          <Checkbox checked={selectedValues.includes(opt)} />
-                          <label>{opt}</label>
+                          <Checkbox checked={selectedValues.includes(opt.id_carrera)} />
+                          <label>{opt.nombre}</label>
                         </div>
                       ))}
                     </PopoverContent>
@@ -139,8 +150,8 @@ export default function AltaMateria(second) {
 
       {completed && (
         <PopUp
-          title="Usuario dado de alta exitosamente"
-          message="Se pasará el objeto usuario."
+          title="Materia dada de alta exitosamente"
+          message="Se pasará el objeto materia."
           onClose={() => setCompleted(false)}
         />
       )}

@@ -33,11 +33,12 @@ export default function BajaUsuario(second) {
     const [error, setError] = useState(null);
     const [completed, setCompleted]=useState(false)
     const [user, setUser]= useState(null)
+    const [ deleted, setDeleted]=useState(false)
 
     const handleSearch = async() => {
         try{
             if (!value.trim()) return;
-            const response = await usuarioPorId(value)
+            const response = await usuarioPorId(parseInt(value))//en la version original no hay que parsearlo
             console.log(`Usuario con id: ${value}  encontrado: ${response}`)
             setUser(response)
             setFound(true)
@@ -51,12 +52,16 @@ export default function BajaUsuario(second) {
         try{
            const response= await bajaUsuario(value)
            console.log("Usuario dado de baja exitosamente")
+           setDeleted(true)
+           setFound(false)
+
         }catch(err){
             console.log("Error al dar de baja usuario:", err.message)
             setError(err.message)
         }
         
     }
+
     return(
         <div className="flex min-h-screen flex-col items-start justify-start ">
             { !completed && (<div className="w-full max-w-md bg-white p-6 rounded-xl">
@@ -87,15 +92,12 @@ export default function BajaUsuario(second) {
                 </div>
             </div>)}
 
-            {completed && (
-                <CardUsuario title={"Se ha dado de baja exitosamente"} user={user}/>
             
-            )}
 
             {/* Resultado simulado */}
             {found && (
-                <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md ml-6">
-                <CardUsuario />
+                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
+                <CardUsuario title={"Desea dar de baja el usuario?"}/>
                 <Button
                     variant="destructive"
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
@@ -106,10 +108,22 @@ export default function BajaUsuario(second) {
                 </div>
             )}
 
-            {/* Popup de confirmación */}
-            {found && (
-                <PopUp title={"Se ha dado de baja al usuario solicitado"} message={"Se enviara una notificación de la misma al usuario"} onClose={() => setCompleted(false)}/>
+            {deleted && (
+                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
+                <CardUsuario title={"Usuario dado de baja exitosamente"}/>
+                <Button
+                    variant="destructive"
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
+                    onClick={()=>{setDeleted(false);setValue("")}}
+                >
+                    OK
+                </Button>
+                </div>
+                
+            
             )}
+
+ 
             {error !== null && (
                 <PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>
             )}

@@ -4,18 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { bajaMateria, materiaPorId } from "@/api/materiasApi";
+import CardMateria from "./CardMateria";
 
 export default function BajaMateria() {
   const [value, setValue] = useState("");
-  const [found, setFound] = useState(false);
+  const [found, setFound] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
+
+
 
   const handleSearch = async() => {
     try{
       if (!value.trim()) return;
       const response = await materiaPorId(value);
       console.log("Materia encontrada exitosamente") 
-      setFound(true)
+      setFound(response)
     }catch(error){
       console.log("Error al buscar materia", error.message)
     }
@@ -25,14 +28,19 @@ export default function BajaMateria() {
     try{
       const response= await bajaMateria(value)
       console.log("Materia dado de baja exitosamente")
+      setShowPopup(true)
+      setFound(null)
+      setValue("")
     }catch(err){
         console.log("Error al dar de baja materia:", err.message)
         setError(err.message)
     }
   }
 
+
+
   return (
-    <div className="flex min-h-screen flex-col items-start justify-start bg-gray-50 mt-4">
+    <div className="flex min-h-screen flex-col items-start justify-start mt-4">
       {/* Sección de búsqueda */}
       <div className="w-full max-w-md  p-6">
         <h1 className="font-bold text-xl mb-4">Baja de Materia</h1>
@@ -63,9 +71,9 @@ export default function BajaMateria() {
       </div>
 
       {/* Resultado simulado */}
-      {found && (
-        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md ml-6">
-          <CardCurso />
+      {found !== null && (
+        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+          <CardMateria title={"Materia encontrada"} materia={found}/>
           <Button
             variant="destructive"
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
@@ -78,8 +86,17 @@ export default function BajaMateria() {
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <PopUp title={"Se ha dado de baja la materia solicitada"} message={"se pasara el objeto materia"} onClose={() => setShowPopup(false)}/>
+        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+            <CardMateria title={"Información eliminada exitosamente"} materia={found} />
+            <Button
+            onClick={() => {setShowPopup(false); setValue("")}}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-md"
+            >
+            OK
+            </Button>
+        </div>
       )}
+
     </div>
   );
 }
