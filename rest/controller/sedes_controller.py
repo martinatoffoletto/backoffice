@@ -1,24 +1,27 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..schemas.sede_schema import Sede
+from ..database import get_db
+from ..service.sede_service import SedeService, get_sede_service
 
 router = APIRouter(prefix="/sedes", tags=["Sedes"])
 
 @router.post("/", response_model=Sede, status_code=status.HTTP_201_CREATED)
-async def create_sede(sede: Sede):
+async def create_sede(
+    sede: Sede, 
+    created_by: str = Query(..., description="Usuario que crea la sede"),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Crear una nueva sede.
     """
     try:
-        # TODO: Implementar lógica de creación en base de datos
-        # Validar que el nombre sea único
-        # db_sede = create_sede_in_db(sede)
-        # return db_sede
-        
-        # Ejemplo temporal
-        sede.id_sede = 1  # Simular ID generado
-        return sede
-        
+        resultado = sede_service.create_sede(sede, created_by)
+        return resultado["sede"]
+    
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -26,30 +29,17 @@ async def create_sede(sede: Sede):
         )
 
 @router.get("/", response_model=List[Sede])
-async def get_all_sedes():
+async def get_all_sedes(
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
-    Obtener todas las sedes activas.
+    Obtener todas las sedes activas con paginación.
     """
     try:
-        # TODO: Implementar consulta a base de datos
-        # sedes = get_all_sedes_from_db()
-        # return sedes
-        
-        # Ejemplo temporal
-        return [
-            Sede(
-                id_sede=1,
-                nombre="Sede Central",
-                ubicacion="Av. Rivadavia 1234, CABA",
-                status=True
-            ),
-            Sede(
-                id_sede=2,
-                nombre="Sede Norte",
-                ubicacion="Av. Cabildo 5678, CABA",
-                status=True
-            )
-        ]
+        resultado = sede_service.get_all_sedes(skip=skip, limit=limit)
+        return resultado["sedes"]
         
     except Exception as e:
         raise HTTPException(
@@ -58,28 +48,18 @@ async def get_all_sedes():
         )
 
 @router.get("/{id_sede}", response_model=Sede)
-async def get_sede_by_id(id_sede: int):
+async def get_sede_by_id(
+    id_sede: int, 
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Obtener una sede por su ID.
     """
     try:
-        # TODO: Implementar consulta a base de datos
-        # sede = get_sede_by_id_from_db(id_sede)
-        # if not sede:
-        #     raise HTTPException(status_code=404, detail="Sede no encontrada")
-        # return sede
         
-        # Ejemplo temporal
-        if id_sede == 1:
-            return Sede(
-                id_sede=1,
-                nombre="Sede Central",
-                ubicacion="Av. Rivadavia 1234, CABA",
-                status=True
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Sede no encontrada")
-            
+        resultado = sede_service.get_sede_by_id(id_sede)
+        return resultado["sede"]
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -89,33 +69,24 @@ async def get_sede_by_id(id_sede: int):
         )
 
 @router.get("/search/nombre/{nombre}", response_model=List[Sede])
-async def get_sedes_by_name(nombre: str):
+async def get_sedes_by_name(
+    nombre: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Buscar sedes por nombre (coincidencia parcial).
     """
     try:
-        # TODO: Implementar búsqueda en base de datos
-        # sedes = search_sedes_by_name_from_db(nombre)
-        # return sedes
         
-        # Ejemplo temporal
-        sedes_ejemplo = [
-            Sede(
-                id_sede=1,
-                nombre="Sede Central",
-                ubicacion="Av. Rivadavia 1234, CABA",
-                status=True
-            ),
-            Sede(
-                id_sede=2,
-                nombre="Sede Norte",
-                ubicacion="Av. Cabildo 5678, CABA",
-                status=True
-            )
-        ]
-        
-        # Filtrar por nombre que contenga la búsqueda
-        return [s for s in sedes_ejemplo if nombre.lower() in s.nombre.lower()]
+        resultado = sede_service.search_sedes(
+            search_term=nombre, 
+            search_type="nombre", 
+            skip=skip, 
+            limit=limit
+        )
+        return resultado["sedes"]
         
     except Exception as e:
         raise HTTPException(
@@ -124,33 +95,23 @@ async def get_sedes_by_name(nombre: str):
         )
 
 @router.get("/search/ubicacion/{ubicacion}", response_model=List[Sede])
-async def get_sedes_by_ubicacion(ubicacion: str):
+async def get_sedes_by_ubicacion(
+    ubicacion: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Buscar sedes por ubicación (coincidencia parcial).
     """
     try:
-        # TODO: Implementar búsqueda en base de datos
-        # sedes = search_sedes_by_ubicacion_from_db(ubicacion)
-        # return sedes
-        
-        # Ejemplo temporal
-        sedes_ejemplo = [
-            Sede(
-                id_sede=1,
-                nombre="Sede Central",
-                ubicacion="Av. Rivadavia 1234, CABA",
-                status=True
-            ),
-            Sede(
-                id_sede=2,
-                nombre="Sede Norte",
-                ubicacion="Av. Cabildo 5678, CABA",
-                status=True
-            )
-        ]
-        
-        # Filtrar por ubicación que contenga la búsqueda
-        return [s for s in sedes_ejemplo if ubicacion.lower() in s.ubicacion.lower()]
+        resultado = sede_service.search_sedes(
+            search_term=ubicacion, 
+            search_type="direccion", 
+            skip=skip, 
+            limit=limit
+        )
+        return resultado["sedes"]
         
     except Exception as e:
         raise HTTPException(
@@ -159,25 +120,18 @@ async def get_sedes_by_ubicacion(ubicacion: str):
         )
 
 @router.put("/{id_sede}", response_model=Sede)
-async def update_sede(id_sede: int, sede_update: Sede):
+async def update_sede(
+    id_sede: int, 
+    sede_update: Sede,
+    updated_by: str = Query(..., description="Usuario que actualiza la sede"),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Actualizar una sede por su ID.
     """
     try:
-        # TODO: Implementar actualización en base de datos
-        # existing_sede = get_sede_by_id_from_db(id_sede)
-        # if not existing_sede:
-        #     raise HTTPException(status_code=404, detail="Sede no encontrada")
-        # 
-        # updated_sede = update_sede_in_db(id_sede, sede_update)
-        # return updated_sede
-        
-        # Ejemplo temporal
-        if id_sede == 1:
-            sede_update.id_sede = id_sede
-            return sede_update
-        else:
-            raise HTTPException(status_code=404, detail="Sede no encontrada")
+        resultado = sede_service.update_sede(id_sede, sede_update, updated_by)
+        return resultado["sede"]
             
     except HTTPException:
         raise
@@ -188,23 +142,17 @@ async def update_sede(id_sede: int, sede_update: Sede):
         )
 
 @router.delete("/{id_sede}", response_model=dict)
-async def soft_delete_sede(id_sede: int):
+async def soft_delete_sede(
+    id_sede: int,
+    deleted_by: str = Query(..., description="Usuario que elimina la sede"),
+    sede_service: SedeService = Depends(get_sede_service)
+):
     """
     Soft delete: marcar sede como inactiva.
     """
     try:
-        # TODO: Implementar soft delete en base de datos
-        # existing_sede = get_sede_by_id_from_db(id_sede)
-        # if not existing_sede:
-        #     raise HTTPException(status_code=404, detail="Sede no encontrada")
-        # 
-        # soft_delete_sede_in_db(id_sede)
-        
-        # Ejemplo temporal
-        if id_sede == 1:
-            return {"message": f"Sede con ID {id_sede} marcada como inactiva"}
-        else:
-            raise HTTPException(status_code=404, detail="Sede no encontrada")
+        resultado = sede_service.delete_sede(id_sede, deleted_by)
+        return resultado
             
     except HTTPException:
         raise
