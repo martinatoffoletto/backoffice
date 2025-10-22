@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from .base import Base
 import uuid
-
-Base = declarative_base()
 
 class UsuarioRol(Base):
     __tablename__ = "usuario_roles"

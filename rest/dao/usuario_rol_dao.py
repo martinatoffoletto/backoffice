@@ -73,7 +73,7 @@ class UsuarioRolDAO:
                 id_rol=rol.id_rol,
                 nombre_rol=rol.nombre_rol,
                 descripcion=rol.descripcion,
-                subcategoria=rol.subcategoria.value if rol.subcategoria else None,
+                subcategoria=rol.subcategoria,
                 sueldo_base=rol.sueldo_base,
                 status=rol.status
             )

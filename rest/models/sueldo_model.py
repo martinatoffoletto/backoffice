@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Numeric, ForeignKeyConstraint
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from .base import Base
 import uuid
-
-Base = declarative_base()
 
 class Sueldo(Base):
     __tablename__ = "sueldos"
@@ -26,8 +24,8 @@ class Sueldo(Base):
         ),
     )
     
-    # Relación con usuario_rol
-    usuario_rol = relationship("UsuarioRol", backref="sueldos")
+    # Relación con usuario_rol - sin backref porque UsuarioRol ya define la relación
+    usuario_rol = relationship("UsuarioRol")
     
     def __repr__(self):
         return f"<Sueldo(id_sueldo={self.id_sueldo}, id_usuario={self.id_usuario}, sueldo_adicional={self.sueldo_adicional})>"

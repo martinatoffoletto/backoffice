@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 import uuid
 from decimal import Decimal
+from .rol_schema import CategoriaRol
 
 class UsuarioRolCreate(BaseModel):
     id_usuario: uuid.UUID = Field(..., description="UUID del usuario")
@@ -19,7 +20,7 @@ class RolDetallado(BaseModel):
     id_rol: uuid.UUID
     nombre_rol: str
     descripcion: Optional[str]
-    subcategoria: Optional[str]
+    subcategoria: Optional[CategoriaRol]
     sueldo_base: Decimal
     status: bool
 

@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Time, Enum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from .base import Base
 import enum
-
-Base = declarative_base()
 
 class EstadoClase(enum.Enum):
     PROGRAMADA = "programada"

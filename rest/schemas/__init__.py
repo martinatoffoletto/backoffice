@@ -1,12 +1,24 @@
 # Schemas para el módulo BackOffice
 
-from .rol_schema import Rol
+from .rol_schema import (
+    Rol,
+    RolBase,
+    RolCreate,
+    RolUpdate,
+    CategoriaRol
+)
 
-from .usuario_schema import Usuario
+from .usuario_schema import (
+    Usuario,
+    UsuarioCreate,
+    UsuarioUpdate
+)
 
 from .usuario_rol_schema import (
     UsuarioRol,
-    UsuarioConRoles
+    UsuarioRolCreate,
+    UsuarioConRoles,
+    RolDetallado
 )
 
 from .parametro_schema import Parametro
@@ -22,7 +34,9 @@ from .espacio_schema import (
 
 from .sueldo_schema import (
     Sueldo,
-    SueldoDetallado
+    SueldoBase,
+    SueldoCreate,
+    SueldoUpdate
 )
 
 from .cronograma_schema import Cronograma
@@ -41,23 +55,25 @@ from .evaluacion_schema import (
 
 __all__ = [
     # Schemas principales
-    "Rol",
-    "Usuario", 
-    "UsuarioRol",
+    "Rol", "RolBase", "RolCreate", "RolUpdate",
+    "Usuario", "UsuarioCreate", "UsuarioUpdate",
+    "UsuarioRol", "UsuarioRolCreate",
     "Parametro",
     "Sede",
     "Espacio",
-    "Sueldo",
+    "Sueldo", "SueldoBase", "SueldoCreate", "SueldoUpdate",
     "Cronograma",
     "ClaseIndividual",
     "Evaluacion",
     
     # Schemas adicionales
-    "UsuarioConRoles",
+    "UsuarioConRoles", "RolDetallado",
     "EspacioConSede", 
-    "SueldoDetallado",
     "ClaseConCronograma",
     "EvaluacionConCronograma",
+    
+    # Enums
+    "CategoriaRol",
     
     # Enums
     "TipoEspacio",
