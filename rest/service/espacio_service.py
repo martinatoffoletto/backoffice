@@ -1,9 +1,12 @@
+# ... (todo el contenido de espacio_service.py que ya tenías) ...
+# ... (imports de Session, Depends, get_db, etc. deben estar arriba) ...
 from sqlalchemy.orm import Session
 from ..dao.sede_dao import SedeDAO
 from ..dao.espacio_dao import EspacioDAO
 from ..schemas.espacio_schema import Espacio as EspacioSchema
 from typing import List, Optional
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from ..database import get_db
 
 class EspacioService:
     
@@ -234,3 +237,6 @@ class EspacioService:
             },
             "capacidad_promedio": sum(e.capacidad for e in all_espacios) / len(all_espacios) if all_espacios else 0
         }
+
+def get_espacio_service(db: Session = Depends(get_db)) -> EspacioService:
+    return EspacioService(db)

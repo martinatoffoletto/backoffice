@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from ..models.parametro_model import Parametro
 from ..schemas.parametro_schema import Parametro as ParametroSchema
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class ParametroDAO:
     
@@ -9,14 +9,11 @@ class ParametroDAO:
     def create(db: Session, parametro: ParametroSchema) -> Parametro:
         """Crear un nuevo parámetro del sistema"""
         db_parametro = Parametro(
-            key=parametro.key,
-            value=parametro.value,
-            description=parametro.description,
+            nombre=parametro.nombre,
             tipo=parametro.tipo,
-            categoria=parametro.categoria,
-            es_editable=parametro.es_editable,
-            valor_por_defecto=parametro.valor_por_defecto,
-            created_by=parametro.created_by
+            valor_numerico=parametro.valor_numerico,
+            valor_texto=parametro.valor_texto,
+            status=parametro.status
         )
         db.add(db_parametro)
         db.commit()
@@ -32,10 +29,10 @@ class ParametroDAO:
         ).first()
     
     @staticmethod
-    def get_by_key(db: Session, key: str) -> Optional[Parametro]:
-        """Obtener parámetro por clave única"""
+    def get_by_nombre(db: Session, nombre: str) -> Optional[Parametro]:
+        """Obtener parámetro por nombre único"""
         return db.query(Parametro).filter(
-            Parametro.key == key,
+            Parametro.nombre == nombre,
             Parametro.status == True
         ).first()
     
@@ -43,14 +40,6 @@ class ParametroDAO:
     def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Parametro]:
         """Obtener todos los parámetros activos"""
         return db.query(Parametro).filter(
-            Parametro.status == True
-        ).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_categoria(db: Session, categoria: str, skip: int = 0, limit: int = 100) -> List[Parametro]:
-        """Obtener parámetros por categoría"""
-        return db.query(Parametro).filter(
-            Parametro.categoria == categoria,
             Parametro.status == True
         ).offset(skip).limit(limit).all()
     
@@ -63,29 +52,13 @@ class ParametroDAO:
         ).offset(skip).limit(limit).all()
     
     @staticmethod
-    def get_editables(db: Session, skip: int = 0, limit: int = 100) -> List[Parametro]:
-        """Obtener solo parámetros editables"""
+    def search_by_nombre(db: Session, nombre_pattern: str, skip: int = 0, limit: int = 100) -> List[Parametro]:
+        """Buscar parámetros por patrón en el nombre"""
         return db.query(Parametro).filter(
-            Parametro.es_editable == True,
+            Parametro.nombre.ilike(f"%{nombre_pattern}%"),
             Parametro.status == True
         ).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def search_by_key(db: Session, key_pattern: str, skip: int = 0, limit: int = 100) -> List[Parametro]:
-        """Buscar parámetros por patrón en la clave"""
-        return db.query(Parametro).filter(
-            Parametro.key.ilike(f"%{key_pattern}%"),
-            Parametro.status == True
-        ).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def search_by_description(db: Session, description_pattern: str, skip: int = 0, limit: int = 100) -> List[Parametro]:
-        """Buscar parámetros por patrón en la descripción"""
-        return db.query(Parametro).filter(
-            Parametro.description.ilike(f"%{description_pattern}%"),
-            Parametro.status == True
-        ).offset(skip).limit(limit).all()
-    
+
     @staticmethod
     def update(db: Session, id_parametro: int, parametro_update: ParametroSchema) -> Optional[Parametro]:
         """Actualizar un parámetro existente"""
@@ -97,42 +70,16 @@ class ParametroDAO:
         if not db_parametro:
             return None
         
-        # Solo actualizar campos que no son None
-        if parametro_update.key is not None:
-            db_parametro.key = parametro_update.key
-        if parametro_update.value is not None:
-            db_parametro.value = parametro_update.value
-        if parametro_update.description is not None:
-            db_parametro.description = parametro_update.description
+        if parametro_update.nombre is not None:
+            db_parametro.nombre = parametro_update.nombre
         if parametro_update.tipo is not None:
             db_parametro.tipo = parametro_update.tipo
-        if parametro_update.categoria is not None:
-            db_parametro.categoria = parametro_update.categoria
-        if parametro_update.es_editable is not None:
-            db_parametro.es_editable = parametro_update.es_editable
-        if parametro_update.valor_por_defecto is not None:
-            db_parametro.valor_por_defecto = parametro_update.valor_por_defecto
-        if parametro_update.updated_by is not None:
-            db_parametro.updated_by = parametro_update.updated_by
-        
-        db.commit()
-        db.refresh(db_parametro)
-        return db_parametro
-    
-    @staticmethod
-    def update_value(db: Session, key: str, new_value: str, updated_by: str) -> Optional[Parametro]:
-        """Actualizar solo el valor de un parámetro por clave"""
-        db_parametro = db.query(Parametro).filter(
-            Parametro.key == key,
-            Parametro.status == True,
-            Parametro.es_editable == True
-        ).first()
-        
-        if not db_parametro:
-            return None
-        
-        db_parametro.value = new_value
-        db_parametro.updated_by = updated_by
+        if parametro_update.valor_numerico is not None:
+            db_parametro.valor_numerico = parametro_update.valor_numerico
+        if parametro_update.valor_texto is not None:
+            db_parametro.valor_texto = parametro_update.valor_texto
+        if parametro_update.status is not None:
+            db_parametro.status = parametro_update.status
         
         db.commit()
         db.refresh(db_parametro)
@@ -148,7 +95,6 @@ class ParametroDAO:
         
         if db_parametro:
             db_parametro.status = False
-            db_parametro.deleted_by = deleted_by
             db.commit()
             return True
         return False
@@ -163,36 +109,34 @@ class ParametroDAO:
         
         if db_parametro:
             db_parametro.status = True
-            db_parametro.deleted_by = None
-            db_parametro.updated_by = updated_by
             db.commit()
             return True
         return False
     
     @staticmethod
-    def exists_by_key(db: Session, key: str) -> bool:
-        """Verificar si existe un parámetro con esa clave"""
-        return db.query(Parametro).filter(Parametro.key == key).first() is not None
+    def exists_by_nombre(db: Session, nombre: str, exclude_id: Optional[int] = None) -> bool:
+        """Verificar si existe un parámetro con ese nombre"""
+        query = db.query(Parametro).filter(Parametro.nombre == nombre)
+        if exclude_id:
+            query = query.filter(Parametro.id_parametro != exclude_id)
+        return query.first() is not None
     
     @staticmethod
-    def get_value(db: Session, key: str) -> Optional[str]:
-        """Obtener solo el valor de un parámetro por clave"""
+    def get_valores_by_nombre(db: Session, nombre: str) -> Optional[Dict[str, any]]:
+        """Obtener los valores (numerico y texto) de un parámetro por nombre"""
         parametro = db.query(Parametro).filter(
-            Parametro.key == key,
+            Parametro.nombre == nombre,
             Parametro.status == True
         ).first()
-        return parametro.value if parametro else None
+        if not parametro:
+            return None
+        return {
+            "valor_numerico": parametro.valor_numerico,
+            "valor_texto": parametro.valor_texto
+        }
     
     @staticmethod
-    def get_all_categories(db: Session) -> List[str]:
-        """Obtener todas las categorías únicas de parámetros"""
-        categorias = db.query(Parametro.categoria).filter(
-            Parametro.status == True
-        ).distinct().all()
-        return [cat[0] for cat in categorias if cat[0]]
-    
-    @staticmethod
-    def get_all_types(db: Session) -> List[str]:
+    def get_all_tipos(db: Session) -> List[str]:
         """Obtener todos los tipos únicos de parámetros"""
         tipos = db.query(Parametro.tipo).filter(
             Parametro.status == True

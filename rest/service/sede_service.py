@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 from ..dao.sede_dao import SedeDAO
 from ..schemas.sede_schema import Sede as SedeSchema
 from typing import List, Optional
-from fastapi import HTTPException, status
+from ..database import get_db
+from fastapi import HTTPException, status, Depends
 
 class SedeService:
     
@@ -257,3 +258,6 @@ class SedeService:
             "capacidad_total": sum(s.capacidad_maxima or 0 for s in all_sedes),
             "capacidad_promedio": sum(s.capacidad_maxima or 0 for s in all_sedes) / len(all_sedes) if all_sedes else 0
         }
+    
+def get_sede_service(db: Session = Depends(get_db)) -> SedeService:
+    return SedeService(db)
