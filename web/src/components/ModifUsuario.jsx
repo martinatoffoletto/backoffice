@@ -318,7 +318,7 @@ export default function ModifUsuario(second) {
                     </Button>
                     <Button
                         type="button"
-                        onClick={cleanForm}
+                        onClick={()=>setShowForm(false)}
                         className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md w-full sm:w-auto"
                     >
                         Cancelar

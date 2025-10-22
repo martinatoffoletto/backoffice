@@ -17,8 +17,8 @@ export default function Inicio() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
-      <h1 className="font-extrabold text-2xl sm:text-3xl text-sky-950 mb-8 text-center">
-        ¡Hola, Usuario!
+      <h1 className="font-extrabold text-xl sm:text-3xl text-sky-950 mb-8 text-center">
+        ¡Bienvenido/a al portal administrativo!
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
@@ -47,9 +47,7 @@ export default function Inicio() {
               <li>Comienzo 2do Cuatrimestre</li>
               <li>Evento en Sede</li>
               <li>Reunión de equipo</li>
-              <li className="cursor-pointer hover:underline text-sky-900">
-                Agregar evento
-              </li>
+
             </ul>
           </div>
         </div>
@@ -75,6 +73,11 @@ export default function Inicio() {
             <Link
               to="/cursos"
               title="Gestión de Cursos"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
+              to="/materias"
+              title="Gestión de Materias"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link

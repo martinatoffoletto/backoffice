@@ -10,8 +10,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import CardUsuario from "./CardUsuario"
+import { useNavigate } from "react-router-dom"; 
 
 export default function SueldoForm() {
+  const navigate = useNavigate(); 
   const [form, setForm] = useState({
     cbu: "",
     sueldo_fijo: "",
@@ -61,18 +63,22 @@ export default function SueldoForm() {
       observaciones: "",
     })
   }
+  const handleOk = () => {
+    clearForm();
+    navigate("/"); 
+  };
 
   return (
-    <div className="flex min-h-screen max-w-2xl items-center justify-center ">
-
-      {!completed &&(<form
-        onSubmit={handleSubmit}
-        className="w-full min-w-2xl py-6 "
-      >
-        <h1 className="font-bold text-xl mb-6">
+    <div className="flex flex-col items-start justify-start w-full min-h-screen overflow-x-hidden">
+      <h1 className="font-bold text-xl mb-6">
           Registrar Sueldo
         </h1>
         <span className="block w-full h-[3px] bg-sky-950 mb-6"></span>
+      {!completed &&(<form
+        onSubmit={handleSubmit}
+        className="w-full max-w-lg bg-white py-6 "
+      >
+        
 
         <FieldSet>
           <FieldGroup>
@@ -152,7 +158,7 @@ export default function SueldoForm() {
               <CardUsuario title={"Sueldo dado de alta exitosamente"} />
               <Button
               className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
-              onClick={()=>{setCompleted(false); clearForm()}}>
+              onClick={handleOk}>
                 OK
               </Button>
           </div>
