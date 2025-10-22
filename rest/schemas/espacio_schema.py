@@ -2,21 +2,17 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from enum import Enum
 
-# Nota: Los Enums de TipoEspacio y EstadoEspacio del archivo original
-# no se usan en el DAO (usa strings). Los he comentado por si los necesitas,
-# pero el schema usará strings para ser consistente con el DAO.
+class TipoEspacio(str, Enum):
+    AULA = "aula"
+    LABORATORIO = "laboratorio"
+    ESPACIO_COMUN = "espacio_comun"
+    OFICINA = "oficina"
+    OTROS = "otros"
 
-# class TipoEspacio(str, Enum):
-#     AULA = "aula"
-#     LABORATORIO = "laboratorio"
-#     ESPACIO_COMUN = "espacio_comun"
-#     OFICINA = "oficina"
-#     OTROS = "otros"
-
-# class EstadoEspacio(str, Enum):
-#     DISPONIBLE = "disponible"
-#     OCUPADO = "ocupado"
-#     EN_MANTENIMIENTO = "en_mantenimiento"
+class EstadoEspacio(str, Enum):
+    DISPONIBLE = "disponible"
+    OCUPADO = "ocupado"
+    EN_MANTENIMIENTO = "en_mantenimiento"
 
 
 class Espacio(BaseModel):
