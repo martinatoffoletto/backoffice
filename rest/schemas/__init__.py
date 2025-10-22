@@ -53,12 +53,6 @@ from .evaluacion_schema import (
     TipoEvaluacion
 )
 
-from .evaluacion_schema import (
-    Evaluacion,
-    EvaluacionConCronograma,
-    TipoEvaluacion
-)
-
 from .carrera_schema import (
     Carrera,
     CarreraCreate,
@@ -81,8 +75,8 @@ __all__ = [
     "ClaseIndividual",
     "Evaluacion",
     "Carrera",
-    "UsuarioCarrera"
-
+    "UsuarioCarrera",
+    
     # Schemas adicionales
     "UsuarioConRoles", "RolDetallado",
     "EspacioConSede", 
@@ -91,8 +85,6 @@ __all__ = [
     
     # Enums
     "CategoriaRol",
-    
-    # Enums
     "TipoEspacio",
     "EstadoEspacio",
     "EstadoClase",
