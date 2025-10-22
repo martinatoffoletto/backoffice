@@ -1,16 +1,19 @@
 from sqlalchemy.orm import Session
-from ..models.rol_model import Rol
-from ..schemas.rol_schema import Rol as RolSchema
+from ..models.rol_model import Rol, CategoriaRol
+from ..schemas.rol_schema import RolCreate, RolUpdate
 from typing import List, Optional
+from sqlalchemy import or_, and_
+import uuid
 
 class RolDAO:
     
-    @staticmethod
-    def create(db: Session, rol: RolSchema) -> Rol:
+    def create(self, db: Session, rol: RolCreate) -> Rol:
         """Crear un nuevo rol"""
         db_rol = Rol(
             nombre_rol=rol.nombre_rol,
             descripcion=rol.descripcion,
+            subcategoria=rol.subcategoria,
+            sueldo_base=rol.sueldo_base,
             status=rol.status
         )
         db.add(db_rol)
@@ -18,59 +21,85 @@ class RolDAO:
         db.refresh(db_rol)
         return db_rol
     
-    @staticmethod
-    def get_by_id(db: Session, id_rol: int) -> Optional[Rol]:
+    def get_by_id(self, db: Session, id_rol: uuid.UUID) -> Optional[Rol]:
         """Obtener rol por ID"""
-        return db.query(Rol).filter(Rol.id_rol == id_rol).first()
+        return db.query(Rol).filter(
+            and_(Rol.id_rol == id_rol, Rol.status == True)
+        ).first()
     
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Rol]:
+    def get_by_nombre(self, db: Session, nombre_rol: str) -> Optional[Rol]:
+        """Obtener rol por nombre exacto"""
+        return db.query(Rol).filter(
+            and_(Rol.nombre_rol == nombre_rol, Rol.status == True)
+        ).first()
+    
+    def get_by_categoria(self, db: Session, categoria: CategoriaRol, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Obtener roles por categoría/subcategoría"""
+        return db.query(Rol).filter(
+            and_(Rol.subcategoria == categoria, Rol.status == True)
+        ).offset(skip).limit(limit).all()
+    
+    def get_by_subcategoria(self, db: Session, subcategoria: CategoriaRol, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Obtener roles por subcategoría (alias de get_by_categoria para consistencia)"""
+        return self.get_by_categoria(db, subcategoria, skip, limit)
+    
+    def get_all(self, db: Session, skip: int = 0, limit: int = 100) -> List[Rol]:
         """Obtener todos los roles activos"""
         return db.query(Rol).filter(Rol.status == True).offset(skip).limit(limit).all()
     
-    @staticmethod
-    def get_by_nombre(db: Session, nombre_rol: str) -> Optional[Rol]:
-        """Obtener rol por nombre exacto"""
-        return db.query(Rol).filter(Rol.nombre_rol == nombre_rol).first()
+    def get_all_categories(self, db: Session) -> List[str]:
+        # Retorna los valores del enum CategoriaRol
+        return [categoria.value for categoria in CategoriaRol]
     
-    @staticmethod
-    def search_by_nombre(db: Session, nombre_partial: str) -> List[Rol]:
-        """Buscar roles por nombre (coincidencia parcial)"""
+    def get_roles_by_categories_in_use(self, db: Session) -> List[dict]:
+        results = db.query(Rol.subcategoria).filter(
+            and_(Rol.status == True, Rol.subcategoria.isnot(None))
+        ).distinct().all()
+        
+        categories_in_use = []
+        for result in results:
+            if result.subcategoria:
+                categories_in_use.append({
+                    "categoria": result.subcategoria.value,
+                    "enum_value": result.subcategoria
+                })
+        
+        return categories_in_use
+    
+    def search_by_nombre(self, db: Session, nombre_pattern: str, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Buscar roles por patrón en el nombre (búsqueda parcial)"""
         return db.query(Rol).filter(
-            Rol.nombre_rol.ilike(f"%{nombre_partial}%"),
-            Rol.status == True
-        ).all()
+            and_(
+                Rol.nombre_rol.ilike(f"%{nombre_pattern}%"),
+                Rol.status == True
+            )
+        ).offset(skip).limit(limit).all()
     
-    @staticmethod
-    def update(db: Session, id_rol: int, rol_update: RolSchema) -> Optional[Rol]:
+    def update(self, db: Session, id_rol: uuid.UUID, rol_update: RolUpdate) -> Optional[Rol]:
         """Actualizar un rol"""
         db_rol = db.query(Rol).filter(Rol.id_rol == id_rol).first()
-        if db_rol:
-            if rol_update.nombre_rol is not None:
-                db_rol.nombre_rol = rol_update.nombre_rol
-            if rol_update.descripcion is not None:
-                db_rol.descripcion = rol_update.descripcion
-            if rol_update.status is not None:
-                db_rol.status = rol_update.status
-            
-            db.commit()
-            db.refresh(db_rol)
+        if not db_rol:
+            return None
+        
+        update_data = rol_update.dict(exclude_unset=True, exclude={'id_rol'})
+        for field, value in update_data.items():
+            if hasattr(db_rol, field):
+                setattr(db_rol, field, value)
+        
+        db.commit()
+        db.refresh(db_rol)
         return db_rol
     
-    @staticmethod
-    def soft_delete(db: Session, id_rol: int) -> bool:
-        """Soft delete: marcar rol como inactivo"""
+    def soft_delete(self, db: Session, id_rol: uuid.UUID, deleted_by: str = None) -> bool:
+        """Eliminación lógica: cambiar status a False"""
         db_rol = db.query(Rol).filter(Rol.id_rol == id_rol).first()
-        if db_rol:
-            db_rol.status = False
-            db.commit()
-            return True
-        return False
+        if not db_rol:
+            return False
+        
+        db_rol.status = False
+        
+        db.commit()
+        return True
     
-    @staticmethod
-    def exists_by_nombre(db: Session, nombre_rol: str, exclude_id: Optional[int] = None) -> bool:
-        """Verificar si existe un rol con el nombre dado"""
-        query = db.query(Rol).filter(Rol.nombre_rol == nombre_rol)
-        if exclude_id:
-            query = query.filter(Rol.id_rol != exclude_id)
-        return query.first() is not None
+    
+   

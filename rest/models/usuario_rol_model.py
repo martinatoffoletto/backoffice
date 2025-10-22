@@ -1,14 +1,16 @@
 from sqlalchemy import Column, Integer, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+import uuid
 
 Base = declarative_base()
 
 class UsuarioRol(Base):
     __tablename__ = "usuario_roles"
     
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
-    id_rol = Column(Integer, ForeignKey("roles.id_rol", ondelete="CASCADE"), nullable=False)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
+    id_rol = Column(UUID(as_uuid=True), ForeignKey("roles.id_rol", ondelete="CASCADE"), nullable=False)
     
     # Clave primaria compuesta
     __table_args__ = (

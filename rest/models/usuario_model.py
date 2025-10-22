@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
@@ -20,6 +21,9 @@ class Usuario(Base):
     contraseña = Column(String(255), nullable=False, comment="Contraseña del usuario")
     fecha_alta = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="Fecha de alta - se registra automáticamente")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del usuario (activo/inactivo)")
+    
+    # Relaciones
+    roles = relationship("UsuarioRol", back_populates="usuario")
     
     def __repr__(self):
         return f"<Usuario(id_usuario={self.id_usuario}, legajo='{self.legajo}', nombre='{self.nombre} {self.apellido}')>"

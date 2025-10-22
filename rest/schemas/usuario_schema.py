@@ -27,7 +27,7 @@ class Usuario(BaseModel):
                 "dni": "12345678",
                 "correo_personal": "juan.perez@email.com",
                 "telefono_personal": "1234567890",
-                "correo_institucional": "juan.perez@institucion.edu",  #  automáticamente
+                "correo_institucional": "juan.perez@campusconnect.edu.ar",  #  automáticamente
                 "status": True
             }
         }
@@ -68,6 +68,12 @@ class UsuarioUpdate(BaseModel):
         json_schema_extra = {
             "example": {
                 "telefono_personal": "0987654321",
-                "correo_personal": "nuevo.email@gmail.com"
+                "correo_personal": "nuevo.email@gmail.com",
+                "contraseña": "nuevaContraseña123",
+                "status": False,
+                "nombre": "Juan Carlos",
+                "apellido": "Gómez",
+                "dni": "87654321",
+                "correo_institucional": "juan.gomez@campusconnect.edu.ar",
             }
         }
