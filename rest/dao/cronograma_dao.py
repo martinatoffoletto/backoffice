@@ -1,311 +1,200 @@
-from sqlalchemy.orm import Session
-from models.cronograma_model import Cronograma
-from models.usuario_model import Usuario
-from models.espacio_model import Espacio
-from models.sede_model import Sede
-from schemas.cronograma_schema import Cronograma as CronogramaSchema
-from typing import List, Optional
-from datetime import datetime, date, time
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import update, and_, or_, func
+from ..models.cronograma_model import Cronograma
+from ..schemas.cronograma_schema import CronogramaCreate, CronogramaUpdate
+from typing import List, Optional, Dict, Any
+from datetime import datetime, date
 
 class CronogramaDAO:
     
     @staticmethod
-    def create(db: Session, cronograma: CronogramaSchema) -> Cronograma:
+    async def create(db: AsyncSession, cronograma: CronogramaCreate) -> Cronograma:
         """Crear un nuevo cronograma"""
-        db_cronograma = Cronograma(
-            id_usuario=cronograma.id_usuario,
-            id_espacio=cronograma.id_espacio,
-            fecha=cronograma.fecha,
-            hora_inicio=cronograma.hora_inicio,
-            hora_fin=cronograma.hora_fin,
-            tipo_clase=cronograma.tipo_clase,
-            materia=cronograma.materia,
-            descripcion=cronograma.descripcion,
-            estado=cronograma.estado,
-            observaciones=cronograma.observaciones,
-            created_by=cronograma.created_by
-        )
+        cronograma_data = cronograma.model_dump()
+        db_cronograma = Cronograma(**cronograma_data)
         db.add(db_cronograma)
-        db.commit()
-        db.refresh(db_cronograma)
+        await db.commit()
+        await db.refresh(db_cronograma)
         return db_cronograma
     
     @staticmethod
-    def get_by_id(db: Session, id_cronograma: int) -> Optional[Cronograma]:
+    async def get_by_id(db: AsyncSession, id_cronograma: int) -> Optional[Cronograma]:
         """Obtener cronograma por ID"""
-        return db.query(Cronograma).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == True
-        ).first()
+        query = select(Cronograma).where(
+            and_(
+                Cronograma.id_cronograma == id_cronograma,
+                Cronograma.status == True
+            )
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener todos los cronogramas activos"""
-        return db.query(Cronograma).filter(
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Cronograma]:
+        """Obtener todos los cronogramas"""
+        query = select(Cronograma)
+        
+        if status_filter is not None:
+            query = query.where(Cronograma.status == status_filter)
+        else:
+            query = query.where(Cronograma.status == True)
+        
+        query = query.order_by(Cronograma.fecha_creacion.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def get_by_usuario(db: Session, id_usuario: int, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por usuario"""
-        return db.query(Cronograma).filter(
-            Cronograma.id_usuario == id_usuario,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
+    async def get_by_course_id(db: AsyncSession, course_id: int, skip: int = 0, limit: int = 100) -> List[Cronograma]:
+        """Obtener cronogramas por ID de curso"""
+        query = select(Cronograma).where(
+            and_(
+                Cronograma.course_id == course_id,
+                Cronograma.status == True
+            )
+        )
+        query = query.order_by(Cronograma.fecha_creacion.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def get_by_espacio(db: Session, id_espacio: int, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por espacio"""
-        return db.query(Cronograma).filter(
-            Cronograma.id_espacio == id_espacio,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
+    async def get_by_course_name(db: AsyncSession, course_name: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
+        """Obtener cronogramas por nombre de curso"""
+        query = select(Cronograma).where(
+            and_(
+                Cronograma.course_name.ilike(f"%{course_name}%"),
+                Cronograma.status == True
+            )
+        )
+        query = query.order_by(Cronograma.fecha_creacion.desc())
+        query = query.offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def get_by_fecha(db: Session, fecha: date, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por fecha específica"""
-        return db.query(Cronograma).filter(
-            Cronograma.fecha == fecha,
-            Cronograma.status == True
-        ).order_by(Cronograma.hora_inicio).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_fecha_range(db: Session, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[Cronograma]:
+    async def get_by_date_range(db: AsyncSession, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[Cronograma]:
         """Obtener cronogramas por rango de fechas"""
-        return db.query(Cronograma).filter(
-            Cronograma.fecha >= fecha_inicio,
-            Cronograma.fecha <= fecha_fin,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha, Cronograma.hora_inicio).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_tipo_clase(db: Session, tipo_clase: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por tipo de clase"""
-        return db.query(Cronograma).filter(
-            Cronograma.tipo_clase == tipo_clase,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_materia(db: Session, materia: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por materia"""
-        return db.query(Cronograma).filter(
-            Cronograma.materia.ilike(f"%{materia}%"),
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_estado(db: Session, estado: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por estado"""
-        return db.query(Cronograma).filter(
-            Cronograma.estado == estado,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha.desc(), Cronograma.hora_inicio.desc()).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_proximos(db: Session, fecha_desde: date = None, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas próximos (desde hoy o fecha específica)"""
-        if fecha_desde is None:
-            fecha_desde = date.today()
+        query = select(Cronograma).where(
+            and_(
+                Cronograma.fecha_inicio >= fecha_inicio,
+                Cronograma.fecha_fin <= fecha_fin,
+                Cronograma.status == True
+            )
+        )
+        query = query.order_by(Cronograma.fecha_inicio.asc())
+        query = query.offset(skip).limit(limit)
         
-        return db.query(Cronograma).filter(
-            Cronograma.fecha >= fecha_desde,
-            Cronograma.status == True
-        ).order_by(Cronograma.fecha, Cronograma.hora_inicio).offset(skip).limit(limit).all()
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def get_conflictos_espacio(db: Session, id_espacio: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> List[Cronograma]:
-        """Verificar conflictos de horario en un espacio"""
-        query = db.query(Cronograma).filter(
-            Cronograma.id_espacio == id_espacio,
-            Cronograma.fecha == fecha,
-            Cronograma.status == True,
-            # Verificar solapamiento de horarios
-            Cronograma.hora_inicio < hora_fin,
-            Cronograma.hora_fin > hora_inicio
+    async def update(db: AsyncSession, id_cronograma: int, cronograma: CronogramaUpdate) -> Optional[Cronograma]:
+        """Actualizar cronograma"""
+        # Obtener el cronograma existente
+        existing_cronograma = await CronogramaDAO.get_by_id(db, id_cronograma)
+        if not existing_cronograma:
+            return None
+        
+        # Actualizar solo los campos proporcionados
+        update_data = cronograma.model_dump(exclude_unset=True)
+        if not update_data:
+            return existing_cronograma
+        
+        # Actualizar fecha_modificacion
+        update_data['fecha_modificacion'] = datetime.now()
+        
+        # Ejecutar actualización
+        stmt = update(Cronograma).where(
+            Cronograma.id_cronograma == id_cronograma
+        ).values(**update_data)
+        
+        await db.execute(stmt)
+        await db.commit()
+        
+        # Retornar el cronograma actualizado
+        return await CronogramaDAO.get_by_id(db, id_cronograma)
+    
+    @staticmethod
+    async def delete(db: AsyncSession, id_cronograma: int) -> bool:
+        """Eliminar cronograma (soft delete)"""
+        stmt = update(Cronograma).where(
+            Cronograma.id_cronograma == id_cronograma
+        ).values(
+            status=False,
+            fecha_modificacion=datetime.now()
         )
         
-        if excluir_id:
-            query = query.filter(Cronograma.id_cronograma != excluir_id)
+        result = await db.execute(stmt)
+        await db.commit()
         
-        return query.all()
+        return result.rowcount > 0
     
     @staticmethod
-    def get_conflictos_usuario(db: Session, id_usuario: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> List[Cronograma]:
-        """Verificar conflictos de horario para un usuario"""
-        query = db.query(Cronograma).filter(
-            Cronograma.id_usuario == id_usuario,
-            Cronograma.fecha == fecha,
-            Cronograma.status == True,
-            # Verificar solapamiento de horarios
-            Cronograma.hora_inicio < hora_fin,
-            Cronograma.hora_fin > hora_inicio
-        )
+    async def hard_delete(db: AsyncSession, id_cronograma: int) -> bool:
+        """Eliminar cronograma permanentemente"""
+        query = select(Cronograma).where(Cronograma.id_cronograma == id_cronograma)
+        result = await db.execute(query)
+        cronograma = result.scalar_one_or_none()
         
-        if excluir_id:
-            query = query.filter(Cronograma.id_cronograma != excluir_id)
-        
-        return query.all()
-    
-    @staticmethod
-    def get_with_details(db: Session, id_cronograma: int) -> Optional[dict]:
-        """Obtener cronograma con información detallada de usuario, espacio y sede"""
-        result = db.query(Cronograma, Usuario, Espacio, Sede).join(Usuario).join(Espacio).join(Sede, Espacio.id_sede == Sede.id_sede).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == True,
-            Usuario.status == True,
-            Espacio.status == True,
-            Sede.status == True
-        ).first()
-        
-        if not result:
-            return None
-        
-        cronograma, usuario, espacio, sede = result
-        return {
-            "cronograma": cronograma,
-            "usuario": {
-                "legajo": usuario.legajo,
-                "nombre": usuario.nombre,
-                "apellido": usuario.apellido,
-                "email": usuario.email
-            },
-            "espacio": {
-                "nombre_espacio": espacio.nombre_espacio,
-                "tipo_espacio": espacio.tipo_espacio,
-                "capacidad": espacio.capacidad
-            },
-            "sede": {
-                "nombre_sede": sede.nombre_sede,
-                "ciudad": sede.ciudad,
-                "direccion": sede.direccion
-            }
-        }
-    
-    @staticmethod
-    def update(db: Session, id_cronograma: int, cronograma_update: CronogramaSchema) -> Optional[Cronograma]:
-        """Actualizar un cronograma existente"""
-        db_cronograma = db.query(Cronograma).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == True
-        ).first()
-        
-        if not db_cronograma:
-            return None
-        
-        # Solo actualizar campos que no son None
-        if cronograma_update.id_usuario is not None:
-            db_cronograma.id_usuario = cronograma_update.id_usuario
-        if cronograma_update.id_espacio is not None:
-            db_cronograma.id_espacio = cronograma_update.id_espacio
-        if cronograma_update.fecha is not None:
-            db_cronograma.fecha = cronograma_update.fecha
-        if cronograma_update.hora_inicio is not None:
-            db_cronograma.hora_inicio = cronograma_update.hora_inicio
-        if cronograma_update.hora_fin is not None:
-            db_cronograma.hora_fin = cronograma_update.hora_fin
-        if cronograma_update.tipo_clase is not None:
-            db_cronograma.tipo_clase = cronograma_update.tipo_clase
-        if cronograma_update.materia is not None:
-            db_cronograma.materia = cronograma_update.materia
-        if cronograma_update.descripcion is not None:
-            db_cronograma.descripcion = cronograma_update.descripcion
-        if cronograma_update.estado is not None:
-            db_cronograma.estado = cronograma_update.estado
-        if cronograma_update.observaciones is not None:
-            db_cronograma.observaciones = cronograma_update.observaciones
-        if cronograma_update.updated_by is not None:
-            db_cronograma.updated_by = cronograma_update.updated_by
-        
-        db.commit()
-        db.refresh(db_cronograma)
-        return db_cronograma
-    
-    @staticmethod
-    def cambiar_estado(db: Session, id_cronograma: int, nuevo_estado: str, updated_by: str) -> Optional[Cronograma]:
-        """Cambiar el estado de un cronograma"""
-        db_cronograma = db.query(Cronograma).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == True
-        ).first()
-        
-        if not db_cronograma:
-            return None
-        
-        db_cronograma.estado = nuevo_estado
-        db_cronograma.updated_by = updated_by
-        
-        db.commit()
-        db.refresh(db_cronograma)
-        return db_cronograma
-    
-    @staticmethod
-    def soft_delete(db: Session, id_cronograma: int, deleted_by: str) -> bool:
-        """Eliminación lógica de un cronograma"""
-        db_cronograma = db.query(Cronograma).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == True
-        ).first()
-        
-        if db_cronograma:
-            db_cronograma.status = False
-            db_cronograma.deleted_by = deleted_by
-            db.commit()
+        if cronograma:
+            await db.delete(cronograma)
+            await db.commit()
             return True
+        
         return False
     
     @staticmethod
-    def restore(db: Session, id_cronograma: int, updated_by: str) -> bool:
-        """Restaurar un cronograma eliminado lógicamente"""
-        db_cronograma = db.query(Cronograma).filter(
-            Cronograma.id_cronograma == id_cronograma,
-            Cronograma.status == False
-        ).first()
+    async def count(db: AsyncSession, status_filter: Optional[bool] = None) -> int:
+        """Contar cronogramas"""
+        query = select(func.count(Cronograma.id_cronograma))
         
-        if db_cronograma:
-            db_cronograma.status = True
-            db_cronograma.deleted_by = None
-            db_cronograma.updated_by = updated_by
-            db.commit()
-            return True
-        return False
+        if status_filter is not None:
+            query = query.where(Cronograma.status == status_filter)
+        else:
+            query = query.where(Cronograma.status == True)
+        
+        result = await db.execute(query)
+        return result.scalar()
     
     @staticmethod
-    def has_conflicts(db: Session, id_espacio: int, fecha: date, hora_inicio: time, hora_fin: time, excluir_id: int = None) -> bool:
-        """Verificar si hay conflictos de horario"""
-        conflictos = CronogramaDAO.get_conflictos_espacio(db, id_espacio, fecha, hora_inicio, hora_fin, excluir_id)
-        return len(conflictos) > 0
+    async def get_active_cronogramas_count(db: AsyncSession) -> int:
+        """Obtener conteo de cronogramas activos"""
+        return await CronogramaDAO.count(db, status_filter=True)
     
     @staticmethod
-    def get_estadisticas_por_periodo(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
-        """Obtener estadísticas de cronogramas por período"""
-        cronogramas = db.query(Cronograma).filter(
-            Cronograma.fecha >= fecha_inicio,
-            Cronograma.fecha <= fecha_fin,
-            Cronograma.status == True
-        ).all()
+    async def search(db: AsyncSession, search_term: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
+        """Buscar cronogramas por término"""
+        query = select(Cronograma).where(
+            and_(
+                or_(
+                    Cronograma.course_name.ilike(f"%{search_term}%"),
+                    Cronograma.descripcion.ilike(f"%{search_term}%")
+                ),
+                Cronograma.status == True
+            )
+        )
+        query = query.order_by(Cronograma.fecha_creacion.desc())
+        query = query.offset(skip).limit(limit)
         
-        if not cronogramas:
-            return {}
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_cronogramas_with_classes(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Cronograma]:
+        """Obtener cronogramas que tienen clases asociadas"""
+        query = select(Cronograma).where(
+            and_(
+                Cronograma.total_classes > 0,
+                Cronograma.status == True
+            )
+        )
+        query = query.order_by(Cronograma.fecha_creacion.desc())
+        query = query.offset(skip).limit(limit)
         
-        estados = {}
-        tipos_clase = {}
-        for cronograma in cronogramas:
-            # Contar por estado
-            if cronograma.estado in estados:
-                estados[cronograma.estado] += 1
-            else:
-                estados[cronograma.estado] = 1
-            
-            # Contar por tipo de clase
-            if cronograma.tipo_clase in tipos_clase:
-                tipos_clase[cronograma.tipo_clase] += 1
-            else:
-                tipos_clase[cronograma.tipo_clase] = 1
-        
-        return {
-            "periodo": f"{fecha_inicio} - {fecha_fin}",
-            "total_cronogramas": len(cronogramas),
-            "por_estado": estados,
-            "por_tipo_clase": tipos_clase
-        }
+        result = await db.execute(query)
+        return result.scalars().all()
