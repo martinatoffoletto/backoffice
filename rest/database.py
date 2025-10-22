@@ -1,8 +1,9 @@
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import text  
 from dotenv import load_dotenv
+from .models.base import Base
+from . import models
 load_dotenv()
 
 DATABASE_HOST = os.getenv('DATABASE_HOST', 'localhost')
@@ -15,8 +16,6 @@ DATABASE_URL = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATAB
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-Base = declarative_base()
 
 async def init_database():
     try:

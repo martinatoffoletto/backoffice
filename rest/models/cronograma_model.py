@@ -2,8 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-
-Base = declarative_base()
+from .base import Base
 
 class Cronograma(Base):
     __tablename__ = "cronogramas"

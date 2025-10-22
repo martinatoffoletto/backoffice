@@ -1,13 +1,17 @@
+DROP DATABASE IF EXISTS backoffice_db;
 CREATE DATABASE backoffice_db;
 \c backoffice_db;
 
+-- Create enum type for rol subcategoria
+CREATE TYPE categoria_rol AS ENUM ('docente', 'administrativo', 'administrativo_it', 'alumno');
+
 CREATE TABLE roles (
-    id_rol SERIAL PRIMARY KEY,
-    nombre_rol VARCHAR(50) UNIQUE NOT NULL,
+    id_rol UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre_rol VARCHAR(100) UNIQUE NOT NULL,
     descripcion TEXT,
-    status BOOLEAN DEFAULT TRUE,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    subcategoria categoria_rol,
+    sueldo_base DECIMAL(15,2) DEFAULT 0,
+    status BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE sedes (
@@ -35,9 +39,7 @@ CREATE TABLE usuarios (
 
 CREATE TABLE usuario_roles (
     id_usuario UUID NOT NULL,
-    id_rol INTEGER NOT NULL,
-    fecha_asignacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    activo BOOLEAN DEFAULT TRUE,
+    id_rol UUID NOT NULL,
     PRIMARY KEY (id_usuario, id_rol),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE
@@ -73,19 +75,14 @@ CREATE TABLE espacios (
 
 
 CREATE TABLE sueldos (
-    id_sueldo SERIAL PRIMARY KEY,
+    id_sueldo UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_usuario UUID NOT NULL,
-    id_rol INTEGER,
+    id_rol UUID NOT NULL,
     cbu VARCHAR(22) NOT NULL,
-    sueldo_fijo DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-    sueldo_adicional DECIMAL(12,2) DEFAULT 0.00,
-    sueldo_total DECIMAL(12,2) GENERATED ALWAYS AS (sueldo_fijo + sueldo_adicional) STORED,
+    sueldo_adicional DECIMAL(15,2) DEFAULT 0,
     observaciones TEXT,
     activo BOOLEAN DEFAULT TRUE,
-    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-    FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE SET NULL
+    FOREIGN KEY (id_usuario, id_rol) REFERENCES usuario_roles(id_usuario, id_rol) ON DELETE CASCADE
 );
 
 
@@ -147,7 +144,9 @@ CREATE INDEX idx_espacios_sede ON espacios(id_sede);
 CREATE INDEX idx_espacios_tipo ON espacios(tipo);
 CREATE INDEX idx_espacios_estado ON espacios(estado);
 CREATE INDEX idx_sueldos_usuario ON sueldos(id_usuario);
+CREATE INDEX idx_sueldos_rol ON sueldos(id_rol);
 CREATE INDEX idx_sueldos_activo ON sueldos(activo);
+CREATE INDEX idx_sueldos_usuario_rol ON sueldos(id_usuario, id_rol);
 CREATE INDEX idx_cronogramas_course ON cronogramas(course_id);
 CREATE INDEX idx_clases_cronograma ON clases_individuales(id_cronograma);
 CREATE INDEX idx_clases_fecha ON clases_individuales(fecha_clase);

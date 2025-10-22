@@ -1,76 +1,121 @@
-from sqlalchemy.orm import Session
-from ..models.rol_model import Rol
-from ..schemas.rol_schema import Rol as RolSchema
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import update, and_, or_
+from ..models.rol_model import Rol, CategoriaRol
+from ..schemas.rol_schema import RolCreate, RolUpdate
 from typing import List, Optional
+import uuid
 
 class RolDAO:
     
     @staticmethod
-    def create(db: Session, rol: RolSchema) -> Rol:
+    async def create(db: AsyncSession, rol: RolCreate) -> Rol:
         """Crear un nuevo rol"""
         db_rol = Rol(
             nombre_rol=rol.nombre_rol,
             descripcion=rol.descripcion,
+            subcategoria=rol.subcategoria,
+            sueldo_base=rol.sueldo_base,
             status=rol.status
         )
         db.add(db_rol)
-        db.commit()
-        db.refresh(db_rol)
+        await db.commit()
+        await db.refresh(db_rol)
         return db_rol
     
     @staticmethod
-    def get_by_id(db: Session, id_rol: int) -> Optional[Rol]:
+    async def get_by_id(db: AsyncSession, id_rol: uuid.UUID) -> Optional[Rol]:
         """Obtener rol por ID"""
-        return db.query(Rol).filter(Rol.id_rol == id_rol).first()
+        query = select(Rol).where(
+            and_(Rol.id_rol == id_rol, Rol.status == True)
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
     
     @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[Rol]:
-        """Obtener todos los roles activos"""
-        return db.query(Rol).filter(Rol.status == True).offset(skip).limit(limit).all()
-    
-    @staticmethod
-    def get_by_nombre(db: Session, nombre_rol: str) -> Optional[Rol]:
+    async def get_by_nombre(db: AsyncSession, nombre_rol: str) -> Optional[Rol]:
         """Obtener rol por nombre exacto"""
-        return db.query(Rol).filter(Rol.nombre_rol == nombre_rol).first()
+        query = select(Rol).where(
+            and_(Rol.nombre_rol == nombre_rol, Rol.status == True)
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
     
     @staticmethod
-    def search_by_nombre(db: Session, nombre_partial: str) -> List[Rol]:
-        """Buscar roles por nombre (coincidencia parcial)"""
-        return db.query(Rol).filter(
-            Rol.nombre_rol.ilike(f"%{nombre_partial}%"),
-            Rol.status == True
-        ).all()
+    async def get_by_categoria(db: AsyncSession, categoria: CategoriaRol, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Obtener roles por categoría/subcategoría"""
+        query = select(Rol).where(
+            and_(Rol.subcategoria == categoria, Rol.status == True)
+        ).offset(skip).limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
-    def update(db: Session, id_rol: int, rol_update: RolSchema) -> Optional[Rol]:
+    async def get_by_subcategoria(db: AsyncSession, subcategoria: CategoriaRol, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Obtener roles por subcategoría (alias de get_by_categoria para consistencia)"""
+        return await RolDAO.get_by_categoria(db, subcategoria, skip, limit)
+    
+    @staticmethod
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Obtener todos los roles activos"""
+        query = select(Rol).where(Rol.status == True).offset(skip).limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def get_all_categories(db: AsyncSession) -> List[str]:
+        # Retorna los valores del enum CategoriaRol
+        return [categoria.value for categoria in CategoriaRol]
+    
+    @staticmethod
+    async def get_roles_by_categories_in_use(db: AsyncSession) -> List[dict]:
+        query = select(Rol.subcategoria).where(
+            and_(Rol.status == True, Rol.subcategoria.isnot(None))
+        ).distinct()
+        result = await db.execute(query)
+        results = result.scalars().all()
+        
+        categories_in_use = []
+        for subcategoria in results:
+            if subcategoria:
+                categories_in_use.append({
+                    "categoria": subcategoria.value,
+                    "enum_value": subcategoria
+                })
+        
+        return categories_in_use
+    
+    @staticmethod
+    async def search_by_nombre(db: AsyncSession, nombre_pattern: str, skip: int = 0, limit: int = 100) -> List[Rol]:
+        """Buscar roles por patrón en el nombre (búsqueda parcial)"""
+        query = select(Rol).where(
+            and_(
+                Rol.nombre_rol.ilike(f"%{nombre_pattern}%"),
+                Rol.status == True
+            )
+        ).offset(skip).limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def update(db: AsyncSession, id_rol: uuid.UUID, rol_update: RolUpdate) -> Optional[Rol]:
         """Actualizar un rol"""
-        db_rol = db.query(Rol).filter(Rol.id_rol == id_rol).first()
-        if db_rol:
-            if rol_update.nombre_rol is not None:
-                db_rol.nombre_rol = rol_update.nombre_rol
-            if rol_update.descripcion is not None:
-                db_rol.descripcion = rol_update.descripcion
-            if rol_update.status is not None:
-                db_rol.status = rol_update.status
-            
-            db.commit()
-            db.refresh(db_rol)
-        return db_rol
+        update_data = rol_update.dict(exclude_unset=True)
+        
+        if update_data:
+            query = update(Rol).where(Rol.id_rol == id_rol).values(**update_data)
+            await db.execute(query)
+            await db.commit()
+        
+        return await RolDAO.get_by_id(db, id_rol)
     
     @staticmethod
-    def soft_delete(db: Session, id_rol: int) -> bool:
-        """Soft delete: marcar rol como inactivo"""
-        db_rol = db.query(Rol).filter(Rol.id_rol == id_rol).first()
-        if db_rol:
-            db_rol.status = False
-            db.commit()
-            return True
-        return False
+    async def soft_delete(db: AsyncSession, id_rol: uuid.UUID) -> bool:
+        """Eliminación lógica: cambiar status a False"""
+        query = update(Rol).where(Rol.id_rol == id_rol).values(status=False)
+        result = await db.execute(query)
+        await db.commit()
+        return result.rowcount > 0
     
-    @staticmethod
-    def exists_by_nombre(db: Session, nombre_rol: str, exclude_id: Optional[int] = None) -> bool:
-        """Verificar si existe un rol con el nombre dado"""
-        query = db.query(Rol).filter(Rol.nombre_rol == nombre_rol)
-        if exclude_id:
-            query = query.filter(Rol.id_rol != exclude_id)
-        return query.first() is not None
+    
+   

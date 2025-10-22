@@ -1,134 +1,91 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_db
 from ..service.rol_service import RolService
-from ..schemas.rol_schema import Rol
-from typing import List, Optional
+from ..schemas.rol_schema import Rol, RolCreate, RolUpdate
+from typing import List, Optional, Dict, Any
+import uuid
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_rol(
-    rol: Rol, 
-    created_by: str = Query(..., description="Usuario que crea el rol"),
-    db: Session = Depends(get_db)
-):
-    """
-    Crear un nuevo rol.
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.create_rol(rol, created_by)
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+@router.post("/", response_model=Rol, status_code=status.HTTP_201_CREATED)
+async def create_rol(rol: RolCreate, db: AsyncSession = Depends(get_db)):
+    """Crear un nuevo rol"""
+    created_rol = await RolService.create_rol(db, rol)
+    return created_rol
 
-@router.get("/")
+@router.get("/", response_model=List[Rol])
 async def get_all_roles(
-    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
-    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    db: Session = Depends(get_db)
-):
-    """
-    Obtener todos los roles activos.
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.get_all_roles(skip, limit)
-        return result
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
-
-@router.get("/{id_rol}")
-async def get_rol_by_id(id_rol: int, db: Session = Depends(get_db)):
-    """
-    Obtener un rol por su ID.
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.get_rol_by_id(id_rol)
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
-
-@router.get("/search/")
-async def search_roles(
-    nombre: str = Query(..., description="Patrón de búsqueda en el nombre del rol"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
-    """
-    Buscar roles por nombre (coincidencia parcial).
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.search_roles(nombre, skip, limit)
-        return result
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+    """Obtener todos los roles activos"""
+    return await RolService.get_all_roles(db, skip, limit)
 
-@router.put("/{id_rol}")
+@router.get("/categories", response_model=List[str])
+async def get_all_categories(db: AsyncSession = Depends(get_db)):
+    """Obtener todas las categorías de roles disponibles"""
+    return await RolService.get_all_categories(db)
+
+@router.get("/categories/in-use", response_model=List[Dict[str, Any]])
+async def get_categories_in_use(db: AsyncSession = Depends(get_db)):
+    """Obtener las categorías que están siendo utilizadas"""
+    return await RolService.get_categories_in_use(db)
+
+@router.get("/by-category/{categoria}", response_model=List[Rol])
+async def get_roles_by_category(
+    categoria: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    """Obtener roles por categoría"""
+    return await RolService.get_roles_by_category(db, categoria, skip, limit)
+
+@router.get("/search", response_model=List[Rol])
+async def search_roles(
+    param: str = Query(..., description="Search parameter: id, nombre, categoria"),
+    value: str = Query(..., description="Search value"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
+):
+    """Buscar roles por diferentes parámetros"""
+    valid_params = ["id", "nombre", "categoria"]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+        )
+    return await RolService.search_roles(db, param, value, skip, limit)
+
+@router.get("/{rol_id}", response_model=Rol)
+async def get_rol_by_id(rol_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Obtener un rol por ID"""
+    return await RolService.get_rol_by_id(db, rol_id)
+
+@router.put("/{rol_id}", response_model=Rol)
 async def update_rol(
-    id_rol: int, 
-    rol_update: Rol,
-    updated_by: str = Query(..., description="Usuario que actualiza el rol"),
-    db: Session = Depends(get_db)
+    rol_id: uuid.UUID,
+    rol_update: RolUpdate,
+    db: AsyncSession = Depends(get_db)
 ):
-    """
-    Actualizar un rol por su ID.
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.update_rol(id_rol, rol_update, updated_by)
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
+    """Actualizar un rol existente"""
+    updated_rol = await RolService.update_rol(db, rol_id, rol_update)
+    return updated_rol
 
-@router.delete("/{id_rol}")
-async def delete_rol(
-    id_rol: int,
-    deleted_by: str = Query(..., description="Usuario que elimina el rol"),
-    db: Session = Depends(get_db)
-):
-    """
-    Soft delete: marcar rol como inactivo.
-    """
-    try:
-        rol_service = RolService(db)
-        result = rol_service.delete_rol(id_rol, deleted_by)
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
+@router.delete("/{rol_id}", response_model=dict, status_code=status.HTTP_200_OK)
+async def delete_rol(rol_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Eliminar (desactivar) un rol"""
+    success = await RolService.delete_rol(db, rol_id)
+    if not success:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error interno del servidor: {str(e)}"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Role not found"
         )
+    return {
+        "message": "Role deleted successfully",
+        "rol_id": rol_id,
+        "status": False
+    }

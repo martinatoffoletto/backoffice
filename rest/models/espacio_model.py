@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Enum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from .base import Base
 import enum
-
-Base = declarative_base()
 
 class TipoEspacio(enum.Enum):
     AULA = "aula"

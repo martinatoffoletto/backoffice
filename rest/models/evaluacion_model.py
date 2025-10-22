@@ -4,8 +4,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
 
-Base = declarative_base()
-
 class TipoEvaluacion(enum.Enum):
     PARCIAL = "parcial"
     FINAL = "final"
