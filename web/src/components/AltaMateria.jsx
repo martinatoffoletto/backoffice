@@ -34,13 +34,14 @@ import PopUp from "@/components/PopUp";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
 import { altaMateria, obtenerCarreras } from "@/api/materiasApi";
 import { Checkbox } from "./ui/checkbox";
+import CardMateria from "./CardMateria";
 
 export default function AltaMateria(second) {
     const [date, setDate] = useState();
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
     const [selectedValues, setSelectedValues]=useState([])
-    
+    const[materiaData, setMateriaData]=useState(null)
     const [filteredOptions, setFilteredOptions] = useState([]);
 
 
@@ -63,7 +64,7 @@ export default function AltaMateria(second) {
           const response= await altaMateria(form, selectedValues)
           console.log("Materia dada de alta exitosamente")
           setCompleted(true);
-          setForm({ id: null, nombre: "", status: "activo" });
+          setMateriaData(response)         
           setSelectedValues([]);
         } catch (err){
             setError(err.message);  
@@ -89,7 +90,8 @@ export default function AltaMateria(second) {
         <h1 className="font-bold text-xl mb-4">Alta de Materia</h1>
         <span className="block w-full h-[2px] bg-sky-950"></span>
 
-        <form onSubmit={handleSubmit} className="space-y-5 mt-8">
+        {!completed &&(
+          <form onSubmit={handleSubmit} className="space-y-5 mt-8">
           <FieldSet>
             <FieldGroup className="space-y-5">
 
@@ -146,15 +148,22 @@ export default function AltaMateria(second) {
             </FieldGroup>
           </FieldSet>
         </form>
+      )}
+
+      
+      {completed  && (
+        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+          <CardMateria title={"Materia dada de alta exitosamente"} materia={materiaData} />
+          <Button
+            onClick={() => {setCompleted(false); setForm({ id: null, nombre: "", status: "activo" });}}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+          >
+            OK
+          </Button>
+        </div>
+      )}
       </div>
 
-      {completed && (
-        <PopUp
-          title="Materia dada de alta exitosamente"
-          message="Se pasará el objeto materia."
-          onClose={() => setCompleted(false)}
-        />
-      )}
 
       {error && (
         <PopUp

@@ -10,6 +10,7 @@ export default function BajaMateria() {
   const [value, setValue] = useState("");
   const [found, setFound] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [materiaData, setMateriaData]=useState(null)
 
 
 
@@ -19,6 +20,7 @@ export default function BajaMateria() {
       const response = await materiaPorId(value);
       console.log("Materia encontrada exitosamente") 
       setFound(response)
+      setMateriaData(response)
     }catch(error){
       console.log("Error al buscar materia", error.message)
     }
@@ -86,11 +88,11 @@ export default function BajaMateria() {
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-            <CardMateria title={"Información eliminada exitosamente"} materia={found} />
+        <div className="flex flex-col justify-center items-center border border-blue-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+            <CardMateria title={"Información eliminada exitosamente"} materia={materiaData} />
             <Button
-            onClick={() => {setShowPopup(false); setValue("")}}
-            className="bg-red-500 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-md"
+            onClick={() => {setShowPopup(false); setValue("");setMateriaData(null)}}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
             >
             OK
             </Button>

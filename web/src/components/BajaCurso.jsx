@@ -84,11 +84,11 @@ export default function BajaCurso() {
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+        <div className="flex flex-col justify-center items-center border border-blue-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
                     <CardCurso title={"Curso eliminado exitosamente"} curso={cursoData} />
                     <Button
                     onClick={() => {setShowPopup(false); setValue("")}}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-md"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
                     >
                     OK
                     </Button>
