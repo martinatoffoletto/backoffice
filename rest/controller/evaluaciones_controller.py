@@ -14,6 +14,7 @@ from ..schemas.evaluacion_schema import (
 )
 from ..service.evaluacion_service import EvaluacionService
 from ..database import get_db
+import uuid
 
 router = APIRouter(prefix="/evaluaciones", tags=["Evaluaciones"])
 
@@ -65,7 +66,7 @@ async def get_all_evaluaciones(
     return evaluaciones
 
 @router.get("/{id_evaluacion}", response_model=EvaluacionResponse)
-async def get_evaluacion_by_id(id_evaluacion: int, db: AsyncSession = Depends(get_db)):
+async def get_evaluacion_by_id(id_evaluacion: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Obtener una evaluación por su ID.
     
@@ -83,7 +84,7 @@ async def get_evaluacion_by_id(id_evaluacion: int, db: AsyncSession = Depends(ge
 
 @router.put("/{id_evaluacion}", response_model=Dict[str, Any])
 async def update_evaluacion(
-    id_evaluacion: int, 
+    id_evaluacion: uuid.UUID, 
     evaluacion_update: EvaluacionUpdate, 
     db: AsyncSession = Depends(get_db)
 ):
@@ -107,7 +108,7 @@ async def update_evaluacion(
     }
 
 @router.delete("/{id_evaluacion}", response_model=Dict[str, str])
-async def delete_evaluacion(id_evaluacion: int, db: AsyncSession = Depends(get_db)):
+async def delete_evaluacion(id_evaluacion: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Eliminar una evaluación (soft delete).
     
@@ -125,7 +126,7 @@ async def delete_evaluacion(id_evaluacion: int, db: AsyncSession = Depends(get_d
 
 @router.get("/cronograma/{id_cronograma}", response_model=List[EvaluacionResponse])
 async def get_evaluaciones_by_cronograma(
-    id_cronograma: int,
+    id_cronograma: uuid.UUID,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db)

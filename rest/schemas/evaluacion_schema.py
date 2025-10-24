@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime, time, date
 from decimal import Decimal
 from enum import Enum
+import uuid
 
 
 class TipoEvaluacion(str, Enum):
@@ -13,8 +14,8 @@ class TipoEvaluacion(str, Enum):
 
 
 class Evaluacion(BaseModel):
-    id_evaluacion: Optional[int] = Field(None, description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_evaluacion: Optional[uuid.UUID] = Field(None, description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., min_length=3, max_length=200, description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -58,7 +59,7 @@ class Evaluacion(BaseModel):
 
 
 class EvaluacionCreate(BaseModel):
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., min_length=3, max_length=200, description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -137,8 +138,8 @@ class EvaluacionUpdate(BaseModel):
 
 
 class EvaluacionResponse(BaseModel):
-    id_evaluacion: int = Field(..., description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_evaluacion: uuid.UUID = Field(..., description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -157,8 +158,8 @@ class EvaluacionResponse(BaseModel):
 
 # Schema para mostrar evaluación con información del cronograma
 class EvaluacionConCronograma(BaseModel):
-    id_evaluacion: int = Field(..., description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma")
+    id_evaluacion: uuid.UUID = Field(..., description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma")
     nombre: str = Field(..., description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, description="Descripción de la evaluación")
     fecha: date = Field(..., description="Fecha de la evaluación")

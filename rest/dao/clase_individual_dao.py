@@ -5,6 +5,7 @@ from ..models.clase_individual_model import ClaseIndividual, EstadoClase
 from ..schemas.clase_individual_schema import ClaseIndividualCreate, ClaseIndividualUpdate
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, time
+import uuid
 
 class ClaseIndividualDAO:
     
@@ -19,7 +20,7 @@ class ClaseIndividualDAO:
         return db_clase
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_clase: int) -> Optional[ClaseIndividual]:
+    async def get_by_id(db: AsyncSession, id_clase: uuid.UUID) -> Optional[ClaseIndividual]:
         """Obtener clase individual por ID"""
         query = select(ClaseIndividual).where(
             and_(
@@ -47,7 +48,7 @@ class ClaseIndividualDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_cronograma(db: AsyncSession, id_cronograma: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+    async def get_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
         """Obtener clases por cronograma"""
         query = select(ClaseIndividual).where(
             and_(
@@ -161,7 +162,7 @@ class ClaseIndividualDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_clase: int, clase: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
+    async def update(db: AsyncSession, id_clase: uuid.UUID, clase: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
         """Actualizar clase individual"""
         # Obtener la clase existente
         existing_clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
@@ -188,7 +189,7 @@ class ClaseIndividualDAO:
         return await ClaseIndividualDAO.get_by_id(db, id_clase)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_clase: int) -> bool:
+    async def delete(db: AsyncSession, id_clase: uuid.UUID) -> bool:
         """Eliminar clase individual (soft delete)"""
         stmt = update(ClaseIndividual).where(
             ClaseIndividual.id_clase == id_clase
@@ -203,7 +204,7 @@ class ClaseIndividualDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_clase: int) -> bool:
+    async def hard_delete(db: AsyncSession, id_clase: uuid.UUID) -> bool:
         """Eliminar clase individual permanentemente"""
         query = select(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase)
         result = await db.execute(query)
@@ -230,7 +231,7 @@ class ClaseIndividualDAO:
         return result.scalar()
     
     @staticmethod
-    async def count_by_cronograma(db: AsyncSession, id_cronograma: int) -> int:
+    async def count_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> int:
         """Contar clases por cronograma"""
         query = select(func.count(ClaseIndividual.id_clase)).where(
             and_(

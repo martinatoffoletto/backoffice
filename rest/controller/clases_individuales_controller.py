@@ -13,6 +13,7 @@ from ..schemas.clase_individual_schema import (
 )
 from ..service.clase_individual_service import ClaseIndividualService
 from ..database import get_db
+import uuid
 
 router = APIRouter(prefix="/clases-individuales", tags=["Clases Individuales"])
 
@@ -63,7 +64,7 @@ async def get_all_clases(
     return clases
 
 @router.get("/{id_clase}", response_model=ClaseIndividualResponse)
-async def get_clase_by_id(id_clase: int, db: AsyncSession = Depends(get_db)):
+async def get_clase_by_id(id_clase: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Obtener una clase individual por su ID.
     
@@ -81,7 +82,7 @@ async def get_clase_by_id(id_clase: int, db: AsyncSession = Depends(get_db)):
 
 @router.put("/{id_clase}", response_model=Dict[str, Any])
 async def update_clase(
-    id_clase: int, 
+    id_clase: uuid.UUID, 
     clase_update: ClaseIndividualUpdate, 
     db: AsyncSession = Depends(get_db)
 ):
@@ -105,7 +106,7 @@ async def update_clase(
     }
 
 @router.delete("/{id_clase}", response_model=Dict[str, str])
-async def delete_clase(id_clase: int, db: AsyncSession = Depends(get_db)):
+async def delete_clase(id_clase: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Eliminar una clase individual (soft delete).
     
@@ -125,7 +126,7 @@ async def delete_clase(id_clase: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/cronograma/{id_cronograma}", response_model=List[ClaseIndividualResponse])
 async def get_clases_by_cronograma(
-    id_cronograma: int,
+    id_cronograma: uuid.UUID,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db)

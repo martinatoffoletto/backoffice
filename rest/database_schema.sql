@@ -87,7 +87,7 @@ CREATE TABLE sueldos (
 
 
 CREATE TABLE cronogramas (
-    id_cronograma SERIAL PRIMARY KEY,
+    id_cronograma UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id INTEGER NOT NULL,
     course_name VARCHAR(200) NOT NULL,
     total_classes INTEGER DEFAULT 0,
@@ -101,8 +101,8 @@ CREATE TABLE cronogramas (
 
 
 CREATE TABLE clases_individuales (
-    id_clase SERIAL PRIMARY KEY,
-    id_cronograma INTEGER NOT NULL,
+    id_clase UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_cronograma UUID NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha_clase DATE NOT NULL,
@@ -117,8 +117,8 @@ CREATE TABLE clases_individuales (
 );
 
 CREATE TABLE evaluaciones (
-    id_evaluacion SERIAL PRIMARY KEY,
-    id_cronograma INTEGER NOT NULL,
+    id_evaluacion UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_cronograma UUID NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha DATE NOT NULL,

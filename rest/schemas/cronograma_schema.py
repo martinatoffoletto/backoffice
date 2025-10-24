@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime, date
+import uuid
 
 
 class Cronograma(BaseModel):
-    id_cronograma: Optional[int] = Field(None, description="Identificador único del cronograma")
+    id_cronograma: Optional[uuid.UUID] = Field(None, description="Identificador único del cronograma")
     course_id: int = Field(..., description="ID del curso proveniente del módulo CORE")
     course_name: str = Field(..., min_length=3, max_length=200, description="Nombre del curso (cacheado localmente)")
     total_classes: int = Field(..., ge=0, description="Cantidad total de clases planificadas")
@@ -92,7 +93,7 @@ class CronogramaUpdate(BaseModel):
 
 
 class CronogramaResponse(BaseModel):
-    id_cronograma: int = Field(..., description="Identificador único del cronograma")
+    id_cronograma: uuid.UUID = Field(..., description="Identificador único del cronograma")
     course_id: int = Field(..., description="ID del curso")
     course_name: str = Field(..., description="Nombre del curso")
     total_classes: int = Field(..., description="Total de clases planificadas")

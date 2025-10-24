@@ -5,6 +5,7 @@ from ..models.cronograma_model import Cronograma
 from ..schemas.cronograma_schema import CronogramaCreate, CronogramaUpdate
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
+import uuid
 
 class CronogramaDAO:
     
@@ -19,7 +20,7 @@ class CronogramaDAO:
         return db_cronograma
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_cronograma: int) -> Optional[Cronograma]:
+    async def get_by_id(db: AsyncSession, id_cronograma: uuid.UUID) -> Optional[Cronograma]:
         """Obtener cronograma por ID"""
         query = select(Cronograma).where(
             and_(
@@ -93,7 +94,7 @@ class CronogramaDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_cronograma: int, cronograma: CronogramaUpdate) -> Optional[Cronograma]:
+    async def update(db: AsyncSession, id_cronograma: uuid.UUID, cronograma: CronogramaUpdate) -> Optional[Cronograma]:
         """Actualizar cronograma"""
         # Obtener el cronograma existente
         existing_cronograma = await CronogramaDAO.get_by_id(db, id_cronograma)
@@ -120,7 +121,7 @@ class CronogramaDAO:
         return await CronogramaDAO.get_by_id(db, id_cronograma)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_cronograma: int) -> bool:
+    async def delete(db: AsyncSession, id_cronograma: uuid.UUID) -> bool:
         """Eliminar cronograma (soft delete)"""
         stmt = update(Cronograma).where(
             Cronograma.id_cronograma == id_cronograma
@@ -135,7 +136,7 @@ class CronogramaDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_cronograma: int) -> bool:
+    async def hard_delete(db: AsyncSession, id_cronograma: uuid.UUID) -> bool:
         """Eliminar cronograma permanentemente"""
         query = select(Cronograma).where(Cronograma.id_cronograma == id_cronograma)
         result = await db.execute(query)

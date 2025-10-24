@@ -13,6 +13,7 @@ from ..models.clase_individual_model import ClaseIndividual
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date, time
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class ClaseIndividualService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def get_clase_by_id(db: AsyncSession, id_clase: int) -> Tuple[Optional[ClaseIndividualResponse], str]:
+    async def get_clase_by_id(db: AsyncSession, id_clase: uuid.UUID) -> Tuple[Optional[ClaseIndividualResponse], str]:
         """Obtener clase por ID"""
         try:
             clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
@@ -95,7 +96,7 @@ class ClaseIndividualService:
     @staticmethod
     async def get_clases_by_cronograma(
         db: AsyncSession, 
-        id_cronograma: int, 
+        id_cronograma: uuid.UUID, 
         skip: int = 0, 
         limit: int = 100
     ) -> Tuple[List[ClaseIndividualResponse], str]:
@@ -261,7 +262,7 @@ class ClaseIndividualService:
     @staticmethod
     async def update_clase(
         db: AsyncSession, 
-        id_clase: int, 
+        id_clase: uuid.UUID, 
         clase_update: ClaseIndividualUpdate
     ) -> Tuple[Optional[ClaseIndividualResponse], str]:
         """Actualizar clase con validaciones"""
@@ -315,7 +316,7 @@ class ClaseIndividualService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def delete_clase(db: AsyncSession, id_clase: int) -> Tuple[bool, str]:
+    async def delete_clase(db: AsyncSession, id_clase: uuid.UUID) -> Tuple[bool, str]:
         """Eliminar clase (soft delete)"""
         try:
             # Verificar que la clase existe

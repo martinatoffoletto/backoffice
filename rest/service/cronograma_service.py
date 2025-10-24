@@ -5,6 +5,7 @@ from ..models.cronograma_model import Cronograma
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class CronogramaService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def get_cronograma_by_id(db: AsyncSession, id_cronograma: int) -> Tuple[Optional[CronogramaResponse], str]:
+    async def get_cronograma_by_id(db: AsyncSession, id_cronograma: uuid.UUID) -> Tuple[Optional[CronogramaResponse], str]:
         """Obtener cronograma por ID"""
         try:
             cronograma = await CronogramaDAO.get_by_id(db, id_cronograma)
@@ -124,7 +125,7 @@ class CronogramaService:
     @staticmethod
     async def update_cronograma(
         db: AsyncSession, 
-        id_cronograma: int, 
+        id_cronograma: uuid.UUID, 
         cronograma_update: CronogramaUpdate
     ) -> Tuple[Optional[CronogramaResponse], str]:
         """Actualizar cronograma con validaciones"""
@@ -164,7 +165,7 @@ class CronogramaService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def delete_cronograma(db: AsyncSession, id_cronograma: int) -> Tuple[bool, str]:
+    async def delete_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> Tuple[bool, str]:
         """Eliminar cronograma (soft delete)"""
         try:
             # Verificar que el cronograma existe

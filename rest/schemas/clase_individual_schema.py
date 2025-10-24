@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime, time, date
 from enum import Enum
+import uuid
 
 
 class EstadoClase(str, Enum):
@@ -12,8 +13,8 @@ class EstadoClase(str, Enum):
 
 
 class ClaseIndividual(BaseModel):
-    id_clase: Optional[int] = Field(None, description="Identificador único de la clase")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_clase: Optional[uuid.UUID] = Field(None, description="Identificador único de la clase")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     titulo: str = Field(..., min_length=3, max_length=200, description="Título del tema de la clase")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la clase")
     fecha_clase: date = Field(..., description="Fecha programada de la clase")
@@ -49,7 +50,7 @@ class ClaseIndividual(BaseModel):
 
 
 class ClaseIndividualCreate(BaseModel):
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     titulo: str = Field(..., min_length=3, max_length=200, description="Título del tema de la clase")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la clase")
     fecha_clase: date = Field(..., description="Fecha programada de la clase")
@@ -112,8 +113,8 @@ class ClaseIndividualUpdate(BaseModel):
 
 
 class ClaseIndividualResponse(BaseModel):
-    id_clase: int = Field(..., description="Identificador único de la clase")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_clase: uuid.UUID = Field(..., description="Identificador único de la clase")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     titulo: str = Field(..., description="Título del tema de la clase")
     descripcion: Optional[str] = Field(None, description="Descripción detallada de la clase")
     fecha_clase: date = Field(..., description="Fecha programada de la clase")
@@ -131,8 +132,8 @@ class ClaseIndividualResponse(BaseModel):
 
 # Schema para mostrar clase con información del cronograma
 class ClaseConCronograma(BaseModel):
-    id_clase: int = Field(..., description="Identificador único de la clase")
-    id_cronograma: int = Field(..., description="ID del cronograma")
+    id_clase: uuid.UUID = Field(..., description="Identificador único de la clase")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma")
     titulo: str = Field(..., description="Título de la clase")
     descripcion: Optional[str] = Field(None, description="Descripción de la clase")
     fecha_clase: date = Field(..., description="Fecha de la clase")

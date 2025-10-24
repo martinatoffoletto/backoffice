@@ -6,6 +6,7 @@ from ..schemas.evaluacion_schema import EvaluacionCreate, EvaluacionUpdate
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, time
 from decimal import Decimal
+import uuid
 
 class EvaluacionDAO:
     
@@ -20,7 +21,7 @@ class EvaluacionDAO:
         return db_evaluacion
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_evaluacion: int) -> Optional[Evaluacion]:
+    async def get_by_id(db: AsyncSession, id_evaluacion: uuid.UUID) -> Optional[Evaluacion]:
         """Obtener evaluación por ID"""
         query = select(Evaluacion).where(
             and_(
@@ -48,7 +49,7 @@ class EvaluacionDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_cronograma(db: AsyncSession, id_cronograma: int, skip: int = 0, limit: int = 100) -> List[Evaluacion]:
+    async def get_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID, skip: int = 0, limit: int = 100) -> List[Evaluacion]:
         """Obtener evaluaciones por cronograma"""
         query = select(Evaluacion).where(
             and_(
@@ -178,7 +179,7 @@ class EvaluacionDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_evaluacion: int, evaluacion: EvaluacionUpdate) -> Optional[Evaluacion]:
+    async def update(db: AsyncSession, id_evaluacion: uuid.UUID, evaluacion: EvaluacionUpdate) -> Optional[Evaluacion]:
         """Actualizar evaluación"""
         # Obtener la evaluación existente
         existing_evaluacion = await EvaluacionDAO.get_by_id(db, id_evaluacion)
@@ -205,7 +206,7 @@ class EvaluacionDAO:
         return await EvaluacionDAO.get_by_id(db, id_evaluacion)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_evaluacion: int) -> bool:
+    async def delete(db: AsyncSession, id_evaluacion: uuid.UUID) -> bool:
         """Eliminar evaluación (soft delete)"""
         stmt = update(Evaluacion).where(
             Evaluacion.id_evaluacion == id_evaluacion
@@ -220,7 +221,7 @@ class EvaluacionDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_evaluacion: int) -> bool:
+    async def hard_delete(db: AsyncSession, id_evaluacion: uuid.UUID) -> bool:
         """Eliminar evaluación permanentemente"""
         query = select(Evaluacion).where(Evaluacion.id_evaluacion == id_evaluacion)
         result = await db.execute(query)
@@ -247,7 +248,7 @@ class EvaluacionDAO:
         return result.scalar()
     
     @staticmethod
-    async def count_by_cronograma(db: AsyncSession, id_cronograma: int) -> int:
+    async def count_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> int:
         """Contar evaluaciones por cronograma"""
         query = select(func.count(Evaluacion.id_evaluacion)).where(
             and_(
@@ -350,7 +351,7 @@ class EvaluacionDAO:
         return stats
     
     @staticmethod
-    async def get_evaluaciones_by_ponderacion_total(db: AsyncSession, id_cronograma: int) -> Decimal:
+    async def get_evaluaciones_by_ponderacion_total(db: AsyncSession, id_cronograma: uuid.UUID) -> Decimal:
         """Obtener suma total de ponderaciones por cronograma"""
         query = select(func.sum(Evaluacion.ponderacion)).where(
             and_(

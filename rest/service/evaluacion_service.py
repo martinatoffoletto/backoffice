@@ -14,6 +14,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date, time
 from decimal import Decimal
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ class EvaluacionService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def get_evaluacion_by_id(db: AsyncSession, id_evaluacion: int) -> Tuple[Optional[EvaluacionResponse], str]:
+    async def get_evaluacion_by_id(db: AsyncSession, id_evaluacion: uuid.UUID) -> Tuple[Optional[EvaluacionResponse], str]:
         """Obtener evaluación por ID"""
         try:
             evaluacion = await EvaluacionDAO.get_by_id(db, id_evaluacion)
@@ -101,7 +102,7 @@ class EvaluacionService:
     @staticmethod
     async def get_evaluaciones_by_cronograma(
         db: AsyncSession, 
-        id_cronograma: int, 
+        id_cronograma: uuid.UUID, 
         skip: int = 0, 
         limit: int = 100
     ) -> Tuple[List[EvaluacionResponse], str]:
@@ -293,7 +294,7 @@ class EvaluacionService:
     @staticmethod
     async def update_evaluacion(
         db: AsyncSession, 
-        id_evaluacion: int, 
+        id_evaluacion: uuid.UUID, 
         evaluacion_update: EvaluacionUpdate
     ) -> Tuple[Optional[EvaluacionResponse], str]:
         """Actualizar evaluación con validaciones"""
@@ -356,7 +357,7 @@ class EvaluacionService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def delete_evaluacion(db: AsyncSession, id_evaluacion: int) -> Tuple[bool, str]:
+    async def delete_evaluacion(db: AsyncSession, id_evaluacion: uuid.UUID) -> Tuple[bool, str]:
         """Eliminar evaluación (soft delete)"""
         try:
             # Verificar que la evaluación existe

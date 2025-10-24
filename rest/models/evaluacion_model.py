@@ -1,8 +1,10 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Time, Enum, Numeric, Date
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base
 import enum
+import uuid
 
 class TipoEvaluacion(enum.Enum):
     PARCIAL = "parcial"
@@ -13,8 +15,8 @@ class TipoEvaluacion(enum.Enum):
 class Evaluacion(Base):
     __tablename__ = "evaluaciones"
     
-    id_evaluacion = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    id_cronograma = Column(Integer, ForeignKey("cronogramas.id_cronograma", ondelete="CASCADE"), nullable=False, comment="ID del cronograma al que pertenece")
+    id_evaluacion = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id_cronograma = Column(UUID(as_uuid=True), ForeignKey("cronogramas.id_cronograma", ondelete="CASCADE"), nullable=False, comment="ID del cronograma al que pertenece")
     nombre = Column(String(200), nullable=False, comment="Nombre de la evaluación")
     descripcion = Column(Text, nullable=True, comment="Descripción detallada de la evaluación")
     fecha = Column(Date, nullable=False, comment="Fecha programada de la evaluación")
