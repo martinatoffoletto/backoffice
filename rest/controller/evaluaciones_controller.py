@@ -1,3 +1,10 @@
+"""
+Controlador REST para la gestión de evaluaciones.
+
+Este módulo contiene todos los endpoints REST para la gestión de evaluaciones,
+incluyendo operaciones CRUD y consultas especializadas.
+"""
+
 from fastapi import APIRouter, HTTPException, status, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
