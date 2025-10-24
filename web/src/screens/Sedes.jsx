@@ -77,12 +77,14 @@ export default function Sedes() {
 
 
   return (
-    <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
+    <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-start p-4 mt-4">
       <div className="w-full max-w-4xl">
-        <h1 className="font-bold text-center text-2xl mb-6">Sedes</h1>
+        <h1 className="font-bold text-2xl mb-4">Sedes</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="overflow-x-auto">
-          <Table className="min-w-full border rounded-lg shadow-sm">
+        <div className="overflow-x-auto mt-8">
+          
+          <Table className="min-w-full border rounded-lg shadow-sm ">
             <TableHeader>
               <TableRow>
                 <TableHead>Sede</TableHead>

@@ -197,7 +197,7 @@ const deletePrice = async (id) => {
                       Editar
                     </Button>
                     <Button
-                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
+                      className="bg-gray.50 hover:bg-gray-200  border-1 border-gray-300 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
                       onClick={() => deletePrice(p.id)}
                     >
                       Eliminar
