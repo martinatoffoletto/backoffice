@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime, time, date
 from enum import Enum
@@ -26,10 +26,11 @@ class ClaseIndividual(BaseModel):
     fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación del registro")
     fecha_modificacion: Optional[datetime] = Field(None, description="Fecha de última modificación")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
@@ -59,10 +60,11 @@ class ClaseIndividualCreate(BaseModel):
     estado: EstadoClase = Field(EstadoClase.PROGRAMADA, description="Estado inicial de la clase")
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la clase")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
@@ -91,10 +93,11 @@ class ClaseIndividualUpdate(BaseModel):
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la clase")
     status: Optional[bool] = Field(None, description="Estado del registro (activo/inactivo)")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 

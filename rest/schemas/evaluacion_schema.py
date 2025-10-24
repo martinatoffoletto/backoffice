@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime, time, date
 from decimal import Decimal
@@ -28,14 +28,16 @@ class Evaluacion(BaseModel):
     fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación del registro")
     fecha_modificacion: Optional[datetime] = Field(None, description="Fecha de última modificación")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v < 0 or v > 100:
             raise ValueError('La ponderación debe estar entre 0 y 100')
@@ -69,14 +71,16 @@ class EvaluacionCreate(BaseModel):
     ponderacion: Decimal = Field(..., ge=0, le=100, description="Ponderación de la evaluación (0-100%)")
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la evaluación")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v < 0 or v > 100:
             raise ValueError('La ponderación debe estar entre 0 y 100')
@@ -109,14 +113,16 @@ class EvaluacionUpdate(BaseModel):
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la evaluación")
     status: Optional[bool] = Field(None, description="Estado del registro (activo/inactivo)")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v is not None and (v < 0 or v > 100):
             raise ValueError('La ponderación debe estar entre 0 y 100')
