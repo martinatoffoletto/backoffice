@@ -65,7 +65,8 @@ class UsuarioService:
             "correo_personal": created_user.correo_personal,
             "telefono_personal": created_user.telefono_personal,
             "fecha_alta": created_user.fecha_alta.isoformat() if created_user.fecha_alta else None,
-            "status": created_user.status
+            "status": created_user.status,
+            "carreras": str(created_user.carreras) if created_user.carreras else None
         }
         
         return user_dict, password
@@ -135,5 +136,6 @@ class UsuarioService:
             "correo_personal": user.correo_personal,
             "telefono_personal": user.telefono_personal,
             "fecha_alta": user.fecha_alta.isoformat() if user.fecha_alta else None,
-            "status": user.status
+            "status": user.status,
+            "carreras": str(user.carreras) if user.carreras else None
         }

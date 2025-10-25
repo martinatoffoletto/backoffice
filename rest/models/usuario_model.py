@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -20,8 +20,12 @@ class Usuario(Base):
     fecha_alta = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="Fecha de alta - se registra automáticamente")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del usuario (activo/inactivo)")
     
+    # Nueva columna agregada
+    carreras = Column(UUID(as_uuid=True), ForeignKey("carreras.id_carrera"), nullable=True, comment="ID de la carrera asociada al usuario")
+    
     # Relaciones
     roles = relationship("UsuarioRol", back_populates="usuario")
+    carrera = relationship("Carrera", foreign_keys=[carreras])
     
     def __repr__(self):
         return f"<Usuario(id_usuario={self.id_usuario}, legajo='{self.legajo}', nombre='{self.nombre} {self.apellido}')>"

@@ -34,7 +34,8 @@ CREATE TABLE usuarios (
     telefono_personal VARCHAR(20) NOT NULL,
     contraseña VARCHAR(255) NOT NULL,
     fecha_alta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status BOOLEAN DEFAULT TRUE
+    status BOOLEAN DEFAULT TRUE,
+    carreras UUID REFERENCES carreras(id_carrera)
 );
 
 CREATE TABLE usuario_roles (
@@ -152,6 +153,7 @@ CREATE INDEX idx_clases_cronograma ON clases_individuales(id_cronograma);
 CREATE INDEX idx_clases_fecha ON clases_individuales(fecha_clase);
 CREATE INDEX idx_evaluaciones_cronograma ON evaluaciones(id_cronograma);
 CREATE INDEX idx_evaluaciones_fecha ON evaluaciones(fecha);
+CREATE INDEX idx_usuarios_carreras ON usuarios(carreras);
 
 
 INSERT INTO roles (nombre_rol, descripcion) VALUES

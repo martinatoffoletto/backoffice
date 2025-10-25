@@ -16,6 +16,7 @@ class Usuario(BaseModel):
     contraseña: Optional[str] = Field(None, description="Contraseña del usuario")
     fecha_alta: Optional[datetime] = Field(None, description="Fecha de alta - se registra automáticamente")
     status: bool = Field(True, description="Estado del usuario (activo/inactivo)")
+    carreras: Optional[uuid.UUID] = Field(None, description="ID de la carrera asociada al usuario")
 
     class Config:
         from_attributes = True
@@ -28,7 +29,8 @@ class Usuario(BaseModel):
                 "correo_personal": "juan.perez@email.com",
                 "telefono_personal": "1234567890",
                 "correo_institucional": "juan.perez@campusconnect.edu.ar",  #  automáticamente
-                "status": True
+                "status": True,
+                "carreras": "550e8400-e29b-41d4-a716-446655440000"
             }
         }
 
@@ -41,6 +43,7 @@ class UsuarioCreate(BaseModel):
     dni: str = Field(..., min_length=7, max_length=10, description="DNI único del usuario")
     correo_personal: EmailStr = Field(..., description="Correo electrónico personal (obligatorio)")
     telefono_personal: str = Field(..., max_length=20, description="Teléfono personal (obligatorio)")
+    carreras: Optional[uuid.UUID] = Field(None, description="ID de la carrera asociada al usuario")
     
     class Config:
         json_schema_extra = {
@@ -49,7 +52,8 @@ class UsuarioCreate(BaseModel):
                 "apellido": "Pérez", 
                 "dni": "12345678",
                 "correo_personal": "juan.perez@gmail.com",
-                "telefono_personal": "1234567890"
+                "telefono_personal": "1234567890",
+                "carreras": "550e8400-e29b-41d4-a716-446655440000"
             }
         }
 
@@ -63,6 +67,7 @@ class UsuarioUpdate(BaseModel):
     correo_institucional: Optional[EmailStr] = Field(None, description="Correo electrónico institucional")
     contraseña: Optional[str] = Field(None, description="Nueva contraseña del usuario")
     status: Optional[bool] = Field(None, description="Estado del usuario (activo/inactivo)")
+    carreras: Optional[uuid.UUID] = Field(None, description="ID de la carrera asociada al usuario")
 
     class Config:
         json_schema_extra = {
@@ -75,5 +80,6 @@ class UsuarioUpdate(BaseModel):
                 "apellido": "Gómez",
                 "dni": "87654321",
                 "correo_institucional": "juan.gomez@campusconnect.edu.ar",
+                "carreras": "550e8400-e29b-41d4-a716-446655440000"
             }
         }
