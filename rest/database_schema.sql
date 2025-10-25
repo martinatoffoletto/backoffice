@@ -34,8 +34,7 @@ CREATE TABLE usuarios (
     telefono_personal VARCHAR(20) NOT NULL,
     contraseña VARCHAR(255) NOT NULL,
     fecha_alta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status BOOLEAN DEFAULT TRUE,
-    carreras UUID REFERENCES carreras(id_carrera)
+    status BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE usuario_roles (
@@ -44,6 +43,14 @@ CREATE TABLE usuario_roles (
     PRIMARY KEY (id_usuario, id_rol),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE
+);
+
+CREATE TABLE usuario_carreras (
+    id_usuario UUID NOT NULL,
+    id_carrera UUID NOT NULL,
+    PRIMARY KEY (id_usuario, id_carrera),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_carrera) REFERENCES carreras(id_carrera) ON DELETE CASCADE
 );
 
 
@@ -153,7 +160,8 @@ CREATE INDEX idx_clases_cronograma ON clases_individuales(id_cronograma);
 CREATE INDEX idx_clases_fecha ON clases_individuales(fecha_clase);
 CREATE INDEX idx_evaluaciones_cronograma ON evaluaciones(id_cronograma);
 CREATE INDEX idx_evaluaciones_fecha ON evaluaciones(fecha);
-CREATE INDEX idx_usuarios_carreras ON usuarios(carreras);
+CREATE INDEX idx_usuario_carreras_usuario ON usuario_carreras(id_usuario);
+CREATE INDEX idx_usuario_carreras_carrera ON usuario_carreras(id_carrera);
 
 
 INSERT INTO roles (nombre_rol, descripcion) VALUES
