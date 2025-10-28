@@ -1,3 +1,10 @@
+"""
+Controlador REST para la gestión de cronogramas.
+
+Este módulo contiene todos los endpoints REST para la gestión de cronogramas,
+incluyendo operaciones CRUD y consultas especializadas.
+"""
+
 from fastapi import APIRouter, HTTPException, status, Query, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
@@ -5,6 +12,7 @@ from datetime import date
 from ..schemas.cronograma_schema import Cronograma, CronogramaCreate, CronogramaUpdate, CronogramaResponse
 from ..service.cronograma_service import CronogramaService
 from ..database import get_db
+import uuid
 
 router = APIRouter(prefix="/cronogramas", tags=["Cronogramas"])
 
@@ -53,7 +61,7 @@ async def get_all_cronogramas(
     return cronogramas
 
 @router.get("/{id_cronograma}", response_model=CronogramaResponse)
-async def get_cronograma_by_id(id_cronograma: int, db: AsyncSession = Depends(get_db)):
+async def get_cronograma_by_id(id_cronograma: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Obtener un cronograma por su ID.
     
@@ -71,7 +79,7 @@ async def get_cronograma_by_id(id_cronograma: int, db: AsyncSession = Depends(ge
 
 @router.put("/{id_cronograma}", response_model=Dict[str, Any])
 async def update_cronograma(
-    id_cronograma: int, 
+    id_cronograma: uuid.UUID, 
     cronograma_update: CronogramaUpdate, 
     db: AsyncSession = Depends(get_db)
 ):
@@ -95,7 +103,7 @@ async def update_cronograma(
     }
 
 @router.delete("/{id_cronograma}", response_model=Dict[str, str])
-async def delete_cronograma(id_cronograma: int, db: AsyncSession = Depends(get_db)):
+async def delete_cronograma(id_cronograma: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """
     Eliminar un cronograma (soft delete).
     

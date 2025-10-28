@@ -22,6 +22,7 @@ class Usuario(Base):
     
     # Relaciones
     roles = relationship("UsuarioRol", back_populates="usuario")
+    carreras = relationship("UsuarioCarrera", back_populates="usuario")
     
     def __repr__(self):
         return f"<Usuario(id_usuario={self.id_usuario}, legajo='{self.legajo}', nombre='{self.nombre} {self.apellido}')>"

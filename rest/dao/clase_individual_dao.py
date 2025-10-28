@@ -1,16 +1,39 @@
+"""
+DAO (Data Access Object) para la gestión de clases individuales.
+
+Este módulo contiene todas las operaciones de base de datos relacionadas con clases individuales,
+incluyendo operaciones CRUD básicas y consultas especializadas.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, and_, or_, func
 from ..models.clase_individual_model import ClaseIndividual, EstadoClase
 from ..schemas.clase_individual_schema import ClaseIndividualCreate, ClaseIndividualUpdate
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date, time
+from datetime import datetime, date
+import uuid
 
 class ClaseIndividualDAO:
+    """
+    Clase DAO para operaciones de base de datos relacionadas con clases individuales.
+    
+    Proporciona métodos para crear, leer, actualizar y eliminar clases individuales,
+    así como consultas especializadas por diferentes criterios.
+    """
     
     @staticmethod
     async def create(db: AsyncSession, clase: ClaseIndividualCreate) -> ClaseIndividual:
-        """Crear una nueva clase individual"""
+        """
+        Crear una nueva clase individual en la base de datos.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            clase: Datos de la clase a crear
+            
+        Returns:
+            ClaseIndividual: La clase creada con su ID generado
+        """
         clase_data = clase.model_dump()
         db_clase = ClaseIndividual(**clase_data)
         db.add(db_clase)
@@ -19,8 +42,17 @@ class ClaseIndividualDAO:
         return db_clase
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_clase: int) -> Optional[ClaseIndividual]:
-        """Obtener clase individual por ID"""
+    async def get_by_id(db: AsyncSession, id_clase: uuid.UUID) -> Optional[ClaseIndividual]:
+        """
+        Obtener una clase individual por su ID.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_clase: UUID de la clase a buscar
+            
+        Returns:
+            Optional[ClaseIndividual]: La clase encontrada o None si no existe
+        """
         query = select(ClaseIndividual).where(
             and_(
                 ClaseIndividual.id_clase == id_clase,
@@ -32,7 +64,18 @@ class ClaseIndividualDAO:
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividual]:
-        """Obtener todas las clases individuales"""
+        """
+        Obtener todas las clases individuales con filtros opcionales.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            status_filter: Filtrar por estado (True=activo, False=inactivo, None=todos activos)
+            
+        Returns:
+            List[ClaseIndividual]: Lista de clases encontradas
+        """
         query = select(ClaseIndividual)
         
         if status_filter is not None:
@@ -47,8 +90,19 @@ class ClaseIndividualDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_cronograma(db: AsyncSession, id_cronograma: int, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
-        """Obtener clases por cronograma"""
+    async def get_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """
+        Obtener clases por cronograma.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[ClaseIndividual]: Lista de clases del cronograma especificado
+        """
         query = select(ClaseIndividual).where(
             and_(
                 ClaseIndividual.id_cronograma == id_cronograma,
@@ -161,7 +215,7 @@ class ClaseIndividualDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_clase: int, clase: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
+    async def update(db: AsyncSession, id_clase: uuid.UUID, clase: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
         """Actualizar clase individual"""
         # Obtener la clase existente
         existing_clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
@@ -188,7 +242,7 @@ class ClaseIndividualDAO:
         return await ClaseIndividualDAO.get_by_id(db, id_clase)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_clase: int) -> bool:
+    async def delete(db: AsyncSession, id_clase: uuid.UUID) -> bool:
         """Eliminar clase individual (soft delete)"""
         stmt = update(ClaseIndividual).where(
             ClaseIndividual.id_clase == id_clase
@@ -203,7 +257,7 @@ class ClaseIndividualDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_clase: int) -> bool:
+    async def hard_delete(db: AsyncSession, id_clase: uuid.UUID) -> bool:
         """Eliminar clase individual permanentemente"""
         query = select(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase)
         result = await db.execute(query)
@@ -230,7 +284,7 @@ class ClaseIndividualDAO:
         return result.scalar()
     
     @staticmethod
-    async def count_by_cronograma(db: AsyncSession, id_cronograma: int) -> int:
+    async def count_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> int:
         """Contar clases por cronograma"""
         query = select(func.count(ClaseIndividual.id_clase)).where(
             and_(

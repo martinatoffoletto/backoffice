@@ -1,17 +1,40 @@
+"""
+DAO (Data Access Object) para la gestión de evaluaciones.
+
+Este módulo contiene todas las operaciones de base de datos relacionadas con evaluaciones,
+incluyendo operaciones CRUD básicas y consultas especializadas.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, and_, or_, func
 from ..models.evaluacion_model import Evaluacion, TipoEvaluacion
 from ..schemas.evaluacion_schema import EvaluacionCreate, EvaluacionUpdate
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date, time
+from datetime import datetime, date
 from decimal import Decimal
+import uuid
 
 class EvaluacionDAO:
+    """
+    Clase DAO para operaciones de base de datos relacionadas con evaluaciones.
+    
+    Proporciona métodos para crear, leer, actualizar y eliminar evaluaciones,
+    así como consultas especializadas por diferentes criterios.
+    """
     
     @staticmethod
     async def create(db: AsyncSession, evaluacion: EvaluacionCreate) -> Evaluacion:
-        """Crear una nueva evaluación"""
+        """
+        Crear una nueva evaluación en la base de datos.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            evaluacion: Datos de la evaluación a crear
+            
+        Returns:
+            Evaluacion: La evaluación creada con su ID generado
+        """
         evaluacion_data = evaluacion.model_dump()
         db_evaluacion = Evaluacion(**evaluacion_data)
         db.add(db_evaluacion)
@@ -20,8 +43,17 @@ class EvaluacionDAO:
         return db_evaluacion
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_evaluacion: int) -> Optional[Evaluacion]:
-        """Obtener evaluación por ID"""
+    async def get_by_id(db: AsyncSession, id_evaluacion: uuid.UUID) -> Optional[Evaluacion]:
+        """
+        Obtener una evaluación por su ID.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_evaluacion: UUID de la evaluación a buscar
+            
+        Returns:
+            Optional[Evaluacion]: La evaluación encontrada o None si no existe
+        """
         query = select(Evaluacion).where(
             and_(
                 Evaluacion.id_evaluacion == id_evaluacion,
@@ -33,7 +65,18 @@ class EvaluacionDAO:
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Evaluacion]:
-        """Obtener todas las evaluaciones"""
+        """
+        Obtener todas las evaluaciones con filtros opcionales.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            status_filter: Filtrar por estado (True=activo, False=inactivo, None=todos activos)
+            
+        Returns:
+            List[Evaluacion]: Lista de evaluaciones encontradas
+        """
         query = select(Evaluacion)
         
         if status_filter is not None:
@@ -48,8 +91,19 @@ class EvaluacionDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_cronograma(db: AsyncSession, id_cronograma: int, skip: int = 0, limit: int = 100) -> List[Evaluacion]:
-        """Obtener evaluaciones por cronograma"""
+    async def get_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID, skip: int = 0, limit: int = 100) -> List[Evaluacion]:
+        """
+        Obtener evaluaciones por cronograma.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Evaluacion]: Lista de evaluaciones del cronograma especificado
+        """
         query = select(Evaluacion).where(
             and_(
                 Evaluacion.id_cronograma == id_cronograma,
@@ -178,7 +232,7 @@ class EvaluacionDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_evaluacion: int, evaluacion: EvaluacionUpdate) -> Optional[Evaluacion]:
+    async def update(db: AsyncSession, id_evaluacion: uuid.UUID, evaluacion: EvaluacionUpdate) -> Optional[Evaluacion]:
         """Actualizar evaluación"""
         # Obtener la evaluación existente
         existing_evaluacion = await EvaluacionDAO.get_by_id(db, id_evaluacion)
@@ -205,7 +259,7 @@ class EvaluacionDAO:
         return await EvaluacionDAO.get_by_id(db, id_evaluacion)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_evaluacion: int) -> bool:
+    async def delete(db: AsyncSession, id_evaluacion: uuid.UUID) -> bool:
         """Eliminar evaluación (soft delete)"""
         stmt = update(Evaluacion).where(
             Evaluacion.id_evaluacion == id_evaluacion
@@ -220,7 +274,7 @@ class EvaluacionDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_evaluacion: int) -> bool:
+    async def hard_delete(db: AsyncSession, id_evaluacion: uuid.UUID) -> bool:
         """Eliminar evaluación permanentemente"""
         query = select(Evaluacion).where(Evaluacion.id_evaluacion == id_evaluacion)
         result = await db.execute(query)
@@ -247,7 +301,7 @@ class EvaluacionDAO:
         return result.scalar()
     
     @staticmethod
-    async def count_by_cronograma(db: AsyncSession, id_cronograma: int) -> int:
+    async def count_by_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> int:
         """Contar evaluaciones por cronograma"""
         query = select(func.count(Evaluacion.id_evaluacion)).where(
             and_(
@@ -350,7 +404,7 @@ class EvaluacionDAO:
         return stats
     
     @staticmethod
-    async def get_evaluaciones_by_ponderacion_total(db: AsyncSession, id_cronograma: int) -> Decimal:
+    async def get_evaluaciones_by_ponderacion_total(db: AsyncSession, id_cronograma: uuid.UUID) -> Decimal:
         """Obtener suma total de ponderaciones por cronograma"""
         query = select(func.sum(Evaluacion.ponderacion)).where(
             and_(

@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime, time, date
 from decimal import Decimal
 from enum import Enum
+import uuid
 
 
 class TipoEvaluacion(str, Enum):
@@ -13,8 +14,8 @@ class TipoEvaluacion(str, Enum):
 
 
 class Evaluacion(BaseModel):
-    id_evaluacion: Optional[int] = Field(None, description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_evaluacion: Optional[uuid.UUID] = Field(None, description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., min_length=3, max_length=200, description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -27,14 +28,16 @@ class Evaluacion(BaseModel):
     fecha_creacion: Optional[datetime] = Field(None, description="Fecha de creación del registro")
     fecha_modificacion: Optional[datetime] = Field(None, description="Fecha de última modificación")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v < 0 or v > 100:
             raise ValueError('La ponderación debe estar entre 0 y 100')
@@ -58,7 +61,7 @@ class Evaluacion(BaseModel):
 
 
 class EvaluacionCreate(BaseModel):
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., min_length=3, max_length=200, description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -68,14 +71,16 @@ class EvaluacionCreate(BaseModel):
     ponderacion: Decimal = Field(..., ge=0, le=100, description="Ponderación de la evaluación (0-100%)")
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la evaluación")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v < 0 or v > 100:
             raise ValueError('La ponderación debe estar entre 0 y 100')
@@ -108,14 +113,16 @@ class EvaluacionUpdate(BaseModel):
     observaciones: Optional[str] = Field(None, max_length=1000, description="Observaciones adicionales sobre la evaluación")
     status: Optional[bool] = Field(None, description="Estado del registro (activo/inactivo)")
 
-    @validator('hora_fin')
-    def validate_hora_fin(cls, v, values):
-        if v and 'hora_inicio' in values and values['hora_inicio']:
-            if v <= values['hora_inicio']:
+    @field_validator('hora_fin')
+    @classmethod
+    def validate_hora_fin(cls, v, info):
+        if v and info.data and info.data.get('hora_inicio'):
+            if v <= info.data['hora_inicio']:
                 raise ValueError('La hora de fin debe ser posterior a la hora de inicio')
         return v
 
-    @validator('ponderacion')
+    @field_validator('ponderacion')
+    @classmethod
     def validate_ponderacion(cls, v):
         if v is not None and (v < 0 or v > 100):
             raise ValueError('La ponderación debe estar entre 0 y 100')
@@ -137,8 +144,8 @@ class EvaluacionUpdate(BaseModel):
 
 
 class EvaluacionResponse(BaseModel):
-    id_evaluacion: int = Field(..., description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma al que pertenece")
+    id_evaluacion: uuid.UUID = Field(..., description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma al que pertenece")
     nombre: str = Field(..., description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, description="Descripción detallada de la evaluación")
     fecha: date = Field(..., description="Fecha programada de la evaluación")
@@ -157,8 +164,8 @@ class EvaluacionResponse(BaseModel):
 
 # Schema para mostrar evaluación con información del cronograma
 class EvaluacionConCronograma(BaseModel):
-    id_evaluacion: int = Field(..., description="Identificador único de la evaluación")
-    id_cronograma: int = Field(..., description="ID del cronograma")
+    id_evaluacion: uuid.UUID = Field(..., description="Identificador único de la evaluación")
+    id_cronograma: uuid.UUID = Field(..., description="ID del cronograma")
     nombre: str = Field(..., description="Nombre de la evaluación")
     descripcion: Optional[str] = Field(None, description="Descripción de la evaluación")
     fecha: date = Field(..., description="Fecha de la evaluación")

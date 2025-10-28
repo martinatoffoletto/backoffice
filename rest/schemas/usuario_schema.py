@@ -74,6 +74,6 @@ class UsuarioUpdate(BaseModel):
                 "nombre": "Juan Carlos",
                 "apellido": "Gómez",
                 "dni": "87654321",
-                "correo_institucional": "juan.gomez@campusconnect.edu.ar",
+                "correo_institucional": "juan.gomez@campusconnect.edu.ar"
             }
         }

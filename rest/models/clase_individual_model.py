@@ -1,8 +1,10 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Time, Enum, Date
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base
 import enum
+import uuid
 
 class EstadoClase(enum.Enum):
     PROGRAMADA = "programada"
@@ -13,8 +15,8 @@ class EstadoClase(enum.Enum):
 class ClaseIndividual(Base):
     __tablename__ = "clases_individuales"
     
-    id_clase = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    id_cronograma = Column(Integer, ForeignKey("cronogramas.id_cronograma", ondelete="CASCADE"), nullable=False, comment="ID del cronograma al que pertenece")
+    id_clase = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
+    id_cronograma = Column(UUID(as_uuid=True), ForeignKey("cronogramas.id_cronograma", ondelete="CASCADE"), nullable=False, comment="ID del cronograma al que pertenece")
     titulo = Column(String(200), nullable=False, comment="Título de la clase")
     descripcion = Column(Text, nullable=True, comment="Descripción detallada de la clase")
     fecha_clase = Column(Date, nullable=False, comment="Fecha programada de la clase")

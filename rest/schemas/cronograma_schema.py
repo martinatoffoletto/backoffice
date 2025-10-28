@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime, date
+import uuid
 
 
 class Cronograma(BaseModel):
-    id_cronograma: Optional[int] = Field(None, description="Identificador único del cronograma")
+    id_cronograma: Optional[uuid.UUID] = Field(None, description="Identificador único del cronograma")
     course_id: int = Field(..., description="ID del curso proveniente del módulo CORE")
     course_name: str = Field(..., min_length=3, max_length=200, description="Nombre del curso (cacheado localmente)")
     total_classes: int = Field(..., ge=0, description="Cantidad total de clases planificadas")
@@ -15,10 +16,11 @@ class Cronograma(BaseModel):
     fecha_modificacion: Optional[datetime] = Field(None, description="Fecha de última modificación")
     status: bool = Field(True, description="Estado del cronograma (activo/inactivo)")
 
-    @validator('fecha_fin')
-    def validate_fecha_fin(cls, v, values):
-        if v and 'fecha_inicio' in values and values['fecha_inicio']:
-            if v < values['fecha_inicio']:
+    @field_validator('fecha_fin')
+    @classmethod
+    def validate_fecha_fin(cls, v, info):
+        if v and info.data and info.data.get('fecha_inicio'):
+            if v < info.data['fecha_inicio']:
                 raise ValueError('La fecha de fin debe ser posterior a la fecha de inicio')
         return v
 
@@ -45,10 +47,11 @@ class CronogramaCreate(BaseModel):
     fecha_fin: Optional[date] = Field(None, description="Fecha de fin del cronograma")
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción del cronograma")
 
-    @validator('fecha_fin')
-    def validate_fecha_fin(cls, v, values):
-        if v and 'fecha_inicio' in values and values['fecha_inicio']:
-            if v < values['fecha_inicio']:
+    @field_validator('fecha_fin')
+    @classmethod
+    def validate_fecha_fin(cls, v, info):
+        if v and info.data and info.data.get('fecha_inicio'):
+            if v < info.data['fecha_inicio']:
                 raise ValueError('La fecha de fin debe ser posterior a la fecha de inicio')
         return v
 
@@ -74,10 +77,11 @@ class CronogramaUpdate(BaseModel):
     descripcion: Optional[str] = Field(None, max_length=1000, description="Descripción del cronograma")
     status: Optional[bool] = Field(None, description="Estado del cronograma (activo/inactivo)")
 
-    @validator('fecha_fin')
-    def validate_fecha_fin(cls, v, values):
-        if v and 'fecha_inicio' in values and values['fecha_inicio']:
-            if v < values['fecha_inicio']:
+    @field_validator('fecha_fin')
+    @classmethod
+    def validate_fecha_fin(cls, v, info):
+        if v and info.data and info.data.get('fecha_inicio'):
+            if v < info.data['fecha_inicio']:
                 raise ValueError('La fecha de fin debe ser posterior a la fecha de inicio')
         return v
 
@@ -92,7 +96,7 @@ class CronogramaUpdate(BaseModel):
 
 
 class CronogramaResponse(BaseModel):
-    id_cronograma: int = Field(..., description="Identificador único del cronograma")
+    id_cronograma: uuid.UUID = Field(..., description="Identificador único del cronograma")
     course_id: int = Field(..., description="ID del curso")
     course_name: str = Field(..., description="Nombre del curso")
     total_classes: int = Field(..., description="Total de clases planificadas")

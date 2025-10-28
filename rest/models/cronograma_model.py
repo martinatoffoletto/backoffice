@@ -1,12 +1,14 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Date
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .base import Base
+import uuid
 
 class Cronograma(Base):
     __tablename__ = "cronogramas"
     
-    id_cronograma = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_cronograma = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     course_id = Column(Integer, nullable=False, index=True, comment="ID del curso del módulo CORE")
     course_name = Column(String(200), nullable=False, comment="Nombre del curso cacheado localmente")
     total_classes = Column(Integer, default=0, nullable=False, comment="Total de clases planificadas")

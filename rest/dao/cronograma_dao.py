@@ -1,16 +1,39 @@
+"""
+DAO (Data Access Object) para la gestión de cronogramas.
+
+Este módulo contiene todas las operaciones de base de datos relacionadas con cronogramas,
+incluyendo operaciones CRUD básicas y consultas especializadas.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, and_, or_, func
 from ..models.cronograma_model import Cronograma
 from ..schemas.cronograma_schema import CronogramaCreate, CronogramaUpdate
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime, date
+import uuid
 
 class CronogramaDAO:
+    """
+    Clase DAO para operaciones de base de datos relacionadas con cronogramas.
+    
+    Proporciona métodos para crear, leer, actualizar y eliminar cronogramas,
+    así como consultas especializadas por diferentes criterios.
+    """
     
     @staticmethod
     async def create(db: AsyncSession, cronograma: CronogramaCreate) -> Cronograma:
-        """Crear un nuevo cronograma"""
+        """
+        Crear un nuevo cronograma en la base de datos.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            cronograma: Datos del cronograma a crear
+            
+        Returns:
+            Cronograma: El cronograma creado con su ID generado
+        """
         cronograma_data = cronograma.model_dump()
         db_cronograma = Cronograma(**cronograma_data)
         db.add(db_cronograma)
@@ -19,8 +42,17 @@ class CronogramaDAO:
         return db_cronograma
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_cronograma: int) -> Optional[Cronograma]:
-        """Obtener cronograma por ID"""
+    async def get_by_id(db: AsyncSession, id_cronograma: uuid.UUID) -> Optional[Cronograma]:
+        """
+        Obtener un cronograma por su ID.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma a buscar
+            
+        Returns:
+            Optional[Cronograma]: El cronograma encontrado o None si no existe
+        """
         query = select(Cronograma).where(
             and_(
                 Cronograma.id_cronograma == id_cronograma,
@@ -32,7 +64,18 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Cronograma]:
-        """Obtener todos los cronogramas"""
+        """
+        Obtener todos los cronogramas con filtros opcionales.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            status_filter: Filtrar por estado (True=activo, False=inactivo, None=todos activos)
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas encontrados
+        """
         query = select(Cronograma)
         
         if status_filter is not None:
@@ -48,7 +91,18 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_by_course_id(db: AsyncSession, course_id: int, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por ID de curso"""
+        """
+        Obtener cronogramas por ID de curso.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            course_id: ID del curso del módulo CORE
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas del curso especificado
+        """
         query = select(Cronograma).where(
             and_(
                 Cronograma.course_id == course_id,
@@ -63,7 +117,18 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_by_course_name(db: AsyncSession, course_name: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por nombre de curso"""
+        """
+        Obtener cronogramas por nombre de curso (búsqueda parcial).
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            course_name: Nombre del curso a buscar (búsqueda parcial)
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas que coinciden con el nombre
+        """
         query = select(Cronograma).where(
             and_(
                 Cronograma.course_name.ilike(f"%{course_name}%"),
@@ -78,7 +143,19 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_by_date_range(db: AsyncSession, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas por rango de fechas"""
+        """
+        Obtener cronogramas por rango de fechas.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            fecha_inicio: Fecha de inicio del rango
+            fecha_fin: Fecha de fin del rango
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas en el rango de fechas
+        """
         query = select(Cronograma).where(
             and_(
                 Cronograma.fecha_inicio >= fecha_inicio,
@@ -93,8 +170,18 @@ class CronogramaDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def update(db: AsyncSession, id_cronograma: int, cronograma: CronogramaUpdate) -> Optional[Cronograma]:
-        """Actualizar cronograma"""
+    async def update(db: AsyncSession, id_cronograma: uuid.UUID, cronograma: CronogramaUpdate) -> Optional[Cronograma]:
+        """
+        Actualizar un cronograma existente.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma a actualizar
+            cronograma: Datos a actualizar (solo campos proporcionados)
+            
+        Returns:
+            Optional[Cronograma]: El cronograma actualizado o None si no existe
+        """
         # Obtener el cronograma existente
         existing_cronograma = await CronogramaDAO.get_by_id(db, id_cronograma)
         if not existing_cronograma:
@@ -120,8 +207,17 @@ class CronogramaDAO:
         return await CronogramaDAO.get_by_id(db, id_cronograma)
     
     @staticmethod
-    async def delete(db: AsyncSession, id_cronograma: int) -> bool:
-        """Eliminar cronograma (soft delete)"""
+    async def delete(db: AsyncSession, id_cronograma: uuid.UUID) -> bool:
+        """
+        Eliminar cronograma (soft delete - marca como inactivo).
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma a eliminar
+            
+        Returns:
+            bool: True si se eliminó correctamente, False en caso contrario
+        """
         stmt = update(Cronograma).where(
             Cronograma.id_cronograma == id_cronograma
         ).values(
@@ -135,8 +231,17 @@ class CronogramaDAO:
         return result.rowcount > 0
     
     @staticmethod
-    async def hard_delete(db: AsyncSession, id_cronograma: int) -> bool:
-        """Eliminar cronograma permanentemente"""
+    async def hard_delete(db: AsyncSession, id_cronograma: uuid.UUID) -> bool:
+        """
+        Eliminar cronograma permanentemente de la base de datos.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma a eliminar
+            
+        Returns:
+            bool: True si se eliminó correctamente, False en caso contrario
+        """
         query = select(Cronograma).where(Cronograma.id_cronograma == id_cronograma)
         result = await db.execute(query)
         cronograma = result.scalar_one_or_none()
@@ -150,7 +255,16 @@ class CronogramaDAO:
     
     @staticmethod
     async def count(db: AsyncSession, status_filter: Optional[bool] = None) -> int:
-        """Contar cronogramas"""
+        """
+        Contar cronogramas con filtro opcional.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            status_filter: Filtrar por estado (True=activo, False=inactivo, None=todos activos)
+            
+        Returns:
+            int: Número total de cronogramas que cumplen el filtro
+        """
         query = select(func.count(Cronograma.id_cronograma))
         
         if status_filter is not None:
@@ -163,12 +277,31 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_active_cronogramas_count(db: AsyncSession) -> int:
-        """Obtener conteo de cronogramas activos"""
+        """
+        Obtener conteo de cronogramas activos.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            
+        Returns:
+            int: Número de cronogramas activos
+        """
         return await CronogramaDAO.count(db, status_filter=True)
     
     @staticmethod
     async def search(db: AsyncSession, search_term: str, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Buscar cronogramas por término"""
+        """
+        Buscar cronogramas por término de búsqueda.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            search_term: Término a buscar en nombre del curso y descripción
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas que coinciden con el término
+        """
         query = select(Cronograma).where(
             and_(
                 or_(
@@ -186,7 +319,17 @@ class CronogramaDAO:
     
     @staticmethod
     async def get_cronogramas_with_classes(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Cronograma]:
-        """Obtener cronogramas que tienen clases asociadas"""
+        """
+        Obtener cronogramas que tienen clases asociadas.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            
+        Returns:
+            List[Cronograma]: Lista de cronogramas con clases asociadas
+        """
         query = select(Cronograma).where(
             and_(
                 Cronograma.total_classes > 0,

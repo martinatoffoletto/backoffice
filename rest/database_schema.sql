@@ -45,6 +45,14 @@ CREATE TABLE usuario_roles (
     FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE
 );
 
+CREATE TABLE usuario_carreras (
+    id_usuario UUID NOT NULL,
+    id_carrera UUID NOT NULL,
+    PRIMARY KEY (id_usuario, id_carrera),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_carrera) REFERENCES carreras(id_carrera) ON DELETE CASCADE
+);
+
 
 CREATE TABLE parametros (
     id_parametro SERIAL PRIMARY KEY,
@@ -87,7 +95,7 @@ CREATE TABLE sueldos (
 
 
 CREATE TABLE cronogramas (
-    id_cronograma SERIAL PRIMARY KEY,
+    id_cronograma UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id INTEGER NOT NULL,
     course_name VARCHAR(200) NOT NULL,
     total_classes INTEGER DEFAULT 0,
@@ -101,8 +109,8 @@ CREATE TABLE cronogramas (
 
 
 CREATE TABLE clases_individuales (
-    id_clase SERIAL PRIMARY KEY,
-    id_cronograma INTEGER NOT NULL,
+    id_clase UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_cronograma UUID NOT NULL,
     titulo VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha_clase DATE NOT NULL,
@@ -117,8 +125,8 @@ CREATE TABLE clases_individuales (
 );
 
 CREATE TABLE evaluaciones (
-    id_evaluacion SERIAL PRIMARY KEY,
-    id_cronograma INTEGER NOT NULL,
+    id_evaluacion UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_cronograma UUID NOT NULL,
     nombre VARCHAR(200) NOT NULL,
     descripcion TEXT,
     fecha DATE NOT NULL,
@@ -152,6 +160,8 @@ CREATE INDEX idx_clases_cronograma ON clases_individuales(id_cronograma);
 CREATE INDEX idx_clases_fecha ON clases_individuales(fecha_clase);
 CREATE INDEX idx_evaluaciones_cronograma ON evaluaciones(id_cronograma);
 CREATE INDEX idx_evaluaciones_fecha ON evaluaciones(fecha);
+CREATE INDEX idx_usuario_carreras_usuario ON usuario_carreras(id_usuario);
+CREATE INDEX idx_usuario_carreras_carrera ON usuario_carreras(id_carrera);
 
 
 INSERT INTO roles (nombre_rol, descripcion) VALUES

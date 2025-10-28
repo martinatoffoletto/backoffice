@@ -1,3 +1,10 @@
+"""
+Servicio de lógica de negocio para cronogramas.
+
+Este módulo contiene la lógica de negocio para la gestión de cronogramas,
+incluyendo validaciones, reglas de negocio y coordinación entre DAOs.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.cronograma_dao import CronogramaDAO
 from ..schemas.cronograma_schema import CronogramaCreate, CronogramaUpdate, CronogramaResponse
@@ -5,14 +12,30 @@ from ..models.cronograma_model import Cronograma
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, date
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
 class CronogramaService:
+    """
+    Servicio de lógica de negocio para cronogramas.
+    
+    Proporciona métodos de alto nivel para la gestión de cronogramas,
+    incluyendo validaciones de negocio y coordinación entre componentes.
+    """
     
     @staticmethod
     async def create_cronograma(db: AsyncSession, cronograma: CronogramaCreate) -> Tuple[Optional[CronogramaResponse], str]:
-        """Crear un nuevo cronograma con validaciones de negocio"""
+        """
+        Crear un nuevo cronograma con validaciones de negocio.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            cronograma: Datos del cronograma a crear
+            
+        Returns:
+            Tuple[Optional[CronogramaResponse], str]: Tupla con el cronograma creado (o None) y mensaje
+        """
         try:
             # Validar que el course_id no esté duplicado para el mismo curso
             existing_cronogramas = await CronogramaDAO.get_by_course_id(db, cronograma.course_id)
@@ -38,8 +61,17 @@ class CronogramaService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def get_cronograma_by_id(db: AsyncSession, id_cronograma: int) -> Tuple[Optional[CronogramaResponse], str]:
-        """Obtener cronograma por ID"""
+    async def get_cronograma_by_id(db: AsyncSession, id_cronograma: uuid.UUID) -> Tuple[Optional[CronogramaResponse], str]:
+        """
+        Obtener un cronograma por su ID.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            id_cronograma: UUID del cronograma a buscar
+            
+        Returns:
+            Tuple[Optional[CronogramaResponse], str]: Tupla con el cronograma (o None) y mensaje
+        """
         try:
             cronograma = await CronogramaDAO.get_by_id(db, id_cronograma)
             if not cronograma:
@@ -59,7 +91,18 @@ class CronogramaService:
         limit: int = 100, 
         status_filter: Optional[bool] = None
     ) -> Tuple[List[CronogramaResponse], str]:
-        """Obtener todos los cronogramas con filtros"""
+        """
+        Obtener todos los cronogramas con filtros opcionales.
+        
+        Args:
+            db: Sesión de base de datos asíncrona
+            skip: Número de registros a omitir (paginación)
+            limit: Número máximo de registros a retornar
+            status_filter: Filtrar por estado (True=activo, False=inactivo, None=todos activos)
+            
+        Returns:
+            Tuple[List[CronogramaResponse], str]: Tupla con lista de cronogramas y mensaje
+        """
         try:
             cronogramas = await CronogramaDAO.get_all(db, skip, limit, status_filter)
             
@@ -124,7 +167,7 @@ class CronogramaService:
     @staticmethod
     async def update_cronograma(
         db: AsyncSession, 
-        id_cronograma: int, 
+        id_cronograma: uuid.UUID, 
         cronograma_update: CronogramaUpdate
     ) -> Tuple[Optional[CronogramaResponse], str]:
         """Actualizar cronograma con validaciones"""
@@ -164,7 +207,7 @@ class CronogramaService:
             return None, f"Error interno: {str(e)}"
     
     @staticmethod
-    async def delete_cronograma(db: AsyncSession, id_cronograma: int) -> Tuple[bool, str]:
+    async def delete_cronograma(db: AsyncSession, id_cronograma: uuid.UUID) -> Tuple[bool, str]:
         """Eliminar cronograma (soft delete)"""
         try:
             # Verificar que el cronograma existe
