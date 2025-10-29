@@ -1,28 +1,51 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Any
-from ..database import get_db
+from ..schemas.auth_schema import LoginRequest, AuthResponse, VerifyResponse
+from ..service.auth_service import AuthService
+from ..database import get_async_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/login", response_model=Dict[str, Any])
+@router.post("/login", response_model=AuthResponse)
 async def login(
-    username: str,
-    password: str,
-    db: AsyncSession = Depends(get_db)
+    login_request: LoginRequest,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    # TODO: Implementar lógica de autenticación
-    return {
-        "message": "Authentication endpoint - To be implemented",
-        "username": username,
-        "status": "placeholder"
-    }
+    """
+    Autenticar usuario por email institucional y contraseña hasheada.
+    Retorna información completa del usuario + rol.
+    """
+    try:
+        auth_response = await AuthService.authenticate_user(db, login_request)
+        
+        if not auth_response:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales incorrectas o usuario inactivo"
+            )
+        
+        return auth_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en el login: {str(e)}"
+        )
 
-@router.post("/logout")
-async def logout():
-    # TODO: Implementar lógica de logout
-    return {"message": "Logout endpoint - To be implemented"}
-
-@router.get("/status")
-async def auth_status():
-    return {"message": "Auth service is running"}
+@router.get("/verify/{email_institucional}", response_model=VerifyResponse)
+async def verify_user_exists(
+    email_institucional: str,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Verificar si un usuario existe y está activo por email institucional
+    """
+    try:
+        return await AuthService.verify_user_exists_and_active(db, email_institucional)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al verificar usuario: {str(e)}"
+        )

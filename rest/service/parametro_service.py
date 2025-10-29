@@ -1,61 +1,60 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.parametro_dao import ParametroDAO
-from ..schemas.parametro_schema import Parametro as ParametroSchema
+from ..schemas.parametro_schema import ParametroCreate, ParametroUpdate, Parametro
 from typing import List, Optional, Dict
-from fastapi import HTTPException, status, Depends
-from ..database import get_db # Importar get_db
+from fastapi import HTTPException, status
+import uuid
 
 class ParametroService:
     
-    def __init__(self, db: Session):
-        self.db = db
-        self.parametro_dao = ParametroDAO()
-    
-    def create_parametro(self, parametro: ParametroSchema, created_by: str) -> dict:
+    @staticmethod
+    async def create_parametro(db: AsyncSession, parametro: ParametroCreate) -> dict:
         """Crear un nuevo parámetro del sistema"""
         # Validar que no exista un parámetro con el mismo nombre
-        if self.parametro_dao.exists_by_nombre(self.db, parametro.nombre):
+        if await ParametroDAO.exists_by_nombre(db, parametro.nombre):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Ya existe un parámetro con el nombre '{parametro.nombre}'"
             )
         
-        # (El DAO se encarga de 'created_by' si se lo pasamos en el schema, 
-        # pero el schema 'Parametro' no tiene 'created_by'.
-        # Lo ideal sería tener un 'ParametroCreate' schema que lo incluya)
-        
         # Crear el parámetro
-        new_parametro = self.parametro_dao.create(self.db, parametro)
+        new_parametro = await ParametroDAO.create(db, parametro)
         
         return {
             "message": "Parámetro creado exitosamente",
-            "parametro": new_parametro,
-            "created_by": created_by # Devolvemos el usuario, aunque no se guarde
+            "parametro": Parametro.model_validate(new_parametro)
         }
     
-    def get_parametro_by_id(self, id_parametro: int) -> dict:
+    @staticmethod
+    async def get_parametro_by_id(db: AsyncSession, id_parametro: uuid.UUID) -> dict:
         """Obtener parámetro por ID"""
-        parametro = self.parametro_dao.get_by_id(self.db, id_parametro)
+        parametro = await ParametroDAO.get_by_id(db, id_parametro)
         if not parametro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No se encontró el parámetro con ID {id_parametro}"
             )
-        return {"parametro": parametro}
+        return {
+            "parametro": Parametro.model_validate(parametro)
+        }
     
-    def get_parametro_by_nombre(self, nombre: str) -> dict:
+    @staticmethod
+    async def get_parametro_by_nombre(db: AsyncSession, nombre: str) -> dict:
         """Obtener parámetro por nombre"""
-        parametro = self.parametro_dao.get_by_nombre(self.db, nombre)
+        parametro = await ParametroDAO.get_by_nombre(db, nombre)
         if not parametro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No se encontró el parámetro con nombre '{nombre}'"
             )
-        return {"parametro": parametro}
+        return {
+            "parametro": Parametro.model_validate(parametro)
+        }
     
-    def get_parametro_valores(self, nombre: str) -> dict:
+    @staticmethod
+    async def get_parametro_valores(db: AsyncSession, nombre: str) -> dict:
         """Obtener los valores de un parámetro"""
-        valores = self.parametro_dao.get_valores_by_nombre(self.db, nombre)
+        valores = await ParametroDAO.get_valores_by_nombre(db, nombre)
         if valores is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -63,75 +62,87 @@ class ParametroService:
             )
         return {"nombre": nombre, "valores": valores}
     
-    def get_all_parametros(self, skip: int = 0, limit: int = 100) -> dict:
+    @staticmethod
+    async def get_all_parametros(db: AsyncSession, skip: int = 0, limit: int = 100) -> dict:
         """Obtener todos los parámetros activos"""
-        parametros = self.parametro_dao.get_all(self.db, skip, limit)
+        parametros = await ParametroDAO.get_all(db, skip, limit)
         
         return {
-            "parametros": parametros,
-            "total": len(parametros),
+            "message": f"Se encontraron {len(parametros)} parámetros",
+            "parametros": [Parametro.model_validate(p) for p in parametros],
+            "count": len(parametros),
             "skip": skip,
             "limit": limit
         }
     
-    def get_parametros_by_tipo(self, tipo: str, skip: int = 0, limit: int = 100) -> dict:
+    @staticmethod
+    async def get_parametros_by_tipo(db: AsyncSession, tipo: str, skip: int = 0, limit: int = 100) -> dict:
         """Obtener parámetros por tipo"""
-        parametros = self.parametro_dao.get_by_tipo(self.db, tipo, skip, limit)
+        parametros = await ParametroDAO.get_by_tipo(db, tipo, skip, limit)
         
         return {
-            "parametros": parametros,
+            "message": f"Se encontraron {len(parametros)} parámetros del tipo '{tipo}'",
+            "parametros": [Parametro.model_validate(p) for p in parametros],
             "tipo": tipo,
-            "total": len(parametros),
+            "count": len(parametros),
             "skip": skip,
             "limit": limit
         }
 
-    def search_parametros_by_nombre(self, nombre_pattern: str, skip: int = 0, limit: int = 100) -> dict:
+    @staticmethod
+    async def search_parametros_by_nombre(db: AsyncSession, nombre_pattern: str, skip: int = 0, limit: int = 100) -> dict:
         """Buscar parámetros por nombre"""
-        parametros = self.parametro_dao.search_by_nombre(self.db, nombre_pattern, skip, limit)
+        parametros = await ParametroDAO.search_by_nombre(db, nombre_pattern, skip, limit)
         
         return {
-            "parametros": parametros,
-            "search_term": nombre_pattern,
-            "total_found": len(parametros),
+            "message": f"Se encontraron {len(parametros)} parámetros que contienen '{nombre_pattern}'",
+            "parametros": [Parametro.model_validate(p) for p in parametros],
+            "search_pattern": nombre_pattern,
+            "count": len(parametros),
             "skip": skip,
             "limit": limit
         }
     
-    def update_parametro(self, id_parametro: int, parametro_update: ParametroSchema, updated_by: str) -> dict:
+    @staticmethod
+    async def update_parametro(db: AsyncSession, id_parametro: uuid.UUID, parametro_update: ParametroUpdate) -> dict:
         """Actualizar parámetro con validaciones"""
-        existing_parametro = self.parametro_dao.get_by_id(self.db, id_parametro)
+        # Verificar que existe
+        existing_parametro = await ParametroDAO.get_by_id(db, id_parametro)
         if not existing_parametro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No se encontró el parámetro con ID {id_parametro}"
             )
         
+        # Validar unicidad del nombre si se está actualizando
         if parametro_update.nombre and parametro_update.nombre != existing_parametro.nombre:
-            if self.parametro_dao.exists_by_nombre(self.db, parametro_update.nombre):
+            if await ParametroDAO.exists_by_nombre(db, parametro_update.nombre, exclude_id=id_parametro):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Ya existe un parámetro con el nombre '{parametro_update.nombre}'"
                 )
         
-        updated_parametro = self.parametro_dao.update(self.db, id_parametro, parametro_update)
+        # Actualizar
+        updated_parametro = await ParametroDAO.update(db, id_parametro, parametro_update)
         
         return {
             "message": "Parámetro actualizado exitosamente",
-            "parametro": updated_parametro,
-            "updated_by": updated_by
+            "parametro": Parametro.model_validate(updated_parametro)
         }
     
-    def delete_parametro(self, id_parametro: int, deleted_by: str) -> dict:
+    @staticmethod
+    async def delete_parametro(db: AsyncSession, id_parametro: uuid.UUID) -> dict:
         """Eliminar parámetro lógicamente"""
-        parametro = self.parametro_dao.get_by_id(self.db, id_parametro)
+        # Verificar que existe
+        parametro = await ParametroDAO.get_by_id(db, id_parametro)
         if not parametro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No se encontró el parámetro con ID {id_parametro}"
             )
         
-        success = self.parametro_dao.soft_delete(self.db, id_parametro, deleted_by)
+        # Eliminar lógicamente
+        success = await ParametroDAO.soft_delete(db, id_parametro)
         
         if not success:
             raise HTTPException(
@@ -141,8 +152,10 @@ class ParametroService:
         
         return {
             "message": f"Parámetro '{parametro.nombre}' eliminado exitosamente",
-            "deleted_by": deleted_by
+            "id_parametro": id_parametro
         }
-
-def get_parametro_service(db: Session = Depends(get_db)) -> ParametroService:
-    return ParametroService(db)
+    
+    @staticmethod
+    async def get_all_tipos(db: AsyncSession) -> List[str]:
+        """Obtener todos los tipos de parámetros disponibles"""
+        return await ParametroDAO.get_all_tipos(db)

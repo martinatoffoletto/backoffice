@@ -1,80 +1,133 @@
 import os
 import logging
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import text  
+from sqlalchemy import text
 from dotenv import load_dotenv
 from .models.base import Base
-from . import models
+from . import models 
 
 load_dotenv()
 logger = logging.getLogger(__name__)
-DATABASE_HOST = os.getenv('DATABASE_HOST', 'localhost')
-DATABASE_PORT = os.getenv('DATABASE_PORT', '5432')
-DATABASE_NAME = os.getenv('DATABASE_NAME', 'backoffice_db')
-DATABASE_USER = os.getenv('DATABASE_USER', 'postgres')
-DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD', '')
 
-DISABLE_DATABASE = os.getenv('DISABLE_DATABASE', 'false').lower() == 'true'
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'production').lower()
+HOSTED_DATABASE_URL = os.getenv('HOSTED_DATABASE_URL', '')
+LOCAL_DATABASE_URL = os.getenv('DATABASE_URL', '')
 
-DATABASE_URL = f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
-
-# Initialize engine and session only if database is enabled
 engine = None
 AsyncSessionLocal = None
+CONNECTION_TYPE = "No inicializado"
 
-if not DISABLE_DATABASE:
-    engine = create_async_engine(DATABASE_URL, echo=False)
-    AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+def _normalize_to_asyncpg(url: str) -> str:
+    if not url:
+        return url
+    if url.startswith("postgres://"):
+        return "postgresql+asyncpg://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + url[len("postgresql://"):]
+    return url
+
+
+async def _test_connection(url: str) -> bool:
+    try:
+        test_engine = create_async_engine(
+            url, 
+            echo=False,
+            connect_args={"ssl": True} if "render.com" in url else {}
+        )
+        async with test_engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        await test_engine.dispose()
+        return True
+    except Exception as e:
+        logger.warning(f"Connection failed: {e}")
+        return False
+
+
+async def _get_database_url() -> tuple[str, str]:
+    if ENVIRONMENT == 'development':
+        if HOSTED_DATABASE_URL:
+            hosted_url = _normalize_to_asyncpg(HOSTED_DATABASE_URL)
+            if await _test_connection(hosted_url):
+                return hosted_url, "Hosteada (Render)"
+        
+        if LOCAL_DATABASE_URL:
+            local_url = _normalize_to_asyncpg(LOCAL_DATABASE_URL)
+            if await _test_connection(local_url):
+                return local_url, "Local"
+        
+        return "", "Mock (desarrollo)"
+    
+    else:  # PRODUCTION
+        render_url = os.getenv('DATABASE_URL', HOSTED_DATABASE_URL).strip()
+        if render_url:
+            normalized_url = _normalize_to_asyncpg(render_url)
+            if await _test_connection(normalized_url):
+                return normalized_url, "Hosteada (Producción)"
+        
+        return "", "Mock (producción - error)"
+
 
 async def init_database():
-    if DISABLE_DATABASE:
-        logger.warning("⚠️ Database is disabled via DISABLE_DATABASE environment variable")
-        print("⚠️ Database is disabled - running without database")
-        return
-        
-    if not engine:
-        logger.error("❌ Database engine not initialized")
-        return
-        
+    global engine, AsyncSessionLocal, CONNECTION_TYPE
+    
     try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        print(f"✓ Database connected: {DATABASE_NAME}")
-        await list_tables()
-    except Exception as e:
-        logger.error(f"Database connection failed: {e}")
-        print(f"⚠️ Database connection failed: {e}")
-        print("🔄 Application will continue without database")
-        # Don't raise the exception - let app continue
-
-async def list_tables():
-    if DISABLE_DATABASE or not engine:
-        return
+        database_url, connection_type = await _get_database_url()
+        CONNECTION_TYPE = connection_type
         
+        if database_url:
+            connect_args = {}
+            if "render.com" in database_url:
+                connect_args["ssl"] = True
+                
+            engine = create_async_engine(
+                database_url,
+                echo=False,
+                pool_pre_ping=True,
+                pool_recycle=1800,
+                connect_args=connect_args
+            )
+            AsyncSessionLocal = async_sessionmaker(
+                engine, 
+                class_=AsyncSession, 
+                expire_on_commit=False
+            )
+            
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+                
+            print(f"✅ Base de datos inicializada: {CONNECTION_TYPE}")
+            await _list_tables()
+            
+        else:
+            print("🔄 Ejecutando en modo mock")
+            
+    except Exception as e:
+        logger.error(f"Error inicializando base de datos: {e}")
+        print("🔄 Continuando en modo mock")
+        CONNECTION_TYPE = "Mock (error en inicialización)"
+
+
+async def _list_tables():
+    if not engine:
+        return
     try:
         async with engine.begin() as conn:
             result = await conn.execute(text("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public'
-                ORDER BY table_name;
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public' ORDER BY table_name;
             """))
             tables = result.fetchall()
-            
             if tables:
-                print("✅ Tables found:")
+                print("📋 Tablas encontradas:")
                 for table in tables:
-                    print(f"   📋 {table[0]}")
-            else:
-                print("⚠️ No tables found in database")
-                
+                    print(f"   • {table[0]}")
     except Exception as e:
-        logger.error(f"Error listing tables: {e}")
-        print(f"❌ Error listing tables: {e}")
+        logger.error(f"Error listando tablas: {e}")
 
-async def get_db():
-    if DISABLE_DATABASE or not AsyncSessionLocal:
-        # Return a mock session that does nothing
+
+async def get_async_db():
+    if not AsyncSessionLocal:
         yield MockDatabaseSession()
         return
         
@@ -82,58 +135,49 @@ async def get_db():
         try:
             yield session
         except Exception as e:
-            logger.error(f"Database session error: {e}")
+            logger.error(f"Error en sesión de base de datos: {e}")
             await session.rollback()
             raise
         finally:
             await session.close()
 
-async def close_database():
-    if DISABLE_DATABASE or not engine:
-        print("✓ No database connection to close")
-        return
-        
-    try:
-        await engine.dispose()
-        print("✓ Database connection closed")
-    except Exception as e:
-        logger.error(f"Error closing database: {e}")
-        print(f"❌ Error closing database: {e}")
 
-# Mock database session for when database is disabled
+async def close_database():
+    global engine
+    if engine:
+        try:
+            await engine.dispose()
+            print("✅ Conexión cerrada")
+        except Exception as e:
+            logger.error(f"Error cerrando base de datos: {e}")
+
+
+def get_connection_status():
+    return {
+        "type": CONNECTION_TYPE,
+        "engine_active": engine is not None,
+        "session_active": AsyncSessionLocal is not None
+    }
+
+
 class MockDatabaseSession:
-    """Mock database session that does nothing when database is disabled"""
-    
-    async def add(self, instance):
-        logger.warning("Database disabled - add operation ignored")
-        
-    async def commit(self):
-        logger.warning("Database disabled - commit operation ignored")
-        
-    async def rollback(self):
-        logger.warning("Database disabled - rollback operation ignored")
-        
-    async def refresh(self, instance):
-        logger.warning("Database disabled - refresh operation ignored")
-        
-    async def execute(self, statement):
-        logger.warning("Database disabled - execute operation ignored")
-        return MockResult()
-        
-    async def close(self):
-        pass
+    async def add(self, instance): pass
+    async def commit(self): pass
+    async def rollback(self): pass
+    async def refresh(self, instance): pass
+    async def execute(self, statement): return MockResult()
+    async def close(self): pass
+
 
 class MockResult:
-    """Mock result for database queries when database is disabled"""
-    
-    def fetchall(self):
-        return []
-        
-    def fetchone(self):
-        return None
-        
-    def first(self):
-        return None
-        
-    def scalar(self):
-        return None
+    def fetchall(self): return []
+    def fetchone(self): return None
+    def first(self): return None
+    def scalar(self): return None
+    def scalar_one_or_none(self): return None
+    def scalars(self): return MockScalars()
+
+
+class MockScalars:
+    def all(self): return []
+    def first(self): return None

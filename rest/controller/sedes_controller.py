@@ -1,23 +1,21 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from ..schemas.sede_schema import Sede
-from ..database import get_db
-from ..service.sede_service import SedeService, get_sede_service
+import uuid
+from ..schemas.sede_schema import SedeCreate, SedeUpdate, Sede
+from ..database import get_async_db
+from ..service.sede_service import SedeService
 
 router = APIRouter(prefix="/sedes", tags=["Sedes"])
 
 @router.post("/", response_model=Sede, status_code=status.HTTP_201_CREATED)
 async def create_sede(
-    sede: Sede, 
-    created_by: str = Query(..., description="Usuario que crea la sede"),
-    sede_service: SedeService = Depends(get_sede_service)
+    sede: SedeCreate,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Crear una nueva sede.
-    """
+    """Crear una nueva sede"""
     try:
-        resultado = sede_service.create_sede(sede, created_by)
+        resultado = await SedeService.create_sede(db, sede)
         return resultado["sede"]
     
     except HTTPException:
@@ -32,13 +30,11 @@ async def create_sede(
 async def get_all_sedes(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    sede_service: SedeService = Depends(get_sede_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener todas las sedes activas con paginación.
-    """
+    """Obtener todas las sedes activas con paginación"""
     try:
-        resultado = sede_service.get_all_sedes(skip=skip, limit=limit)
+        resultado = await SedeService.get_all_sedes(db, skip=skip, limit=limit)
         return resultado["sedes"]
         
     except Exception as e:
@@ -49,17 +45,14 @@ async def get_all_sedes(
 
 @router.get("/{id_sede}", response_model=Sede)
 async def get_sede_by_id(
-    id_sede: int, 
-    sede_service: SedeService = Depends(get_sede_service)
+    id_sede: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener una sede por su ID.
-    """
+    """Obtener sede por ID"""
     try:
-        
-        resultado = sede_service.get_sede_by_id(id_sede)
+        resultado = await SedeService.get_sede_by_id(db, id_sede)
         return resultado["sede"]
-        
+    
     except HTTPException:
         raise
     except Exception as e:
@@ -68,24 +61,34 @@ async def get_sede_by_id(
             detail=f"Error al obtener la sede: {str(e)}"
         )
 
-@router.get("/search/nombre/{nombre}", response_model=List[Sede])
-async def get_sedes_by_name(
+@router.get("/nombre/{nombre}", response_model=Sede)
+async def get_sede_by_nombre(
     nombre: str,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    sede_service: SedeService = Depends(get_sede_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Buscar sedes por nombre (coincidencia parcial).
-    """
+    """Obtener sede por nombre"""
     try:
-        
-        resultado = sede_service.search_sedes(
-            search_term=nombre, 
-            search_type="nombre", 
-            skip=skip, 
-            limit=limit
+        resultado = await SedeService.get_sede_by_nombre(db, nombre)
+        return resultado["sede"]
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener la sede: {str(e)}"
         )
+
+@router.get("/search/nombre", response_model=List[Sede])
+async def search_sedes_by_nombre(
+    q: str = Query(..., description="Patrón de búsqueda en el nombre"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Buscar sedes por patrón en el nombre"""
+    try:
+        resultado = await SedeService.search_sedes_by_nombre(db, q, skip, limit)
         return resultado["sedes"]
         
     except Exception as e:
@@ -94,45 +97,35 @@ async def get_sedes_by_name(
             detail=f"Error al buscar sedes: {str(e)}"
         )
 
-@router.get("/search/ubicacion/{ubicacion}", response_model=List[Sede])
-async def get_sedes_by_ubicacion(
-    ubicacion: str,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    sede_service: SedeService = Depends(get_sede_service)
+@router.get("/search/ubicacion", response_model=List[Sede])
+async def search_sedes_by_ubicacion(
+    q: str = Query(..., description="Patrón de búsqueda en la ubicación"),
+    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Buscar sedes por ubicación (coincidencia parcial).
-    """
+    """Buscar sedes por patrón en la ubicación"""
     try:
-        resultado = sede_service.search_sedes(
-            search_term=ubicacion, 
-            search_type="direccion", 
-            skip=skip, 
-            limit=limit
-        )
+        resultado = await SedeService.search_sedes_by_ubicacion(db, q, skip, limit)
         return resultado["sedes"]
         
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar sedes por ubicación: {str(e)}"
+            detail=f"Error al buscar sedes: {str(e)}"
         )
 
 @router.put("/{id_sede}", response_model=Sede)
 async def update_sede(
-    id_sede: int, 
-    sede_update: Sede,
-    updated_by: str = Query(..., description="Usuario que actualiza la sede"),
-    sede_service: SedeService = Depends(get_sede_service)
+    id_sede: uuid.UUID,
+    sede_update: SedeUpdate,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Actualizar una sede por su ID.
-    """
+    """Actualizar una sede existente"""
     try:
-        resultado = sede_service.update_sede(id_sede, sede_update, updated_by)
+        resultado = await SedeService.update_sede(db, id_sede, sede_update)
         return resultado["sede"]
-            
+    
     except HTTPException:
         raise
     except Exception as e:
@@ -141,19 +134,16 @@ async def update_sede(
             detail=f"Error al actualizar la sede: {str(e)}"
         )
 
-@router.delete("/{id_sede}", response_model=dict)
-async def soft_delete_sede(
-    id_sede: int,
-    deleted_by: str = Query(..., description="Usuario que elimina la sede"),
-    sede_service: SedeService = Depends(get_sede_service)
+@router.delete("/{id_sede}", status_code=status.HTTP_200_OK)
+async def delete_sede(
+    id_sede: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Soft delete: marcar sede como inactiva.
-    """
+    """Eliminar lógicamente una sede"""
     try:
-        resultado = sede_service.delete_sede(id_sede, deleted_by)
+        resultado = await SedeService.delete_sede(db, id_sede)
         return resultado
-            
+    
     except HTTPException:
         raise
     except Exception as e:

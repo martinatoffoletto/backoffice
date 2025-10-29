@@ -1,303 +1,115 @@
-# BackOffice API 🎓
+# BackOffice Platform
 
-Sistema de gestión educativa completo con API REST desarrollado en FastAPI, SQLAlchemy y PostgreSQL.
+Aplicación full-stack para la gestión académica que combina un backend FastAPI asíncrono con un frontend React/Tailwind. La API expone servicios para usuarios, roles, sedes, espacios, parámetros, sueldos y clases individuales.
 
-## 🚀 Características
+## Tech stack
 
-- **Gestión de Usuarios**: Administración completa de usuarios con roles y permisos
-- **Autenticación**: Sistema de login con email/password y gestión de roles
-- **Parámetros del Sistema**: Configuración centralizada y editable
-- **Gestión de Sedes**: Administración de ubicaciones físicas
-- **Espacios/Aulas**: Gestión de aulas con características técnicas
-- **Sueldos**: Registro y gestión de nómina del personal
-- **Cronogramas**: Programación de horarios y actividades
-- **Clases Individuales**: Gestión de clases personalizadas
-- **Evaluaciones**: Sistema de calificaciones y seguimiento académico
+- FastAPI 0.115+ con SQLAlchemy async y Pydantic
+- PostgreSQL (principal) con modo mock para desarrollo sin base de datos
+- React 19, Vite 7 y Tailwind CSS 4
+- Axios con interceptor de autenticación
 
-## 📁 Estructura del Proyecto
+## Estructura del repositorio
 
 ```
 backoffice/
-├── rest/
-│   ├── controller/          # Controladores REST (endpoints)
-│   ├── service/            # Lógica de negocio
-│   ├── dao/                # Acceso a datos
-│   ├── models/             # Modelos SQLAlchemy
-│   ├── schemas/            # Esquemas Pydantic
-│   ├── app.py              # Aplicación principal
-│   ├── database.py         # Configuración de BD
-│   └── create_sample_data.py
-├── requirements.txt        # Dependencias Python
-├── .env.example           # Variables de entorno de ejemplo
-├── setup.py               # Script de inicialización
-├── run_server.py          # Script para ejecutar el servidor
-└── README.md              # Este archivo
+├─ rest/                   API FastAPI
+│  ├─ controller/          Capas de endpoints
+│  ├─ service/             Reglas de negocio
+│  ├─ dao/                 Acceso a datos con SQLAlchemy async
+│  ├─ models/              Declaraciones ORM
+│  ├─ schemas/             Esquemas Pydantic
+│  ├─ app.py               Punto de entrada FastAPI
+│  └─ database.py          Inicialización y pooling de base de datos
+├─ web/                    Frontend React
+│  ├─ src/api/             Clientes Axios hacia la API
+│  ├─ src/components/      UI reutilizable y formularios CRUD
+│  └─ vite.config.js       Configuración de Vite
+├─ requirements.txt        Dependencias del backend
+├─ README.md
+└─ .env                    Variables del backend
 ```
 
-## 🛠️ Instalación y Configuración
+## Requisitos
 
-### Prerrequisitos
+- Python 3.11 o superior
+- Node.js 20 o superior y npm 10+
+- PostgreSQL 14+ (opcional en local; se puede trabajar en modo mock)
 
-- Python 3.8 o superior
-- PostgreSQL (opcional, se puede usar SQLite para desarrollo)
-- pip (gestor de paquetes de Python)
+## Puesta en marcha
 
-### 1. Clonar el repositorio
+### 1. Backend (FastAPI)
 
-```bash
-git clone https://github.com/martinatoffoletto/backoffice.git
+```cmd
 cd backoffice
-```
-
-### 2. Crear entorno virtual (recomendado)
-
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-### 3. Instalar dependencias
-
-```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Configurar variables de entorno
+Configura el archivo `.env` (se incluye uno de ejemplo) con al menos:
 
-```bash
-# Copiar archivo de ejemplo
-cp .env.example .env
-
-# Editar .env con tu configuración
-# DATABASE_URL=postgresql://user:password@localhost:5432/backoffice_db
-# O para desarrollo simple:
-# DATABASE_URL=sqlite:///./backoffice.db
+```
+ENVIRONMENT=development
+HOSTED_DATABASE_URL=postgresql://usuario:pass@host:puerto/base
+DATABASE_URL=postgresql://usuario:pass@localhost:5432/backoffice_db
 ```
 
-### 5. Inicializar el sistema desde root
+Para desarrollo puedes dejar `HOSTED_DATABASE_URL` vacío y apuntar `DATABASE_URL` a tu instancia local. Si ninguna conexión es válida, la API opera en modo mock y no realiza escrituras reales.
 
-```bash
+Inicia el backend:
+
+```cmd
 uvicorn rest.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Este script:
+La documentación interactiva queda disponible en `http://localhost:8000/docs`.
 
-- Crea las tablas de la base de datos
-- Genera datos de ejemplo
-- Configura el entorno inicial
+### 2. Frontend (React)
 
-### 6. Ejecutar el servidor
-
-```bash
-python run_server.py
+```cmd
+cd web
+npm install
+npm run dev
 ```
 
-El servidor estará disponible en:
+El frontend consulta la API usando `axiosInstance`. Para cambiar el host expuesto, ajusta `web/src/api/axiosInstance.js` o crea una variable `VITE_API_BASE_URL` siguiendo las convenciones de Vite.
 
-- **API**: http://localhost:8000
-- **Documentación Swagger**: http://localhost:8000/docs
-- **Documentación ReDoc**: http://localhost:8000/redoc
+## Módulos expuestos por la API
 
-## 🔧 Configuración de Base de Datos
+| Módulo              | Prefijo                       | Descripción                                    |
+| ------------------- | ----------------------------- | ---------------------------------------------- |
+| Autenticación       | `/api/v1/auth`                | Login institucional y verificación de usuarios |
+| Usuarios            | `/api/v1/usuarios`            | CRUD de usuarios y datos personales            |
+| Roles               | `/api/v1/roles`               | Administración de roles y permisos             |
+| Parámetros          | `/api/v1/parametros`          | Parámetros configurables del sistema           |
+| Sedes               | `/api/v1/sedes`               | Gestión de ubicaciones físicas                 |
+| Espacios            | `/api/v1/espacios`            | Aulas y espacios disponibles                   |
+| Sueldos             | `/api/v1/sueldos`             | Gestión de nómina y liquidaciones              |
+| Usuarios-Carreras   | `/api/v1/usuarios-carreras`   | Relación entre usuarios y carreras             |
+| Clases Individuales | `/api/v1/clases-individuales` | Reservas y seguimiento de clases               |
 
-### PostgreSQL (Producción)
+## Conexión a base de datos
 
-```env
-DATABASE_URL=postgresql://username:password@localhost:5432/backoffice_db
-```
+`rest/database.py` selecciona la conexión según el entorno:
 
-### SQLite (Desarrollo)
+1. `ENVIRONMENT=development` busca primero `HOSTED_DATABASE_URL`, luego `DATABASE_URL` local.
+2. `ENVIRONMENT=production` toma `DATABASE_URL` (normalizado a `postgresql+asyncpg`).
+3. Si ninguna conexión es válida, se activa un mock in-memory para evitar caídas durante desarrollo.
 
-```env
-DATABASE_URL=sqlite:///./backoffice.db
-```
+## Testing
 
-## 📚 API Endpoints
-
-### Autenticación
-
-- `POST /api/v1/auth/login` - Iniciar sesión
-- `GET /api/v1/auth/validate/{email}` - Validar acceso
-- `POST /api/v1/auth/logout` - Cerrar sesión
-
-### Usuarios
-
-- `GET /api/v1/usuarios` - Obtener usuarios
-- `POST /api/v1/usuarios` - Crear usuario
-- `GET /api/v1/usuarios/{id}` - Obtener usuario por ID
-- `PUT /api/v1/usuarios/{id}` - Actualizar usuario
-- `DELETE /api/v1/usuarios/{id}` - Eliminar usuario
-
-### Roles
-
-- `GET /api/v1/roles` - Obtener roles
-- `POST /api/v1/roles` - Crear rol
-- `GET /api/v1/roles/{id}` - Obtener rol por ID
-- `PUT /api/v1/roles/{id}` - Actualizar rol
-- `DELETE /api/v1/roles/{id}` - Eliminar rol
-
-### Otros Módulos
-
-- **Parámetros**: `/api/v1/parametros`
-- **Sedes**: `/api/v1/sedes`
-- **Espacios**: `/api/v1/espacios`
-- **Sueldos**: `/api/v1/sueldos`
-- **Cronogramas**: `/api/v1/cronogramas`
-
-## 🏗️ Arquitectura
-
-El sistema sigue una arquitectura en capas:
-
-```
-Controller → Service → DAO → Database
-```
-
-- **Controllers**: Manejan requests HTTP y responses
-- **Services**: Contienen la lógica de negocio y validaciones
-- **DAOs**: Acceso directo a la base de datos
-- **Models**: Definición de entidades SQLAlchemy
-- **Schemas**: Validación y serialización con Pydantic
-
-## 🔐 Autenticación y Autorización
-
-### Sistema de Roles
-
-- **Administrador**: Acceso completo al sistema
-- **Profesor**: Gestión de cronogramas, clases y evaluaciones
-- **Estudiante**: Consulta de cronogramas y evaluaciones
-- **Secretaria**: Gestión de usuarios, espacios y cronogramas
-
-### Autenticación
-
-```python
-# Ejemplo de login
-POST /api/v1/auth/login
-{
-    "email": "user@example.com",
-    "password": "password123"
-}
-
-# Respuesta
-{
-    "legajo": "12345",
-    "nombre": "Juan Pérez",
-    "roles": ["Administrador", "Profesor"]
-}
-```
-
-## 🗃️ Modelos de Datos
-
-### Principales Entidades
-
-- **Usuario**: Información personal y credenciales
-- **Rol**: Roles del sistema con permisos
-- **UsuarioRol**: Relación many-to-many usuarios-roles
-- **Sede**: Ubicaciones físicas de la institución
-- **Espacio**: Aulas/espacios con características técnicas
-- **Cronograma**: Programación de actividades
-- **Sueldo**: Gestión de nómina
-- **Evaluacion**: Calificaciones académicas
-
-## 🧪 Datos de Ejemplo
-
-El sistema incluye datos de ejemplo:
-
-```python
-# Usuarios predefinidos
-admin@backoffice.com (Administrador)
-profesor@backoffice.com (Profesor)
-estudiante@backoffice.com (Estudiante)
-
-# Password por defecto: "admin123"
-```
-
-## 🚀 Despliegue
-
-### Con Docker (Recomendado)
-
-```dockerfile
-# Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-EXPOSE 8000
-
-CMD ["python", "run_server.py"]
-```
-
-### Con Gunicorn
-
-```bash
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker rest.app:app --bind 0.0.0.0:8000
-```
-
-## 🔧 Desarrollo
-
-### Estructura de Archivos
-
-```bash
-# Crear nuevo controller
-touch rest/controller/nuevo_controller.py
-
-# Crear nuevo service
-touch rest/service/nuevo_service.py
-
-# Crear nuevo DAO
-touch rest/dao/nuevo_dao.py
-
-# Crear nuevo modelo
-touch rest/models/nuevo_model.py
-
-# Crear nuevo schema
-touch rest/schemas/nuevo_schema.py
-```
-
-### Testing
-
-```bash
-# Instalar dependencias de testing
+```cmd
 pip install pytest pytest-asyncio httpx
-
-# Ejecutar tests
-pytest tests/
+pytest
 ```
 
-## 📖 Documentación
+## Contribución
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI Schema**: http://localhost:8000/openapi.json
+- CONTROLLER MANEJA ERRORES HTTP Y SERVICE NOOO!!!
 
-## 🤝 Contribuir
+## Soporte
 
-1. Fork el proyecto
-2. Crear feature branch (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la licencia MIT. Ver archivo `LICENSE` para más detalles.
-
-## 🆘 Soporte
-
-Si tienes problemas o preguntas:
-
-1. Revisa la documentación en `/docs`
-2. Verifica los logs del servidor
-3. Consulta los issues en GitHub
-4. Contacta al equipo de desarrollo
-
----
-
-**Desarrollado con ❤️ para la gestión educativa moderna**
+- Documentación interactiva: `http://localhost:8000/docs`
+- Revisión de logs: consola de Uvicorn y navegador
+- Issues y mejoras: tablero de GitHub del repositorio

@@ -1,242 +1,113 @@
-# ... (todo el contenido de espacio_service.py que ya tenías) ...
-# ... (imports de Session, Depends, get_db, etc. deben estar arriba) ...
-from sqlalchemy.orm import Session
-from ..dao.sede_dao import SedeDAO
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.espacio_dao import EspacioDAO
-from ..schemas.espacio_schema import Espacio as EspacioSchema
+from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede
 from typing import List, Optional
-from fastapi import HTTPException, status, Depends
-from ..database import get_db
+import uuid
 
 class EspacioService:
     
-    def __init__(self, db: Session):
-        self.db = db
-        self.espacio_dao = EspacioDAO()
-        self.sede_dao = SedeDAO()
+    @staticmethod
+    async def create_espacio(db: AsyncSession, espacio: EspacioCreate) -> Espacio:
+        """Crear un nuevo espacio"""
+        # Verificar que no exista un espacio con el mismo nombre en esa sede
+        exists = await EspacioDAO.exists_by_nombre_and_sede(db, espacio.nombre, espacio.id_sede)
+        if exists:
+            raise ValueError(f"Ya existe un espacio con el nombre '{espacio.nombre}' en esta sede")
+        
+        db_espacio = await EspacioDAO.create(db, espacio)
+        return Espacio.model_validate(db_espacio)
     
-    def create_espacio(self, espacio: EspacioSchema, created_by: str) -> dict:
-        """Crear un nuevo espacio con validaciones"""
-        # Verificar que la sede existe
-        sede = self.sede_dao.get_by_id(self.db, espacio.id_sede)
-        if not sede:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No se encontró la sede con ID {espacio.id_sede}"
-            )
-        
-        # Verificar que no exista un espacio con el mismo nombre en la misma sede
-        if self.espacio_dao.exists_by_nombre_and_sede(self.db, espacio.nombre_espacio, espacio.id_sede):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un espacio con el nombre '{espacio.nombre_espacio}' en la sede '{sede.nombre_sede}'"
-            )
-        
-        # Asignar created_by
-        espacio.created_by = created_by
-        
-        # Crear el espacio
-        new_espacio = self.espacio_dao.create(self.db, espacio)
-        
-        return {
-            "message": "Espacio creado exitosamente",
-            "espacio": new_espacio,
-            "sede": sede.nombre_sede,
-            "created_by": created_by
-        }
+    @staticmethod
+    async def get_espacio_by_id(db: AsyncSession, id_espacio: uuid.UUID) -> Optional[Espacio]:
+        """Obtener espacio por ID"""
+        db_espacio = await EspacioDAO.get_by_id(db, id_espacio)
+        if db_espacio:
+            return Espacio.model_validate(db_espacio)
+        return None
     
-    def get_espacio_by_id(self, id_espacio: int, include_sede: bool = False) -> dict:
-        """Obtener espacio por ID con opción de incluir información de sede"""
-        if include_sede:
-            espacio_with_sede = self.espacio_dao.get_with_sede_info(self.db, id_espacio)
-            if not espacio_with_sede:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No se encontró el espacio con ID {id_espacio}"
-                )
-            return espacio_with_sede
-        else:
-            espacio = self.espacio_dao.get_by_id(self.db, id_espacio)
-            if not espacio:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"No se encontró el espacio con ID {id_espacio}"
-                )
-            return {"espacio": espacio}
-    
-    def get_all_espacios(self, skip: int = 0, limit: int = 100) -> dict:
+    @staticmethod
+    async def get_all_espacios(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Espacio]:
         """Obtener todos los espacios activos"""
-        espacios = self.espacio_dao.get_all(self.db, skip, limit)
-        
-        return {
-            "espacios": espacios,
-            "total": len(espacios),
-            "skip": skip,
-            "limit": limit
-        }
+        db_espacios = await EspacioDAO.get_all(db, skip, limit)
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
     
-    def get_espacios_by_sede(self, id_sede: int, skip: int = 0, limit: int = 100) -> dict:
+    @staticmethod
+    async def get_espacios_by_sede(db: AsyncSession, id_sede: uuid.UUID, skip: int = 0, limit: int = 100) -> List[Espacio]:
         """Obtener espacios por sede"""
-        # Verificar que la sede existe
-        sede = self.sede_dao.get_by_id(self.db, id_sede)
-        if not sede:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró la sede con ID {id_sede}"
-            )
-        
-        espacios = self.espacio_dao.get_by_sede(self.db, id_sede, skip, limit)
-        
-        return {
-            "espacios": espacios,
-            "sede": sede.nombre_sede,
-            "total": len(espacios),
-            "skip": skip,
-            "limit": limit
-        }
+        db_espacios = await EspacioDAO.get_by_sede(db, id_sede, skip, limit)
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
     
-    def search_espacios_disponibles(self, 
-                                  id_sede: Optional[int] = None,
-                                  tipo_espacio: Optional[str] = None,
-                                  capacidad_minima: Optional[int] = None,
-                                  necesita_proyector: Optional[bool] = None,
-                                  necesita_sonido: Optional[bool] = None,
-                                  necesita_internet: Optional[bool] = None,
-                                  necesita_aire: Optional[bool] = None,
-                                  skip: int = 0, limit: int = 100) -> dict:
-        """Buscar espacios con filtros específicos"""
-        espacios = self.espacio_dao.get_by_filters(
-            self.db, id_sede, tipo_espacio, capacidad_minima,
-            necesita_proyector, necesita_sonido, necesita_internet, necesita_aire,
-            skip, limit
+    @staticmethod
+    async def get_espacios_by_tipo(db: AsyncSession, tipo: str, skip: int = 0, limit: int = 100) -> List[Espacio]:
+        """Obtener espacios por tipo"""
+        db_espacios = await EspacioDAO.get_by_tipo(db, tipo, skip, limit)
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
+    
+    @staticmethod
+    async def search_espacios(db: AsyncSession, nombre_pattern: str, skip: int = 0, limit: int = 100) -> List[Espacio]:
+        """Buscar espacios por patrón en el nombre"""
+        db_espacios = await EspacioDAO.search_by_nombre(db, nombre_pattern, skip, limit)
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
+    
+    @staticmethod
+    async def get_espacios_by_capacity(db: AsyncSession, capacidad_minima: int, skip: int = 0, limit: int = 100) -> List[Espacio]:
+        """Obtener espacios con capacidad mayor a la especificada"""
+        db_espacios = await EspacioDAO.get_with_capacity_greater_than(db, capacidad_minima, skip, limit)
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
+    
+    @staticmethod
+    async def filter_espacios(db: AsyncSession, 
+                           id_sede: Optional[uuid.UUID] = None,
+                           tipo: Optional[str] = None,
+                           capacidad_minima: Optional[int] = None,
+                           estado: Optional[str] = None,
+                           skip: int = 0, limit: int = 100) -> List[Espacio]:
+        """Obtener espacios aplicando múltiples filtros"""
+        db_espacios = await EspacioDAO.get_by_filters(
+            db, id_sede, tipo, capacidad_minima, estado, skip, limit
         )
-        
-        return {
-            "espacios": espacios,
-            "filtros_aplicados": {
-                "sede": id_sede,
-                "tipo": tipo_espacio,
-                "capacidad_minima": capacidad_minima,
-                "proyector": necesita_proyector,
-                "sonido": necesita_sonido,
-                "internet": necesita_internet,
-                "aire_acondicionado": necesita_aire
-            },
-            "total_encontrados": len(espacios),
-            "skip": skip,
-            "limit": limit
-        }
+        return [Espacio.model_validate(espacio) for espacio in db_espacios]
     
-    def update_espacio(self, id_espacio: int, espacio_update: EspacioSchema, updated_by: str) -> dict:
-        """Actualizar espacio con validaciones"""
+    @staticmethod
+    async def get_espacio_with_sede(db: AsyncSession, id_espacio: uuid.UUID) -> Optional[EspacioConSede]:
+        """Obtener espacio con información de la sede"""
+        return await EspacioDAO.get_with_sede_info(db, id_espacio)
+    
+    @staticmethod
+    async def update_espacio(db: AsyncSession, id_espacio: uuid.UUID, espacio_update: EspacioUpdate) -> Optional[Espacio]:
+        """Actualizar un espacio existente"""
         # Verificar que el espacio existe
-        existing_espacio = self.espacio_dao.get_by_id(self.db, id_espacio)
+        existing_espacio = await EspacioDAO.get_by_id(db, id_espacio)
         if not existing_espacio:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el espacio con ID {id_espacio}"
-            )
+            return None
         
-        # Verificar sede si se está cambiando
-        if espacio_update.id_sede and espacio_update.id_sede != existing_espacio.id_sede:
-            sede = self.sede_dao.get_by_id(self.db, espacio_update.id_sede)
-            if not sede:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"No se encontró la sede con ID {espacio_update.id_sede}"
-                )
-        
-        # Verificar nombre único en la sede si se está cambiando
-        if (espacio_update.nombre_espacio and 
-            espacio_update.nombre_espacio != existing_espacio.nombre_espacio):
+        # Si se está actualizando el nombre o la sede, verificar unicidad
+        if espacio_update.nombre is not None or espacio_update.id_sede is not None:
+            nombre_check = espacio_update.nombre if espacio_update.nombre is not None else existing_espacio.nombre
+            sede_check = espacio_update.id_sede if espacio_update.id_sede is not None else existing_espacio.id_sede
             
-            sede_id = espacio_update.id_sede or existing_espacio.id_sede
-            if self.espacio_dao.exists_by_nombre_and_sede(self.db, espacio_update.nombre_espacio, sede_id):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Ya existe un espacio con el nombre '{espacio_update.nombre_espacio}' en esa sede"
-                )
+            # Solo verificar si es diferente al espacio actual
+            if nombre_check != existing_espacio.nombre or sede_check != existing_espacio.id_sede:
+                exists = await EspacioDAO.exists_by_nombre_and_sede(db, nombre_check, sede_check)
+                if exists:
+                    raise ValueError(f"Ya existe un espacio con el nombre '{nombre_check}' en esta sede")
         
-        # Asignar updated_by
-        espacio_update.updated_by = updated_by
-        
-        # Actualizar
-        updated_espacio = self.espacio_dao.update(self.db, id_espacio, espacio_update)
-        
-        return {
-            "message": "Espacio actualizado exitosamente",
-            "espacio": updated_espacio,
-            "updated_by": updated_by
-        }
+        db_espacio = await EspacioDAO.update(db, id_espacio, espacio_update)
+        if db_espacio:
+            return Espacio.model_validate(db_espacio)
+        return None
     
-    def delete_espacio(self, id_espacio: int, deleted_by: str) -> dict:
-        """Eliminar espacio lógicamente"""
-        espacio = self.espacio_dao.get_by_id(self.db, id_espacio)
-        if not espacio:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"No se encontró el espacio con ID {id_espacio}"
-            )
-        
-        # TODO: Verificar que no hay cronogramas o clases programadas en este espacio
-        # cronogramas_activos = self.cronograma_dao.get_by_espacio(self.db, id_espacio, limit=1)
-        # if cronogramas_activos:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="No se puede eliminar el espacio porque tiene cronogramas activos"
-        #     )
-        
-        # Eliminar lógicamente
-        success = self.espacio_dao.soft_delete(self.db, id_espacio, deleted_by)
-        
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al eliminar el espacio"
-            )
-        
-        return {
-            "message": f"Espacio '{espacio.nombre_espacio}' eliminado exitosamente",
-            "deleted_by": deleted_by
-        }
+    @staticmethod
+    async def delete_espacio(db: AsyncSession, id_espacio: uuid.UUID) -> bool:
+        """Eliminación lógica de un espacio"""
+        return await EspacioDAO.soft_delete(db, id_espacio)
     
-    def get_espacios_statistics(self) -> dict:
-        """Obtener estadísticas de espacios"""
-        all_espacios = self.espacio_dao.get_all(self.db, skip=0, limit=1000)
-        
-        # Estadísticas por tipo
-        tipos = self.espacio_dao.get_all_tipos(self.db)
-        espacios_por_tipo = {}
-        for tipo in tipos:
-            espacios_por_tipo[tipo] = len(self.espacio_dao.get_by_tipo(self.db, tipo, limit=1000))
-        
-        # Estadísticas por sede
-        espacios_por_sede = {}
-        for espacio in all_espacios:
-            sede = self.sede_dao.get_by_id(self.db, espacio.id_sede)
-            if sede:
-                if sede.nombre_sede not in espacios_por_sede:
-                    espacios_por_sede[sede.nombre_sede] = 0
-                espacios_por_sede[sede.nombre_sede] += 1
-        
-        # Estadísticas de equipamiento
-        con_proyector = len(self.espacio_dao.get_with_projector(self.db, limit=1000))
-        con_sonido = len(self.espacio_dao.get_with_sound(self.db, limit=1000))
-        con_internet = len(self.espacio_dao.get_with_internet(self.db, limit=1000))
-        con_aire = len(self.espacio_dao.get_with_air_conditioning(self.db, limit=1000))
-        
-        return {
-            "total_espacios": len(all_espacios),
-            "por_tipo": espacios_por_tipo,
-            "por_sede": espacios_por_sede,
-            "equipamiento": {
-                "con_proyector": con_proyector,
-                "con_sonido": con_sonido,
-                "con_internet": con_internet,
-                "con_aire_acondicionado": con_aire
-            },
-            "capacidad_promedio": sum(e.capacidad for e in all_espacios) / len(all_espacios) if all_espacios else 0
-        }
-
-def get_espacio_service(db: Session = Depends(get_db)) -> EspacioService:
-    return EspacioService(db)
+    @staticmethod
+    async def get_available_tipos(db: AsyncSession) -> List[str]:
+        """Obtener todos los tipos únicos de espacios"""
+        return await EspacioDAO.get_all_tipos(db)
+    
+    @staticmethod
+    async def count_espacios_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> int:
+        """Contar espacios activos por sede"""
+        return await EspacioDAO.count_by_sede(db, id_sede)

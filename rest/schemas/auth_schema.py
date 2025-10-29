@@ -1,15 +1,33 @@
 from pydantic import BaseModel, EmailStr
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 
 class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    email_institucional: EmailStr
+    contraseña: str  # Ya viene hasheada
 
-class AuthResponse(BaseModel):
-    nombre: str
-    apellido: str
-    legajo: str
-    roles: List[str]
+class RolInfo(BaseModel):
+    id_rol: UUID
+    descripcion: Optional[str]
+    categoria: str
+    subcategoria: Optional[str]
     
     class Config:
         from_attributes = True
+
+class AuthResponse(BaseModel):
+    id_usuario: UUID
+    nombre: str
+    apellido: str
+    legajo: str
+    dni: str
+    email_institucional: Optional[str]
+    rol: RolInfo
+    
+    class Config:
+        from_attributes = True
+
+class VerifyResponse(BaseModel):
+    exists: bool
+    active: bool
+    email_institucional: str

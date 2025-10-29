@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Text
+from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -13,16 +13,18 @@ class Usuario(Base):
     apellido = Column(String(100), nullable=False, comment="Apellido del usuario")
     legajo = Column(String(20), unique=True, nullable=False, index=True, comment="Legajo único del usuario")
     dni = Column(String(10), unique=True, nullable=False, index=True, comment="DNI único del usuario")
-    correo_institucional = Column(String(150), unique=True, nullable=True, index=True, comment="Correo electrónico institucional (único)")
-    correo_personal = Column(String(150), unique=True, nullable=False, index=True, comment="Correo electrónico personal (único y obligatorio)")
+    email_institucional = Column(String(150), unique=True, nullable=True, index=True, comment="Email institucional (único)")
+    email_personal = Column(String(150), unique=True, nullable=False, index=True, comment="Email personal (único y obligatorio)")
     telefono_personal = Column(String(20), nullable=False, comment="Teléfono personal (obligatorio)")
     contraseña = Column(String(255), nullable=False, comment="Contraseña del usuario")
     fecha_alta = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="Fecha de alta - se registra automáticamente")
+    id_rol = Column(UUID(as_uuid=True), ForeignKey("roles.id_rol"), nullable=False, comment="Rol único del usuario")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del usuario (activo/inactivo)")
     
     # Relaciones
-    roles = relationship("UsuarioRol", back_populates="usuario")
+    rol = relationship("Rol", back_populates="usuarios")
     carreras = relationship("UsuarioCarrera", back_populates="usuario")
+    
     
     def __repr__(self):
         return f"<Usuario(id_usuario={self.id_usuario}, legajo='{self.legajo}', nombre='{self.nombre} {self.apellido}')>"

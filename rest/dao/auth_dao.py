@@ -1,6 +1,12 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import and_
+from sqlalchemy.orm import selectinload
 from ..models.usuario_model import Usuario
+from ..models.rol_model import Rol
+from .usuario_dao import UsuarioDAO
 from typing import Optional
+import uuid
 
 class AuthDAO:
     """
@@ -8,46 +14,27 @@ class AuthDAO:
     """
     
     @staticmethod
-    def get_user_by_email_for_auth(db: Session, email: str) -> Optional[Usuario]:
+    async def get_user_by_email_institucional_with_rol(db: AsyncSession, email_institucional: str) -> Optional[Usuario]:
         """
-        Obtener usuario por email para autenticación
-        Incluye verificación de status activo
+        Obtener usuario por email institucional para autenticación
+        Incluye la información del rol y verifica que esté activo
         """
-        return db.query(Usuario).filter(
-            Usuario.email == email,
-            Usuario.status == True
-        ).first()
+        query = select(Usuario).options(
+            selectinload(Usuario.rol)
+        ).where(
+            and_(
+                Usuario.email_institucional == email_institucional,
+                Usuario.status == True
+            )
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
     
     @staticmethod
-    def verify_user_exists_and_active(db: Session, email: str) -> bool:
+    async def verify_user_exists_and_active(db: AsyncSession, email_institucional: str) -> bool:
         """
-        Verificar que un usuario existe y está activo
+        Verificar que un usuario existe y está activo por email institucional
+        Usa el método existente del UsuarioDAO
         """
-        user = db.query(Usuario).filter(
-            Usuario.email == email,
-            Usuario.status == True
-        ).first()
-        return user is not None
-    
-    @staticmethod
-    def get_user_basic_info(db: Session, email: str) -> Optional[dict]:
-        """
-        Obtener información básica del usuario para autenticación
-        """
-        user = db.query(Usuario).filter(
-            Usuario.email == email,
-            Usuario.status == True
-        ).first()
-        
-        if not user:
-            return None
-        
-        return {
-            "id_usuario": user.id_usuario,
-            "legajo": user.legajo,
-            "nombre": user.nombre,
-            "apellido": user.apellido,
-            "email": user.email,
-            "password": user.password,
-            "status": user.status
-        }
+        user = await UsuarioDAO.get_by_email_institucional(db, email_institucional)
+        return user is not None and user.status

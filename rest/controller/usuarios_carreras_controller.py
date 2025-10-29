@@ -1,27 +1,24 @@
-﻿from fastapi import APIRouter, HTTPException, status, Depends, Query
-from sqlalchemy.orm import Session
-from ..database import get_db
-from ..service.usuario_carrera_service import UsuarioCarreraService, get_usuario_carrera_service
-from ..schemas.usuario_carrera_schema import UsuarioCarrera
-from ..schemas.carrera_schema import Carrera
-from ..schemas.usuario_schema import Usuario
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from ..database import get_async_db
+from ..service.usuario_carrera_service import UsuarioCarreraService
+from ..schemas.usuario_carrera_schema import UsuarioCarrera, UsuarioCarreraCreate
 from typing import List
 from uuid import UUID
 
-router = APIRouter(prefix="/user-carreras", tags=["User Carreras"])
+router = APIRouter(prefix="/usuarios-carreras", tags=["Usuario-Carrera"])
 
 @router.post("/", response_model=UsuarioCarrera, status_code=status.HTTP_201_CREATED)
-async def assign_carrera_to_usuario(
-    assignment: UsuarioCarrera,
-    assigned_by: str = Query(..., description="Usuario que realiza la asignación"),
-    service: UsuarioCarreraService = Depends(get_usuario_carrera_service)
+async def create_usuario_carrera_assignment(
+    assignment: UsuarioCarreraCreate,
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Asignar una carrera a un usuario.
     """
     try:
-        result = service.assign_carrera(assignment.id_usuario, assignment.id_carrera, assigned_by)
-        return result["assignment"]
+        result = await UsuarioCarreraService.create_assignment(db, assignment)
+        return result
     except HTTPException:
         raise
     except Exception as e:
@@ -31,36 +28,39 @@ async def assign_carrera_to_usuario(
         )
 
 @router.delete("/", response_model=dict)
-async def remove_carrera_from_usuario(
+async def remove_usuario_carrera_assignment(
     id_usuario: UUID = Query(..., description="ID del usuario"),
     id_carrera: UUID = Query(..., description="ID de la carrera"),
-    removed_by: str = Query(..., description="Usuario que remueve la asignación"),
-    service: UsuarioCarreraService = Depends(get_usuario_carrera_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Remover una carrera de un usuario.
     """
     try:
-        result = service.remove_carrera(id_usuario, id_carrera, removed_by)
-        return result
+        success = await UsuarioCarreraService.remove_assignment(db, id_usuario, id_carrera)
+        return {
+            "message": "Asignaci�n removida exitosamente",
+            "success": success
+        }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al remover la carrera: {str(e)}"
+            detail=f"Error al remover la asignaci�n: {str(e)}"
         )
 
-@router.get("/usuario/{id_usuario}", response_model=List[Carrera])
+@router.get("/usuario/{id_usuario}", response_model=List[UsuarioCarrera])
 async def get_carreras_by_usuario(
     id_usuario: UUID,
-    service: UsuarioCarreraService = Depends(get_usuario_carrera_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todas las carreras de un usuario específico.
+    Obtener todas las carreras asignadas a un usuario espec�fico.
+    Retorna las relaciones usuario-carrera (solo IDs).
     """
     try:
-        return service.get_carreras_for_usuario(id_usuario)
+        return await UsuarioCarreraService.get_carreras_by_usuario(db, id_usuario)
     except HTTPException:
         raise
     except Exception as e:
@@ -69,21 +69,43 @@ async def get_carreras_by_usuario(
             detail=f"Error al obtener carreras del usuario: {str(e)}"
         )
 
-@router.get("/carrera/{id_carrera}", response_model=List[Usuario])
+@router.get("/carrera/{id_carrera}", response_model=List[UsuarioCarrera])
 async def get_usuarios_by_carrera(
     id_carrera: UUID,
-    service: UsuarioCarreraService = Depends(get_usuario_carrera_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todos los usuarios de una carrera específica.
-    (Nota: El schema 'Usuario' debe ser compatible con UUID)
+    Obtener todos los usuarios asignados a una carrera espec�fica.
+    Retorna las relaciones usuario-carrera (solo IDs).
     """
     try:
-        return service.get_usuarios_for_carrera(id_carrera)
+        return await UsuarioCarreraService.get_usuarios_by_carrera(db, id_carrera)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener usuarios de la carrera: {str(e)}"
+        )
+
+@router.get("/exists", response_model=dict)
+async def check_assignment_exists(
+    id_usuario: UUID = Query(..., description="ID del usuario"),
+    id_carrera: UUID = Query(..., description="ID de la carrera"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Verificar si existe una asignaci�n espec�fica usuario-carrera.
+    """
+    try:
+        exists = await UsuarioCarreraService.check_assignment_exists(db, id_usuario, id_carrera)
+        return {
+            "exists": exists,
+            "id_usuario": id_usuario,
+            "id_carrera": id_carrera
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al verificar la asignaci�n: {str(e)}"
         )

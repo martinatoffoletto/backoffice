@@ -12,24 +12,24 @@ class EstadoClase(enum.Enum):
     REPROGRAMADA = "reprogramada"
     CANCELADA = "cancelada"
 
+class TipoClase(enum.Enum):
+    REGULAR = "regular"
+    PARCIAL = "parcial"
+    FINAL = "final"
+    TRABAJO_PRACTICO = "trabajo_practico"
+
 class ClaseIndividual(Base):
     __tablename__ = "clases_individuales"
     
     id_clase = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    id_cronograma = Column(UUID(as_uuid=True), ForeignKey("cronogramas.id_cronograma", ondelete="CASCADE"), nullable=False, comment="ID del cronograma al que pertenece")
+    id_curso = Column(UUID(as_uuid=True), nullable=False, comment="Referencia a curso (entidad externa)")
     titulo = Column(String(200), nullable=False, comment="Título de la clase")
     descripcion = Column(Text, nullable=True, comment="Descripción detallada de la clase")
     fecha_clase = Column(Date, nullable=False, comment="Fecha programada de la clase")
-    hora_inicio = Column(Time, nullable=False, comment="Hora de inicio de la clase")
-    hora_fin = Column(Time, nullable=False, comment="Hora de fin de la clase")
+    tipo = Column(Enum(TipoClase), default=TipoClase.REGULAR, nullable=False, comment="Tipo de clase (regular, evaluación, entrega TPO)")
     estado = Column(Enum(EstadoClase), default=EstadoClase.PROGRAMADA, nullable=False, comment="Estado actual de la clase")
     observaciones = Column(Text, nullable=True, comment="Observaciones adicionales sobre la clase")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del registro (activo/inactivo)")
-    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, comment="Fecha de creación del registro")
-    fecha_modificacion = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False, comment="Fecha de última modificación")
-    
-    # Relación con cronograma
-    cronograma = relationship("Cronograma", back_populates="clases")
     
     def __repr__(self):
-        return f"<ClaseIndividual(id_clase={self.id_clase}, titulo='{self.titulo}', fecha_clase='{self.fecha_clase}', estado='{self.estado.value}')>"
+        return f"<ClaseIndividual(id_clase={self.id_clase}, titulo='{self.titulo}', fecha_clase='{self.fecha_clase}', tipo='{self.tipo.value}', estado='{self.estado.value}')>"
