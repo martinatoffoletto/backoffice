@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, and_, or_, func
+from sqlalchemy.orm import selectinload
 from ..models.usuario_model import Usuario
 from ..schemas.usuario_schema import UsuarioCreate, UsuarioUpdate
 from typing import List, Optional, Dict, Any, Union
@@ -15,7 +16,7 @@ class UsuarioDAO:
         usuario_data.update({
             "contraseña": contraseña,
             "legajo": legajo,
-            "correo_institucional": email
+            "email_institucional": email
         })
         
         db_usuario = Usuario(**usuario_data)
@@ -26,7 +27,7 @@ class UsuarioDAO:
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Usuario]:
-        query = select(Usuario)
+        query = select(Usuario).options(selectinload(Usuario.rol))
         
         if status_filter is not None:
             query = query.where(Usuario.status == status_filter)
@@ -37,31 +38,37 @@ class UsuarioDAO:
     
     @staticmethod
     async def get_by_id(db: AsyncSession, user_id: uuid.UUID) -> Optional[Usuario]:
-        query = select(Usuario).where(Usuario.id_usuario == user_id)
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.id_usuario == user_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_legajo(db: AsyncSession, legajo: str) -> Optional[Usuario]:
-        query = select(Usuario).where(Usuario.legajo == legajo)
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.legajo == legajo)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_dni(db: AsyncSession, dni: str) -> Optional[Usuario]:
-        query = select(Usuario).where(Usuario.dni == dni)
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.dni == dni)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_by_email(db: AsyncSession, email: str) -> Optional[Usuario]:
-        query = select(Usuario).where(Usuario.correo_institucional == email)
+    async def get_by_email_institucional(db: AsyncSession, email: str) -> Optional[Usuario]:
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email_institucional == email)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def get_by_email_personal(db: AsyncSession, email: str) -> Optional[Usuario]:
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email_personal == email)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def search_by_name(db: AsyncSession, search_term: str, skip: int = 0, limit: int = 100) -> List[Usuario]:
-        query = select(Usuario).where(
+        query = select(Usuario).options(selectinload(Usuario.rol)).where(
             or_(
                 func.lower(Usuario.nombre).contains(search_term.lower()),
                 func.lower(Usuario.apellido).contains(search_term.lower()),
@@ -73,7 +80,7 @@ class UsuarioDAO:
     
     @staticmethod
     async def update(db: AsyncSession, user_id: uuid.UUID, usuario_update: UsuarioUpdate) -> Optional[Usuario]:
-        update_data = usuario_update.dict(exclude_unset=True)
+        update_data = usuario_update.model_dump(exclude_unset=True)
         
         if update_data:
             query = update(Usuario).where(Usuario.id_usuario == user_id).values(**update_data)

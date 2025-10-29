@@ -1,11 +1,14 @@
 # Schemas para el módulo BackOffice
 
+from .auth_schema import (
+    LoginRequest,
+    AuthResponse
+)
+
 from .rol_schema import (
     Rol,
     RolBase,
-    RolCreate,
-    RolUpdate,
-    CategoriaRol
+    RolUpdate
 )
 
 from .usuario_schema import (
@@ -14,19 +17,27 @@ from .usuario_schema import (
     UsuarioUpdate
 )
 
-from .usuario_rol_schema import (
-    UsuarioRol,
-    UsuarioRolCreate,
-    UsuarioConRoles,
-    RolDetallado
+from .usuario_carrera_schema import (
+    UsuarioCarrera,
+    UsuarioCarreraCreate
 )
 
-from .parametro_schema import Parametro
+from .parametro_schema import (
+    Parametro,
+    ParametroCreate,
+    ParametroUpdate
+)
 
-from .sede_schema import Sede
+from .sede_schema import (
+    Sede,
+    SedeCreate,
+    SedeUpdate
+)
 
 from .espacio_schema import (
     Espacio,
+    EspacioCreate,
+    EspacioUpdate,
     EspacioConSede,
     TipoEspacio,
     EstadoEspacio
@@ -35,59 +46,68 @@ from .espacio_schema import (
 from .sueldo_schema import (
     Sueldo,
     SueldoBase,
-    SueldoCreate,
     SueldoUpdate
 )
 
-from .cronograma_schema import Cronograma
-
 from .clase_individual_schema import (
     ClaseIndividual,
-    ClaseConCronograma,
-    EstadoClase
+    ClaseIndividualCreate,
+    ClaseIndividualUpdate,
+    ClaseIndividualResponse,
+    ClaseEstadisticas,
+    EstadoClase,
+    TipoClase
 )
-
-from .evaluacion_schema import (
-    Evaluacion,
-    EvaluacionConCronograma,
-    TipoEvaluacion
-)
-
-from .carrera_schema import (
-    Carrera,
-    CarreraCreate,
-    CarreraUpdate,
-    NivelCarrera
-)
-from .usuario_carrera_schema import UsuarioCarrera as SchemaUsuarioCarrera
-
 
 __all__ = [
-    # Schemas principales
-    "Rol", "RolBase", "RolCreate", "RolUpdate",
-    "Usuario", "UsuarioCreate", "UsuarioUpdate",
-    "UsuarioRol", "UsuarioRolCreate",
-    "Parametro",
-    "Sede",
-    "Espacio",
-    "Sueldo", "SueldoBase", "SueldoCreate", "SueldoUpdate",
-    "Cronograma",
-    "ClaseIndividual",
-    "Evaluacion",
-    "Carrera",
+    # Auth
+    "LoginRequest",
+    "AuthResponse",
+    
+    # Rol
+    "Rol",
+    "RolBase", 
+    "RolUpdate",
+    
+    # Usuario
+    "Usuario",
+    "UsuarioCreate",
+    "UsuarioUpdate",
+    
+    # Usuario Carrera
     "UsuarioCarrera",
+    "UsuarioCarreraCreate",
     
-    # Schemas adicionales
-    "UsuarioConRoles", "RolDetallado",
-    "EspacioConSede", 
-    "ClaseConCronograma",
-    "EvaluacionConCronograma",
+    # Parametro
+    "Parametro",
+    "ParametroCreate",
+    "ParametroUpdate",
     
-    # Enums
-    "CategoriaRol",
+    # Sede
+    "Sede",
+    "SedeCreate",
+    "SedeUpdate",
+    
+    # Espacio
+    "Espacio",
+    "EspacioCreate",
+    "EspacioUpdate",
+    "EspacioConSede",
     "TipoEspacio",
     "EstadoEspacio",
+    
+    # Sueldo
+    "Sueldo",
+    "SueldoBase",
+    "SueldoCreate", 
+    "SueldoUpdate",
+    
+    # Clase Individual
+    "ClaseIndividual",
+    "ClaseIndividualCreate",
+    "ClaseIndividualUpdate",
+    "ClaseIndividualResponse",
+    "ClaseEstadisticas",
     "EstadoClase",
-    "TipoEvaluacion",
-    "NivelCarrera"
+    "TipoClase"
 ]

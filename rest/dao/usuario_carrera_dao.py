@@ -2,9 +2,7 @@
 from sqlalchemy.future import select
 from sqlalchemy import and_, delete
 from ..models.usuario_carrera_model import UsuarioCarrera
-from ..models.usuario_model import Usuario
-from ..models.carrera_model import Carrera
-from ..schemas.usuario_carrera_schema import UsuarioCarreraCreate, UsuarioConCarreras, CarreraDetallada
+from ..schemas.usuario_carrera_schema import UsuarioCarreraCreate
 from typing import List, Optional
 import uuid
 
@@ -42,55 +40,11 @@ class UsuarioCarreraDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_usuario_with_carreras_detailed(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[UsuarioConCarreras]:
-        """Obtener usuario con información detallada de sus carreras"""
-        # Obtener usuario
-        usuario_query = select(Usuario).where(
-            and_(
-                Usuario.id_usuario == id_usuario,
-                Usuario.status == True
-            )
-        )
-        usuario_result = await db.execute(usuario_query)
-        usuario = usuario_result.scalar_one_or_none()
-        
-        if not usuario:
-            return None
-        
-        # Obtener carreras activas del usuario con toda su información
-        carreras_query = select(Carrera).join(UsuarioCarrera).where(
-            and_(
-                UsuarioCarrera.id_usuario == id_usuario,
-                Carrera.status == True
-            )
-        )
-        carreras_result = await db.execute(carreras_query)
-        carreras_list = carreras_result.scalars().all()
-        
-        carreras_detalladas = []
-        for carrera in carreras_list:
-            carrera_detallada = CarreraDetallada(
-                id_carrera=carrera.id_carrera,
-                nombre=carrera.nombre,
-                nivel=carrera.nivel.value if carrera.nivel else None,
-                duracion_anios=carrera.duracion_anios,
-                status=carrera.status
-            )
-            carreras_detalladas.append(carrera_detallada)
-        
-        return UsuarioConCarreras(
-            id_usuario=usuario.id_usuario,
-            nombre=usuario.nombre,
-            apellido=usuario.apellido,
-            legajo=usuario.legajo,
-            dni=usuario.dni,
-            correo_institucional=usuario.correo_institucional,
-            correo_personal=usuario.correo_personal,
-            telefono_personal=usuario.telefono_personal,
-            fecha_alta=usuario.fecha_alta.isoformat() if usuario.fecha_alta else None,
-            status=usuario.status,
-            carreras=carreras_detalladas
-        )
+    async def get_usuarios_by_carrera(db: AsyncSession, id_carrera: uuid.UUID) -> List[UsuarioCarrera]:
+        """Obtener todos los usuarios de una carrera"""
+        query = select(UsuarioCarrera).where(UsuarioCarrera.id_carrera == id_carrera)
+        result = await db.execute(query)
+        return result.scalars().all()
     
     @staticmethod
     async def delete(db: AsyncSession, id_usuario: uuid.UUID, id_carrera: uuid.UUID) -> bool:

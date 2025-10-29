@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Enum, Integer
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import Base
 import enum
+import uuid
 
 class TipoEspacio(enum.Enum):
     AULA = "aula"
@@ -18,13 +20,13 @@ class EstadoEspacio(enum.Enum):
 class Espacio(Base):
     __tablename__ = "espacios"
     
-    id_espacio = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id_espacio = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     nombre = Column(String(100), unique=True, nullable=False, index=True)
     tipo = Column(Enum(TipoEspacio), nullable=False)
     capacidad = Column(Integer, nullable=False)
     ubicacion = Column(Text, nullable=False)
     estado = Column(Enum(EstadoEspacio), default=EstadoEspacio.DISPONIBLE, nullable=False)
-    id_sede = Column(Integer, ForeignKey("sedes.id_sede", ondelete="CASCADE"), nullable=False)
+    id_sede = Column(UUID(as_uuid=True), ForeignKey("sedes.id_sede", ondelete="CASCADE"), nullable=False)
     status = Column(Boolean, default=True, nullable=False)
     
     # Relación con sede

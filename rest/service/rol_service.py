@@ -1,45 +1,31 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from ..dao.rol_dao import RolDAO
-from ..schemas.rol_schema import RolCreate, RolUpdate, CategoriaRol
+from ..schemas.rol_schema import RolBase, RolUpdate
 from ..models.rol_model import Rol
-from typing import List, Optional, Dict, Any
-from fastapi import HTTPException, status
+from typing import List, Optional, Dict, Any, Tuple
 import uuid
 
 class RolService:
     
     @staticmethod
-    async def create_rol(db: AsyncSession, rol: RolCreate) -> Optional[Rol]:
+    async def create_rol(db: AsyncSession, rol: RolBase) -> Tuple[Optional[Rol], Optional[str]]:
         """Crear un nuevo rol"""
-        # Verificar si ya existe un rol con el mismo nombre
-        existing_rol = await RolDAO.get_by_nombre(db, rol.nombre_rol)
-        if existing_rol:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Role with name '{rol.nombre_rol}' already exists"
-            )
-        
-        return await RolDAO.create(db, rol)
+        try:
+            created_rol = await RolDAO.create(db, rol)
+            return created_rol, None
+        except IntegrityError as e:
+            error_message = str(e.orig)
+            if "categoria" in error_message and "subcategoria" not in error_message:
+                return None, f"Ya existe un rol con la categoría '{rol.categoria}'"
+            elif "uq_rol_categoria_subcategoria" in error_message:
+                return None, f"Ya existe la subcategoría '{rol.subcategoria}' en la categoría '{rol.categoria}'"
+            else:
+                return None, "Error de integridad al crear el rol"
     
     @staticmethod
-    async def get_all_roles(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Rol]:
-        """Obtener todos los roles activos"""
-        return await RolDAO.get_all(db, skip, limit)
-    
-    @staticmethod
-    async def get_rol_by_id(db: AsyncSession, rol_id: uuid.UUID) -> Optional[Rol]:
-        """Obtener un rol por ID"""
-        rol = await RolDAO.get_by_id(db, rol_id)
-        if not rol:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role with ID {rol_id} not found"
-            )
-        return rol
-    
-    @staticmethod
-    async def search_roles(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Rol]:
-        """Buscar roles por diferentes parámetros"""
+    async def search_roles(db: AsyncSession, param: str, value: str) -> List[Rol]:
+        """Buscar roles por ID, categoría o subcategoría"""
         param_lower = param.lower()
         
         if param_lower == "id":
@@ -50,70 +36,46 @@ class RolService:
             except ValueError:
                 return []
         
-        elif param_lower in ["nombre", "nombre_rol"]:
-            return await RolDAO.search_by_nombre(db, value, skip, limit)
+        elif param_lower == "categoria":
+            return await RolDAO.search_by_categoria(db, value)
         
-        elif param_lower in ["categoria", "subcategoria"]:
-            try:
-                categoria = CategoriaRol(value.lower())
-                return await RolDAO.get_by_categoria(db, categoria, skip, limit)
-            except ValueError:
-                return []
+        elif param_lower == "subcategoria":
+            return await RolDAO.get_by_subcategoria(db, value)
         
         return []
     
     @staticmethod
-    async def update_rol(db: AsyncSession, rol_id: uuid.UUID, rol_update: RolUpdate) -> Optional[Rol]:
+    async def update_rol(db: AsyncSession, rol_id: uuid.UUID, rol_update: RolUpdate) -> Tuple[Optional[Rol], Optional[str]]:
         """Actualizar un rol existente"""
-        # Verificar si el rol existe
+        # Verificar que el rol existe
         existing_rol = await RolDAO.get_by_id(db, rol_id)
         if not existing_rol:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role with ID {rol_id} not found"
-            )
+            return None, "Rol no encontrado"
         
-        # Si se está actualizando el nombre, verificar que no exista otro rol con ese nombre
-        if rol_update.nombre_rol and rol_update.nombre_rol != existing_rol.nombre_rol:
-            existing_name = await RolDAO.get_by_nombre(db, rol_update.nombre_rol)
-            if existing_name and existing_name.id_rol != rol_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Role with name '{rol_update.nombre_rol}' already exists"
-                )
-        
-        return await RolDAO.update(db, rol_id, rol_update)
-    
-    @staticmethod
-    async def delete_rol(db: AsyncSession, rol_id: uuid.UUID) -> bool:
-        """Eliminar (desactivar) un rol"""
-        existing_rol = await RolDAO.get_by_id(db, rol_id)
-        if not existing_rol:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role with ID {rol_id} not found"
-            )
-        
-        return await RolDAO.soft_delete(db, rol_id)
-    
-    @staticmethod
-    async def get_all_categories(db: AsyncSession) -> List[str]:
-        """Obtener todas las categorías de roles disponibles"""
-        return await RolDAO.get_all_categories(db)
-    
-    @staticmethod
-    async def get_categories_in_use(db: AsyncSession) -> List[Dict[str, Any]]:
-        """Obtener las categorías que están siendo utilizadas"""
-        return await RolDAO.get_roles_by_categories_in_use(db)
-    
-    @staticmethod
-    async def get_roles_by_category(db: AsyncSession, categoria: str, skip: int = 0, limit: int = 100) -> List[Rol]:
-        """Obtener roles por categoría"""
         try:
-            categoria_enum = CategoriaRol(categoria.lower())
-            return await RolDAO.get_by_categoria(db, categoria_enum, skip, limit)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid category: {categoria}. Valid categories: {[c.value for c in CategoriaRol]}"
-            )
+            updated_rol = await RolDAO.update(db, rol_id, rol_update)
+            return updated_rol, None
+        except IntegrityError as e:
+            error_message = str(e.orig)
+            if "categoria" in error_message and "subcategoria" not in error_message:
+                return None, f"Ya existe un rol con la categoría '{rol_update.categoria}'"
+            elif "uq_rol_categoria_subcategoria" in error_message:
+                return None, f"Ya existe la subcategoría '{rol_update.subcategoria}' en la categoría especificada"
+            else:
+                return None, "Error de integridad al actualizar el rol"
+    
+    @staticmethod
+    async def delete_rol(db: AsyncSession, rol_id: uuid.UUID) -> Tuple[bool, Optional[str]]:
+        """Eliminar (desactivar) un rol"""
+        # Verificar que el rol existe
+        existing_rol = await RolDAO.get_by_id(db, rol_id)
+        if not existing_rol:
+            return False, "Rol no encontrado"
+        
+        success = await RolDAO.soft_delete(db, rol_id)
+        return success, None
+    
+    @staticmethod
+    async def get_categories_with_subcategories(db: AsyncSession) -> List[Dict[str, Any]]:
+        """Obtener todas las categorías con sus subcategorías"""
+        return await RolDAO.get_categories_with_subcategories(db)

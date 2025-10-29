@@ -1,24 +1,21 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from ..schemas.parametro_schema import Parametro
-from ..database import get_db
+import uuid
+from ..schemas.parametro_schema import Parametro, ParametroCreate, ParametroUpdate
+from ..database import get_async_db
+from ..service.parametro_service import ParametroService
 
-from ..service.parametro_service import ParametroService, get_parametro_service
-
-router = APIRouter(prefix="/parameters", tags=["Parameters"])
+router = APIRouter(prefix="/parametros", tags=["Parametros"])
 
 @router.post("/", response_model=Parametro, status_code=status.HTTP_201_CREATED)
 async def create_parametro(
-    parametro: Parametro,
-    created_by: str = Query(..., description="Usuario que crea el parámetro"),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    parametro: ParametroCreate,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Crear un nuevo parámetro del sistema.
-    """
+    """Crear un nuevo parámetro del sistema"""
     try:
-        resultado = parametro_service.create_parametro(parametro, created_by)
+        resultado = await ParametroService.create_parametro(db, parametro)
         return resultado["parametro"]
         
     except HTTPException:
@@ -33,13 +30,11 @@ async def create_parametro(
 async def get_all_parametros(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener todos los parámetros activos.
-    """
+    """Obtener todos los parámetros activos"""
     try:
-        resultado = parametro_service.get_all_parametros(skip, limit)
+        resultado = await ParametroService.get_all_parametros(db, skip, limit)
         return resultado["parametros"]
         
     except Exception as e:
@@ -48,16 +43,25 @@ async def get_all_parametros(
             detail=f"Error al obtener los parámetros: {str(e)}"
         )
 
+@router.get("/tipos", response_model=List[str])
+async def get_all_tipos(db: AsyncSession = Depends(get_async_db)):
+    """Obtener todos los tipos de parámetros disponibles"""
+    try:
+        return await ParametroService.get_all_tipos(db)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener los tipos: {str(e)}"
+        )
+
 @router.get("/{id_parametro}", response_model=Parametro)
 async def get_parametro_by_id(
-    id_parametro: int,
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    id_parametro: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener un parámetro por su ID.
-    """
+    """Obtener un parámetro por su ID"""
     try:
-        resultado = parametro_service.get_parametro_by_id(id_parametro)
+        resultado = await ParametroService.get_parametro_by_id(db, id_parametro)
         return resultado["parametro"]
             
     except HTTPException:
@@ -68,18 +72,34 @@ async def get_parametro_by_id(
             detail=f"Error al obtener el parámetro: {str(e)}"
         )
 
-@router.get("/search/nombre/{nombre}", response_model=List[Parametro])
-async def get_parametros_by_nombre(
+@router.get("/nombre/{nombre}", response_model=Parametro)
+async def get_parametro_by_nombre(
     nombre: str,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Obtener un parámetro por su nombre exacto"""
+    try:
+        resultado = await ParametroService.get_parametro_by_nombre(db, nombre)
+        return resultado["parametro"]
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el parámetro por nombre: {str(e)}"
+        )
+
+@router.get("/search/nombre", response_model=List[Parametro])
+async def search_parametros_by_nombre(
+    q: str = Query(..., description="Patrón de búsqueda en el nombre"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Buscar parámetros por nombre (coincidencia parcial).
-    """
+    """Buscar parámetros por nombre (coincidencia parcial)"""
     try:
-        resultado = parametro_service.search_parametros_by_nombre(nombre, skip, limit)
+        resultado = await ParametroService.search_parametros_by_nombre(db, q, skip, limit)
         return resultado["parametros"]
         
     except Exception as e:
@@ -93,13 +113,11 @@ async def get_parametros_by_tipo(
     tipo: str,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener parámetros por tipo.
-    """
+    """Obtener parámetros por tipo"""
     try:
-        resultado = parametro_service.get_parametros_by_tipo(tipo, skip, limit)
+        resultado = await ParametroService.get_parametros_by_tipo(db, tipo, skip, limit)
         return resultado["parametros"]
         
     except Exception as e:
@@ -110,16 +128,13 @@ async def get_parametros_by_tipo(
 
 @router.put("/{id_parametro}", response_model=Parametro)
 async def update_parametro(
-    id_parametro: int, 
-    parametro_update: Parametro,
-    updated_by: str = Query(..., description="Usuario que actualiza el parámetro"),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+    id_parametro: uuid.UUID,
+    parametro_update: ParametroUpdate,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Actualizar un parámetro por su ID.
-    """
+    """Actualizar un parámetro por su ID"""
     try:
-        resultado = parametro_service.update_parametro(id_parametro, parametro_update, updated_by)
+        resultado = await ParametroService.update_parametro(db, id_parametro, parametro_update)
         return resultado["parametro"]
             
     except HTTPException:
@@ -130,17 +145,14 @@ async def update_parametro(
             detail=f"Error al actualizar el parámetro: {str(e)}"
         )
 
-@router.delete("/{id_parametro}", response_model=dict)
-async def soft_delete_parametro(
-    id_parametro: int,
-    deleted_by: str = Query(..., description="Usuario que elimina el parámetro"),
-    parametro_service: ParametroService = Depends(get_parametro_service)
+@router.delete("/{id_parametro}", status_code=status.HTTP_200_OK)
+async def delete_parametro(
+    id_parametro: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Soft delete: marcar parámetro como inactivo.
-    """
+    """Eliminación lógica de un parámetro"""
     try:
-        resultado = parametro_service.delete_parametro(id_parametro, deleted_by)
+        resultado = await ParametroService.delete_parametro(db, id_parametro)
         return resultado
             
     except HTTPException:
@@ -149,24 +161,4 @@ async def soft_delete_parametro(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al eliminar el parámetro: {str(e)}"
-        )
-
-@router.get("/nombre/{nombre}", response_model=Parametro)
-async def get_parametro_by_nombre(
-    nombre: str,
-    parametro_service: ParametroService = Depends(get_parametro_service)
-):
-    """
-    Obtener un parámetro por su nombre exacto.
-    """
-    try:
-        resultado = parametro_service.get_parametro_by_nombre(nombre)
-        return resultado["parametro"]
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener el parámetro por nombre: {str(e)}"
         )
