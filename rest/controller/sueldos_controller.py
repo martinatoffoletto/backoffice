@@ -43,6 +43,25 @@ async def get_all_sueldos(
     """Obtener todos los sueldos con filtros opcionales"""
     return await SueldoService.get_all_sueldos(db, skip, limit, status)
 
+@router.get("/search", response_model=List[Sueldo])
+async def search_sueldos(
+    param: str = Query(..., description="Parámetro de búsqueda: id, id_sueldo, id_usuario"),
+    value: str = Query(..., description="Valor a buscar"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Buscar sueldos por diferentes parámetros"""
+    valid_params = ["id", "id_sueldo", "id_usuario"]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
+        )
+    
+    sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit)
+    return sueldos
+
 @router.get("/usuario/{id_usuario}", response_model=List[Sueldo])
 async def get_sueldos_by_usuario(id_usuario: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
     """Obtener todos los sueldos de un usuario específico"""

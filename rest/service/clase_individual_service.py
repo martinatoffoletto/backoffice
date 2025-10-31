@@ -160,3 +160,9 @@ class ClaseIndividualService:
         if db_clase:
             return ClaseIndividualResponse.model_validate(db_clase)
         return None
+    
+    @staticmethod
+    async def search_clases(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+        """Buscar clases individuales por diferentes parámetros"""
+        db_clases = await ClaseIndividualDAO.search(db, param, value, skip, limit)
+        return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]

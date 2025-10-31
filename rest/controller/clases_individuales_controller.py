@@ -57,6 +57,34 @@ async def get_all_clases(
         )
 
 
+@router.get("/search", response_model=List[ClaseIndividualResponse])
+async def search_clases(
+    param: str = Query(..., description="Parámetro de búsqueda: id, id_clase, id_curso, tipo"),
+    value: str = Query(..., description="Valor a buscar"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Buscar clases individuales por diferentes parámetros
+    """
+    valid_params = ["id", "id_clase", "id_curso", "tipo"]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
+        )
+    
+    try:
+        clases = await ClaseIndividualService.search_clases(db, param, value, skip, limit)
+        return clases
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al buscar las clases: {str(e)}"
+        )
+
+
 @router.get("/estadisticas", response_model=ClaseEstadisticas)
 async def get_estadisticas(
     db: AsyncSession = Depends(get_async_db)
