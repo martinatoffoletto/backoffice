@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, and_, or_, func
-from ..models.clase_individual_model import ClaseIndividual, EstadoClase
+from ..models.clase_individual_model import ClaseIndividual, EstadoClase, TipoClase
 from ..schemas.clase_individual_schema import ClaseIndividualCreate, ClaseIndividualUpdate
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
@@ -176,3 +176,44 @@ class ClaseIndividualDAO:
         )
         result = await db.execute(query)
         return result.scalar_one_or_none() is not None
+    
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividual]:
+        """Buscar clases individuales por diferentes parámetros"""
+        param_lower = param.lower()
+        
+        if param_lower in ["id", "id_clase"]:
+            try:
+                clase_id = uuid.UUID(value)
+                clase = await ClaseIndividualDAO.get_by_id(db, clase_id)
+                return [clase] if clase else []
+            except ValueError:
+                return []
+        
+        elif param_lower == "id_curso":
+            try:
+                curso_id = uuid.UUID(value)
+                clases = await ClaseIndividualDAO.get_by_curso(db, curso_id, skip, limit)
+                return clases
+            except ValueError:
+                return []
+        
+        elif param_lower == "tipo":
+            try:
+                # Convertir el valor del string al enum TipoClase
+                tipo_enum = TipoClase(value.lower())
+                query = select(ClaseIndividual).where(
+                    and_(
+                        ClaseIndividual.tipo == tipo_enum,
+                        ClaseIndividual.status == True
+                    )
+                )
+                query = query.order_by(ClaseIndividual.fecha_clase.desc())
+                query = query.offset(skip).limit(limit)
+                result = await db.execute(query)
+                return result.scalars().all()
+            except ValueError:
+                # Si el valor no es válido para el enum, retornar lista vacía
+                return []
+        
+        return []

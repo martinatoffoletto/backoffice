@@ -90,3 +90,26 @@ class SueldoDAO:
         )
         result = await db.execute(query)
         return result.scalar_one_or_none() is not None
+    
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Sueldo]:
+        """Buscar sueldos por diferentes parámetros"""
+        param_lower = param.lower()
+        
+        if param_lower in ["id", "id_sueldo"]:
+            try:
+                sueldo_id = uuid.UUID(value)
+                sueldo = await SueldoDAO.get_by_id(db, sueldo_id)
+                return [sueldo] if sueldo else []
+            except ValueError:
+                return []
+        
+        elif param_lower == "id_usuario":
+            try:
+                usuario_id = uuid.UUID(value)
+                sueldos = await SueldoDAO.get_sueldos_by_usuario(db, usuario_id)
+                return sueldos[skip:skip+limit] if sueldos else []
+            except ValueError:
+                return []
+        
+        return []

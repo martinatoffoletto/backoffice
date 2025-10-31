@@ -75,3 +75,8 @@ class SueldoService:
             return False
         
         return await SueldoDAO.soft_delete(db, sueldo_id)
+    
+    @staticmethod
+    async def search_sueldos(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Sueldo]:
+        """Buscar sueldos por diferentes parámetros"""
+        return await SueldoDAO.search(db, param, value, skip, limit)
