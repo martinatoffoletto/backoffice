@@ -106,20 +106,14 @@ class ClaseIndividualDAO:
     @staticmethod
     async def update(db: AsyncSession, id_clase: uuid.UUID, clase_update: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
         """Actualizar una clase individual"""
-        # Obtener la clase existente
-        db_clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
-        if not db_clase:
-            return None
-        
-        # Actualizar solo los campos que se proporcionaron
         update_data = clase_update.model_dump(exclude_unset=True)
         
-        for field, value in update_data.items():
-            setattr(db_clase, field, value)
+        if update_data:
+            query = update(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase).values(**update_data)
+            await db.execute(query)
+            await db.commit()
         
-        await db.commit()
-        await db.refresh(db_clase)
-        return db_clase
+        return await ClaseIndividualDAO.get_by_id(db, id_clase)
     
     @staticmethod
     async def delete(db: AsyncSession, id_clase: uuid.UUID) -> bool:
