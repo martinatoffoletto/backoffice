@@ -82,7 +82,17 @@ async def create_usuario_carrera_assignment(
     """
     try:
         result = await UsuarioCarreraService.create_assignment(db, assignment)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuario con ID {assignment.id_usuario} no encontrado"
+            )
         return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -130,8 +140,13 @@ async def remove_usuario_carrera_assignment(
     """
     try:
         success = await UsuarioCarreraService.remove_assignment(db, id_usuario, id_carrera)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró la asignación especificada"
+            )
         return {
-            "message": "Asignaci�n removida exitosamente",
+            "message": "Asignación removida exitosamente",
             "success": success
         }
     except HTTPException:
@@ -139,7 +154,7 @@ async def remove_usuario_carrera_assignment(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al remover la asignaci�n: {str(e)}"
+            detail=f"Error al remover la asignación: {str(e)}"
         )
 
 @router.get("/usuario/{id_usuario}", response_model=List[UsuarioCarrera])
@@ -152,7 +167,13 @@ async def get_carreras_by_usuario(
     Retorna las relaciones usuario-carrera (solo IDs).
     """
     try:
-        return await UsuarioCarreraService.get_carreras_by_usuario(db, id_usuario)
+        carreras = await UsuarioCarreraService.get_carreras_by_usuario(db, id_usuario)
+        if carreras is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuario con ID {id_usuario} no encontrado"
+            )
+        return carreras
     except HTTPException:
         raise
     except Exception as e:
@@ -167,7 +188,7 @@ async def get_usuarios_by_carrera(
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todos los usuarios asignados a una carrera espec�fica.
+    Obtener todos los usuarios asignados a una carrera específica.
     Retorna las relaciones usuario-carrera (solo IDs).
     """
     try:
@@ -187,7 +208,7 @@ async def check_assignment_exists(
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Verificar si existe una asignaci�n espec�fica usuario-carrera.
+    Verificar si existe una asignación específica usuario-carrera.
     """
     try:
         exists = await UsuarioCarreraService.check_assignment_exists(db, id_usuario, id_carrera)
@@ -199,5 +220,5 @@ async def check_assignment_exists(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al verificar la asignaci�n: {str(e)}"
+            detail=f"Error al verificar la asignación: {str(e)}"
         )

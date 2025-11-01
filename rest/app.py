@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import logging
 
 # Importar controllers
 from .controller.usuarios_controller import router as usuarios_router
@@ -16,13 +17,32 @@ from .controller.clases_individuales_controller import router as clases_individu
 # Importar funciones de base de datos
 from .database import init_database, close_database
 
+# Importar funciones de RabbitMQ
+from .messaging.rabbitmq import get_connection, close_connection
+
+logger = logging.getLogger(__name__)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: abrir conexión a la base de datos
     await init_database()
+    
+    # Startup: inicializar RabbitMQ (opcional, no falla si no está disponible)
+    try:
+        await get_connection()
+    except Exception as e:
+        logger.warning(f"RabbitMQ no disponible (modo sin colas): {e}")
+    
     yield
+    
     # Shutdown: cerrar conexión a la base de datos
     await close_database()
+    
+    # Shutdown: cerrar conexión a RabbitMQ
+    try:
+        await close_connection()
+    except Exception:
+        pass
 
 app = FastAPI(title="API de BackOffice", version="1.0.0", lifespan=lifespan)
 
