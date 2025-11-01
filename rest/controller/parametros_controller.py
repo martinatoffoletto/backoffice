@@ -30,11 +30,12 @@ async def create_parametro(
 async def get_all_parametros(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Obtener todos los parámetros activos"""
+    """Obtener todos los parámetros con filtro opcional por status"""
     try:
-        resultado = await ParametroService.get_all_parametros(db, skip, limit)
+        resultado = await ParametroService.get_all_parametros(db, skip, limit, status_filter)
         return resultado["parametros"]
         
     except Exception as e:
@@ -72,58 +73,30 @@ async def get_parametro_by_id(
             detail=f"Error al obtener el parámetro: {str(e)}"
         )
 
-@router.get("/nombre/{nombre}", response_model=Parametro)
-async def get_parametro_by_nombre(
-    nombre: str,
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Obtener un parámetro por su nombre exacto"""
-    try:
-        resultado = await ParametroService.get_parametro_by_nombre(db, nombre)
-        return resultado["parametro"]
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener el parámetro por nombre: {str(e)}"
-        )
-
-@router.get("/search/nombre", response_model=List[Parametro])
-async def search_parametros_by_nombre(
-    q: str = Query(..., description="Patrón de búsqueda en el nombre"),
+@router.get("/search", response_model=List[Parametro])
+async def search_parametros(
+    param: str = Query(..., description="Search parameter: id, nombre, tipo, status"),
+    value: str = Query(..., description="Search value"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Buscar parámetros por nombre (coincidencia parcial)"""
+    """Buscar parámetros por diferentes parámetros. Parámetros válidos: id, nombre, tipo, status"""
+    valid_params = [
+        "id", "id_parametro", "nombre", "search", "tipo", "status"
+    ]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+        )
+    
     try:
-        resultado = await ParametroService.search_parametros_by_nombre(db, q, skip, limit)
-        return resultado["parametros"]
-        
+        return await ParametroService.search(db, param, value, skip, limit)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al buscar parámetros: {str(e)}"
-        )
-
-@router.get("/tipo/{tipo}", response_model=List[Parametro])
-async def get_parametros_by_tipo(
-    tipo: str,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Obtener parámetros por tipo"""
-    try:
-        resultado = await ParametroService.get_parametros_by_tipo(db, tipo, skip, limit)
-        return resultado["parametros"]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener parámetros por tipo: {str(e)}"
         )
 
 @router.put("/{id_parametro}", response_model=Parametro)

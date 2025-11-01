@@ -45,9 +45,16 @@ class SedeDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Sede]:
-        """Obtener todas las sedes activas"""
-        query = select(Sede).where(Sede.status == True).offset(skip).limit(limit)
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Sede]:
+        """Obtener todas las sedes con filtro opcional por status"""
+        query = select(Sede)
+        
+        if status_filter is not None:
+            query = query.where(Sede.status == status_filter)
+        else:
+            query = query.where(Sede.status == True)
+        
+        query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
     

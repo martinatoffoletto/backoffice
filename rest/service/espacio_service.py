@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.espacio_dao import EspacioDAO
-from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede
+from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede, ComedorInfo
 from typing import List, Optional
 import uuid
 
@@ -26,9 +26,9 @@ class EspacioService:
         return None
     
     @staticmethod
-    async def get_all_espacios(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Espacio]:
-        """Obtener todos los espacios activos"""
-        db_espacios = await EspacioDAO.get_all(db, skip, limit)
+    async def get_all_espacios(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Espacio]:
+        """Obtener todos los espacios con filtro opcional por status"""
+        db_espacios = await EspacioDAO.get_all(db, skip, limit, status_filter)
         return [Espacio.model_validate(espacio) for espacio in db_espacios]
     
     @staticmethod
@@ -81,14 +81,13 @@ class EspacioService:
         if not existing_espacio:
             return None
         
-        # Si se está actualizando el nombre o la sede, verificar unicidad
-        if espacio_update.nombre is not None or espacio_update.id_sede is not None:
-            nombre_check = espacio_update.nombre if espacio_update.nombre is not None else existing_espacio.nombre
-            sede_check = espacio_update.id_sede if espacio_update.id_sede is not None else existing_espacio.id_sede
-            
-            # Solo verificar si es diferente al espacio actual
-            if nombre_check != existing_espacio.nombre or sede_check != existing_espacio.id_sede:
-                exists = await EspacioDAO.exists_by_nombre_and_sede(db, nombre_check, sede_check)
+        # Si se está actualizando el nombre, verificar unicidad (la sede no se puede cambiar)
+        if espacio_update.nombre is not None:
+            nombre_check = espacio_update.nombre
+            # Solo verificar si el nombre es diferente al nombre actual
+            if nombre_check != existing_espacio.nombre:
+                # Usar la sede actual del espacio (no se puede cambiar)
+                exists = await EspacioDAO.exists_by_nombre_and_sede(db, nombre_check, existing_espacio.id_sede)
                 if exists:
                     raise ValueError(f"Ya existe un espacio con el nombre '{nombre_check}' en esta sede")
         
@@ -111,3 +110,59 @@ class EspacioService:
     async def count_espacios_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> int:
         """Contar espacios activos por sede"""
         return await EspacioDAO.count_by_sede(db, id_sede)
+    
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Espacio]:
+        """Buscar espacios por diferentes parámetros"""
+        param_lower = param.lower()
+        espacios = []
+        
+        if param_lower in ["id", "id_espacio"]:
+            try:
+                espacio_uuid = uuid.UUID(value)
+                espacio = await EspacioDAO.get_by_id(db, espacio_uuid)
+                espacios = [espacio] if espacio else []
+            except ValueError:
+                espacios = []
+        
+        elif param_lower == "nombre":
+            espacios = await EspacioDAO.search_by_nombre(db, value, skip, limit)
+        
+        elif param_lower == "tipo":
+            espacios = await EspacioDAO.get_by_tipo(db, value, skip, limit)
+        
+        elif param_lower in ["estado", "estado_espacio"]:
+            # Buscar por estado
+            espacios = await EspacioDAO.get_by_filters(db, estado=value, skip=skip, limit=limit)
+        
+        elif param_lower == "sede" or param_lower == "id_sede":
+            try:
+                sede_uuid = uuid.UUID(value)
+                espacios = await EspacioDAO.get_by_sede(db, sede_uuid, skip, limit)
+            except ValueError:
+                espacios = []
+        
+        elif param_lower == "capacidad":
+            try:
+                capacidad_min = int(value)
+                espacios = await EspacioDAO.get_with_capacity_greater_than(db, capacidad_min, skip, limit)
+            except ValueError:
+                espacios = []
+        
+        elif param_lower == "status":
+            status_bool = value.lower() in ["true", "1", "active"]
+            espacios = await EspacioDAO.get_all(db, skip, limit, status_bool)
+        
+        return [Espacio.model_validate(espacio) for espacio in espacios if espacio]
+    
+    @staticmethod
+    async def get_comedores_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> List[ComedorInfo]:
+        """Obtener comedores de una sede con nombre y capacidad"""
+        db_comedores = await EspacioDAO.get_comedores_by_sede(db, id_sede)
+        return [
+            ComedorInfo(
+                nombre=comedor.nombre,
+                capacidad=comedor.capacidad
+            )
+            for comedor in db_comedores
+        ]

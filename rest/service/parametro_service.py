@@ -63,9 +63,9 @@ class ParametroService:
         return {"nombre": nombre, "valores": valores}
     
     @staticmethod
-    async def get_all_parametros(db: AsyncSession, skip: int = 0, limit: int = 100) -> dict:
-        """Obtener todos los parámetros activos"""
-        parametros = await ParametroDAO.get_all(db, skip, limit)
+    async def get_all_parametros(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> dict:
+        """Obtener todos los parámetros con filtro opcional por status"""
+        parametros = await ParametroDAO.get_all(db, skip, limit, status_filter)
         
         return {
             "message": f"Se encontraron {len(parametros)} parámetros",
@@ -159,3 +159,29 @@ class ParametroService:
     async def get_all_tipos(db: AsyncSession) -> List[str]:
         """Obtener todos los tipos de parámetros disponibles"""
         return await ParametroDAO.get_all_tipos(db)
+    
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Parametro]:
+        """Buscar parámetros por diferentes parámetros"""
+        param_lower = param.lower()
+        parametros = []
+        
+        if param_lower in ["id", "id_parametro"]:
+            try:
+                parametro_uuid = uuid.UUID(value)
+                parametro = await ParametroDAO.get_by_id(db, parametro_uuid)
+                parametros = [parametro] if parametro else []
+            except ValueError:
+                parametros = []
+        
+        elif param_lower in ["nombre", "search"]:
+            parametros = await ParametroDAO.search_by_nombre(db, value, skip, limit)
+        
+        elif param_lower == "tipo":
+            parametros = await ParametroDAO.get_by_tipo(db, value, skip, limit)
+        
+        elif param_lower == "status":
+            status_bool = value.lower() in ["true", "1", "active"]
+            parametros = await ParametroDAO.get_all(db, skip, limit, status_bool)
+        
+        return [Parametro.model_validate(p) for p in parametros if p]

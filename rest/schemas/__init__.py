@@ -40,7 +40,8 @@ from .espacio_schema import (
     EspacioUpdate,
     EspacioConSede,
     TipoEspacio,
-    EstadoEspacio
+    EstadoEspacio,
+    ComedorInfo
 )
 
 from .sueldo_schema import (
@@ -95,6 +96,7 @@ __all__ = [
     "EspacioConSede",
     "TipoEspacio",
     "EstadoEspacio",
+    "ComedorInfo",
     
     # Sueldo
     "Sueldo",
