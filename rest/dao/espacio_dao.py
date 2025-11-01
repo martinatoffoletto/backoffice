@@ -38,9 +38,16 @@ class EspacioDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Espacio]:
-        """Obtener todos los espacios activos"""
-        query = select(Espacio).where(Espacio.status == True).offset(skip).limit(limit)
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Espacio]:
+        """Obtener todos los espacios con filtro opcional por status"""
+        query = select(Espacio)
+        
+        if status_filter is not None:
+            query = query.where(Espacio.status == status_filter)
+        else:
+            query = query.where(Espacio.status == True)
+        
+        query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
     
@@ -206,3 +213,16 @@ class EspacioDAO:
         )
         result = await db.execute(query)
         return len(result.scalars().all())
+    
+    @staticmethod
+    async def get_comedores_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> List[Espacio]:
+        """Obtener comedores de una sede (espacios cuyo nombre contiene 'comedor')"""
+        query = select(Espacio).where(
+            and_(
+                Espacio.id_sede == id_sede,
+                Espacio.nombre.ilike("%comedor%"),
+                Espacio.status == True
+            )
+        )
+        result = await db.execute(query)
+        return result.scalars().all()

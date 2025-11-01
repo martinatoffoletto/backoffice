@@ -47,9 +47,16 @@ class ParametroDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Parametro]:
-        """Obtener todos los parámetros activos"""
-        query = select(Parametro).where(Parametro.status == True).offset(skip).limit(limit)
+    async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Parametro]:
+        """Obtener todos los parámetros con filtro opcional por status"""
+        query = select(Parametro)
+        
+        if status_filter is not None:
+            query = query.where(Parametro.status == status_filter)
+        else:
+            query = query.where(Parametro.status == True)
+        
+        query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
     
