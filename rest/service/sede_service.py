@@ -54,9 +54,9 @@ class SedeService:
         }
     
     @staticmethod
-    async def get_all_sedes(db: AsyncSession, skip: int = 0, limit: int = 100) -> dict:
-        """Obtener todas las sedes activas"""
-        sedes = await SedeDAO.get_all(db, skip, limit)
+    async def get_all_sedes(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> dict:
+        """Obtener todas las sedes con filtro opcional por status"""
+        sedes = await SedeDAO.get_all(db, skip, limit, status_filter)
         
         return {
             "message": f"Se encontraron {len(sedes)} sedes",
@@ -144,3 +144,29 @@ class SedeService:
             "message": "Sede eliminada exitosamente",
             "id_sede": id_sede
         }
+    
+    @staticmethod
+    async def search(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Sede]:
+        """Buscar sedes por diferentes parámetros"""
+        param_lower = param.lower()
+        sedes = []
+        
+        if param_lower in ["id", "id_sede"]:
+            try:
+                sede_uuid = uuid.UUID(value)
+                sede = await SedeDAO.get_by_id(db, sede_uuid)
+                sedes = [sede] if sede else []
+            except ValueError:
+                sedes = []
+        
+        elif param_lower in ["nombre", "search"]:
+            sedes = await SedeDAO.search_by_nombre(db, value, skip, limit)
+        
+        elif param_lower == "ubicacion":
+            sedes = await SedeDAO.search_by_ubicacion(db, value, skip, limit)
+        
+        elif param_lower == "status":
+            status_bool = value.lower() in ["true", "1", "active"]
+            sedes = await SedeDAO.get_all(db, skip, limit, status_bool)
+        
+        return [Sede.model_validate(s) for s in sedes if s]

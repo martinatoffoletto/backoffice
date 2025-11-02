@@ -68,3 +68,11 @@ class EspacioConSede(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ComedorInfo(BaseModel):
+    nombre: str = Field(..., description="Nombre del comedor")
+    capacidad: int = Field(..., description="Capacidad del comedor")
+
+    class Config:
+        from_attributes = True

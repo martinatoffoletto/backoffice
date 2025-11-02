@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 import uuid
 
-from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede, TipoEspacio, EstadoEspacio
+from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede, ComedorInfo
 from ..database import get_async_db
 from ..service.espacio_service import EspacioService
 
@@ -34,13 +34,14 @@ async def create_espacio(
 async def get_all_espacios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todos los espacios activos
+    Obtener todos los espacios con filtro opcional por status
     """
     try:
-        return await EspacioService.get_all_espacios(db, skip, limit)
+        return await EspacioService.get_all_espacios(db, skip, limit, status_filter)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -95,102 +96,34 @@ async def get_espacio_with_sede(
             detail=f"Error al obtener el espacio con sede: {str(e)}"
         )
 
-@router.get("/sede/{id_sede}", response_model=List[Espacio])
-async def get_espacios_by_sede(
-    id_sede: uuid.UUID,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Obtener todos los espacios de una sede específica
-    """
-    try:
-        return await EspacioService.get_espacios_by_sede(db, id_sede, skip, limit)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener espacios por sede: {str(e)}"
-        )
-
-@router.get("/tipo/{tipo}", response_model=List[Espacio])
-async def get_espacios_by_tipo(
-    tipo: TipoEspacio,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Obtener espacios por tipo
-    """
-    try:
-        return await EspacioService.get_espacios_by_tipo(db, tipo.value, skip, limit)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener espacios por tipo: {str(e)}"
-        )
-
 @router.get("/search", response_model=List[Espacio])
 async def search_espacios(
-    nombre: str = Query(..., description="Patrón de búsqueda en el nombre"),
+    param: str = Query(..., description="Search parameter: id, nombre, tipo, estado, sede, id_sede, capacidad, status"),
+    value: str = Query(..., description="Search value"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Buscar espacios por nombre
+    Buscar espacios por diferentes parámetros. Parámetros válidos: id, nombre, tipo, estado, sede, id_sede, capacidad, status
     """
+    valid_params = [
+        "id", "id_espacio", "nombre", "tipo", 
+        "estado", "estado_espacio", "sede", "id_sede",
+        "capacidad", "status"
+    ]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+        )
+    
     try:
-        return await EspacioService.search_espacios(db, nombre, skip, limit)
+        return await EspacioService.search(db, param, value, skip, limit)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al buscar espacios: {str(e)}"
-        )
-
-@router.get("/capacidad/{capacidad_minima}", response_model=List[Espacio])
-async def get_espacios_by_capacity(
-    capacidad_minima: int,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Obtener espacios con capacidad mayor o igual a la especificada
-    """
-    try:
-        return await EspacioService.get_espacios_by_capacity(db, capacidad_minima, skip, limit)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener espacios por capacidad: {str(e)}"
-        )
-
-@router.get("/filtros", response_model=List[Espacio])
-async def filter_espacios(
-    id_sede: Optional[uuid.UUID] = Query(None, description="Filtrar por ID de sede"),
-    tipo: Optional[TipoEspacio] = Query(None, description="Filtrar por tipo"),
-    capacidad_minima: Optional[int] = Query(None, description="Filtrar por capacidad mínima"),
-    estado: Optional[EstadoEspacio] = Query(None, description="Filtrar por estado"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Filtrar espacios por múltiples criterios
-    """
-    try:
-        tipo_value = tipo.value if tipo else None
-        estado_value = estado.value if estado else None
-        
-        return await EspacioService.filter_espacios(
-            db, id_sede, tipo_value, capacidad_minima, estado_value, skip, limit
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al filtrar espacios: {str(e)}"
         )
 
 @router.get("/tipos/disponibles", response_model=List[str])
@@ -222,6 +155,22 @@ async def count_espacios_by_sede(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al contar espacios por sede: {str(e)}"
+        )
+
+@router.get("/sede/{id_sede}/comedores", response_model=List[ComedorInfo])
+async def get_comedores_by_sede(
+    id_sede: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener lista de comedores de una sede con sus nombres y capacidades
+    """
+    try:
+        return await EspacioService.get_comedores_by_sede(db, id_sede)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener comedores por sede: {str(e)}"
         )
 
 @router.put("/{id_espacio}", response_model=Espacio)

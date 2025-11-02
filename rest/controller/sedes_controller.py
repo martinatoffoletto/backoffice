@@ -30,11 +30,12 @@ async def create_sede(
 async def get_all_sedes(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Obtener todas las sedes activas con paginación"""
+    """Obtener todas las sedes con filtro opcional por status y paginación"""
     try:
-        resultado = await SedeService.get_all_sedes(db, skip=skip, limit=limit)
+        resultado = await SedeService.get_all_sedes(db, skip=skip, limit=limit, status_filter=status_filter)
         return resultado["sedes"]
         
     except Exception as e:
@@ -61,54 +62,26 @@ async def get_sede_by_id(
             detail=f"Error al obtener la sede: {str(e)}"
         )
 
-@router.get("/nombre/{nombre}", response_model=Sede)
-async def get_sede_by_nombre(
-    nombre: str,
+@router.get("/search", response_model=List[Sede])
+async def search_sedes(
+    param: str = Query(..., description="Search parameter: id, nombre, ubicacion, status"),
+    value: str = Query(..., description="Search value"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Obtener sede por nombre"""
-    try:
-        resultado = await SedeService.get_sede_by_nombre(db, nombre)
-        return resultado["sede"]
+    """Buscar sedes por diferentes parámetros. Parámetros válidos: id, nombre, ubicacion, status"""
+    valid_params = [
+        "id", "id_sede", "nombre", "search", "ubicacion", "status"
+    ]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+        )
     
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener la sede: {str(e)}"
-        )
-
-@router.get("/search/nombre", response_model=List[Sede])
-async def search_sedes_by_nombre(
-    q: str = Query(..., description="Patrón de búsqueda en el nombre"),
-    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
-    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Buscar sedes por patrón en el nombre"""
     try:
-        resultado = await SedeService.search_sedes_by_nombre(db, q, skip, limit)
-        return resultado["sedes"]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar sedes: {str(e)}"
-        )
-
-@router.get("/search/ubicacion", response_model=List[Sede])
-async def search_sedes_by_ubicacion(
-    q: str = Query(..., description="Patrón de búsqueda en la ubicación"),
-    skip: int = Query(0, ge=0, description="Número de registros a omitir"),
-    limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Buscar sedes por patrón en la ubicación"""
-    try:
-        resultado = await SedeService.search_sedes_by_ubicacion(db, q, skip, limit)
-        return resultado["sedes"]
-        
+        return await SedeService.search(db, param, value, skip, limit)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
