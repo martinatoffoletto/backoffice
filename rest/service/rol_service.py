@@ -24,23 +24,23 @@ class RolService:
                 return None, "Error de integridad al crear el rol"
     
     @staticmethod
-    async def search_roles(db: AsyncSession, param: str, value: str) -> List[Rol]:
+    async def search_roles(db: AsyncSession, param: str, value: str, status_filter: Optional[bool] = None) -> List[Rol]:
         """Buscar roles por ID, categoría o subcategoría"""
         param_lower = param.lower()
         
         if param_lower == "id":
             try:
                 rol_id = uuid.UUID(value)
-                rol = await RolDAO.get_by_id(db, rol_id)
+                rol = await RolDAO.get_by_id(db, rol_id, status_filter)
                 return [rol] if rol else []
             except ValueError:
                 return []
         
         elif param_lower == "categoria":
-            return await RolDAO.search_by_categoria(db, value)
+            return await RolDAO.search_by_categoria(db, value, status_filter)
         
         elif param_lower == "subcategoria":
-            return await RolDAO.get_by_subcategoria(db, value)
+            return await RolDAO.get_by_subcategoria(db, value, status_filter)
         
         return []
     
@@ -48,7 +48,7 @@ class RolService:
     async def update_rol(db: AsyncSession, rol_id: uuid.UUID, rol_update: RolUpdate) -> Tuple[Optional[Rol], Optional[str]]:
         """Actualizar un rol existente"""
         # Verificar que el rol existe
-        existing_rol = await RolDAO.get_by_id(db, rol_id)
+        existing_rol = await RolDAO.get_by_id(db, rol_id, True)
         if not existing_rol:
             return None, "Rol no encontrado"
         
@@ -68,7 +68,7 @@ class RolService:
     async def delete_rol(db: AsyncSession, rol_id: uuid.UUID) -> Tuple[bool, Optional[str]]:
         """Eliminar (desactivar) un rol"""
         # Verificar que el rol existe
-        existing_rol = await RolDAO.get_by_id(db, rol_id)
+        existing_rol = await RolDAO.get_by_id(db, rol_id, True)
         if not existing_rol:
             return False, "Rol no encontrado"
         
@@ -76,6 +76,11 @@ class RolService:
         return success, None
     
     @staticmethod
-    async def get_categories_with_subcategories(db: AsyncSession) -> List[Dict[str, Any]]:
+    async def get_categories_with_subcategories(db: AsyncSession, status_filter: Optional[bool] = None) -> List[Dict[str, Any]]:
         """Obtener todas las categorías con sus subcategorías"""
-        return await RolDAO.get_categories_with_subcategories(db)
+        return await RolDAO.get_categories_with_subcategories(db, status_filter)
+
+    @staticmethod
+    async def get_all_roles(db: AsyncSession, status_filter: Optional[bool] = None) -> List[Rol]:
+        """Obtener todos los roles con filtro opcional por estado"""
+        return await RolDAO.get_all(db, status_filter)

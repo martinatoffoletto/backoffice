@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, and_, or_
+from sqlalchemy import update
 from ..models.rol_model import Rol
 from ..schemas.rol_schema import RolBase, RolUpdate
 from typing import List, Optional
@@ -24,44 +24,40 @@ class RolDAO:
         return db_rol
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_rol: uuid.UUID) -> Optional[Rol]:
+    async def get_by_id(db: AsyncSession, id_rol: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Rol]:
         """Obtener rol por ID"""
-        query = select(Rol).where(
-            and_(Rol.id_rol == id_rol, Rol.status == True)
-        )
+        query = select(Rol).where(Rol.id_rol == id_rol)
+        if status_filter is not None:
+            query = query.where(Rol.status == status_filter)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def search_by_categoria(db: AsyncSession, categoria_pattern: str) -> List[Rol]:
-        """Buscar roles por patrón en la categoría (búsqueda parcial)"""
+    async def search_by_categoria(db: AsyncSession, categoria_pattern: str, status_filter: Optional[bool] = None) -> List[Rol]:
         query = select(Rol).where(
-            and_(
-                Rol.categoria.ilike(f"%{categoria_pattern}%"),
-                Rol.status == True
-            )
+            Rol.categoria.ilike(f"%{categoria_pattern}%")
         )
+        if status_filter is not None:
+            query = query.where(Rol.status == status_filter)
         result = await db.execute(query)
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_subcategoria(db: AsyncSession, subcategoria: str) -> List[Rol]:
-        """Obtener roles por subcategoría (búsqueda parcial)"""
+    async def get_by_subcategoria(db: AsyncSession, subcategoria: str, status_filter: Optional[bool] = None) -> List[Rol]:
         query = select(Rol).where(
-            and_(
-                Rol.subcategoria.ilike(f"%{subcategoria}%"),
-                Rol.status == True
-            )
+            Rol.subcategoria.ilike(f"%{subcategoria}%")
         )
+        if status_filter is not None:
+            query = query.where(Rol.status == status_filter)
         result = await db.execute(query)
         return result.scalars().all()
     
     @staticmethod
-    async def get_categories_with_subcategories(db: AsyncSession) -> List[dict]:
+    async def get_categories_with_subcategories(db: AsyncSession, status_filter: Optional[bool] = None) -> List[dict]:
         """Obtener todas las categorías con sus subcategorías agrupadas"""
-        query = select(Rol.categoria, Rol.subcategoria).where(
-            and_(Rol.status == True)
-        ).distinct()
+        query = select(Rol.categoria, Rol.subcategoria).distinct()
+        if status_filter is not None:
+            query = query.where(Rol.status == status_filter)
         result = await db.execute(query)
         results = result.fetchall()
         
@@ -103,6 +99,15 @@ class RolDAO:
         result = await db.execute(query)
         await db.commit()
         return result.rowcount > 0
+
+    @staticmethod
+    async def get_all(db: AsyncSession, status_filter: Optional[bool] = None) -> List[Rol]:
+        """Obtener todos los roles, filtrando por estado cuando se indica."""
+        query = select(Rol)
+        if status_filter is not None:
+            query = query.where(Rol.status == status_filter)
+        result = await db.execute(query)
+        return result.scalars().all()
     
     
    
