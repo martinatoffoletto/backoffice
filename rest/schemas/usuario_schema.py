@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 import uuid
 
@@ -32,6 +32,7 @@ class SueldoDetallado(BaseModel):
 class CarreraDetallada(BaseModel):
     """Información básica de carrera (solo ID ya que es entidad externa)"""
     id_carrera: uuid.UUID
+    status: bool
     
     class Config:
         from_attributes = True
@@ -67,30 +68,7 @@ class Usuario(BaseModel):
         }
 
 
-class UsuarioCompleto(BaseModel):
-    """Usuario con toda la información detallada incluida (sueldos O carreras, nunca ambos)"""
-    id_usuario: uuid.UUID
-    nombre: str
-    apellido: str
-    legajo: str
-    dni: str
-    email_institucional: Optional[str]
-    email_personal: str
-    telefono_personal: str
-    fecha_alta: Optional[datetime]
-    status: bool
-    rol: RolDetallado
-    tipo_info_adicional: str = Field(description="Tipo de información adicional: 'sueldos' o 'carreras'")
-    sueldos: Optional[List[SueldoDetallado]] = Field(None, description="Lista de sueldos (solo si el rol corresponde)")
-    carreras: Optional[List[CarreraDetallada]] = Field(None, description="Lista de carreras (solo si el rol corresponde)")
-    
-    class Config:
-        from_attributes = True
-        exclude_none = True  # Esto excluye campos que son None del JSON
-
-
 class UsuarioConRol(BaseModel):
-    """Usuario con información del rol para listados"""
     id_usuario: uuid.UUID
     nombre: str
     apellido: str
@@ -102,9 +80,12 @@ class UsuarioConRol(BaseModel):
     fecha_alta: Optional[datetime]
     status: bool
     rol: RolDetallado
+    sueldo: Optional[SueldoDetallado] = Field(default=None, description="Sueldo asociado al usuario")
+    carrera: Optional[CarreraDetallada] = Field(default=None, description="Carrera asociada al usuario")
     
     class Config:
         from_attributes = True
+        exclude_none = True
 
 
 ###DTOs para crear y actualizar usuarios

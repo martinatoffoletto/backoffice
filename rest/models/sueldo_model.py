@@ -14,7 +14,7 @@ class Sueldo(Base):
     status = Column(Boolean, default=True, nullable=False)
     
     # Relación con usuario
-    usuario = relationship("Usuario")
+    usuario = relationship("Usuario", back_populates="sueldos")
     
     def __repr__(self):
         return f"<Sueldo(id_sueldo={self.id_sueldo}, id_usuario={self.id_usuario}, sueldo_adicional={self.sueldo_adicional})>"

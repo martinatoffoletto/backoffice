@@ -157,23 +157,20 @@ async def remove_usuario_carrera_assignment(
             detail=f"Error al remover la asignación: {str(e)}"
         )
 
-@router.get("/usuario/{id_usuario}", response_model=List[UsuarioCarrera])
-async def get_carreras_by_usuario(
+@router.get("/usuario/{id_usuario}", response_model=UsuarioCarrera)
+async def get_carrera_by_usuario(
     id_usuario: UUID,
     db: AsyncSession = Depends(get_async_db)
 ):
-    """
-    Obtener todas las carreras asignadas a un usuario espec�fico.
-    Retorna las relaciones usuario-carrera (solo IDs).
-    """
+    """Obtener la carrera activa asignada a un usuario especifico."""
     try:
-        carreras = await UsuarioCarreraService.get_carreras_by_usuario(db, id_usuario)
-        if carreras is None:
+        carrera = await UsuarioCarreraService.get_carrera_by_usuario(db, id_usuario)
+        if carrera is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Usuario con ID {id_usuario} no encontrado"
+                detail=f"Usuario con ID {id_usuario} no encontrado o sin carrera activa"
             )
-        return carreras
+        return carrera
     except HTTPException:
         raise
     except Exception as e:

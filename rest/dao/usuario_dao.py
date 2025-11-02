@@ -27,7 +27,11 @@ class UsuarioDAO:
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol))
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        )
         
         if status_filter is not None:
             query = query.where(Usuario.status == status_filter)
@@ -38,37 +42,61 @@ class UsuarioDAO:
     
     @staticmethod
     async def get_by_id(db: AsyncSession, user_id: uuid.UUID) -> Optional[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.id_usuario == user_id)
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(Usuario.id_usuario == user_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_legajo(db: AsyncSession, legajo: str) -> Optional[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.legajo == legajo)
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(Usuario.legajo == legajo)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_dni(db: AsyncSession, dni: str) -> Optional[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.dni == dni)
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(Usuario.dni == dni)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_email_institucional(db: AsyncSession, email: str) -> Optional[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email_institucional == email)
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(Usuario.email_institucional == email)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def get_by_email_personal(db: AsyncSession, email: str) -> Optional[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email_personal == email)
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(Usuario.email_personal == email)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
     async def search_by_name(db: AsyncSession, search_term: str, skip: int = 0, limit: int = 100) -> List[Usuario]:
-        query = select(Usuario).options(selectinload(Usuario.rol)).where(
+        query = select(Usuario).options(
+            selectinload(Usuario.rol),
+            selectinload(Usuario.sueldos),
+            selectinload(Usuario.carreras)
+        ).where(
             or_(
                 func.lower(Usuario.nombre).contains(search_term.lower()),
                 func.lower(Usuario.apellido).contains(search_term.lower()),

@@ -42,14 +42,14 @@ class SueldoService:
         return await SueldoDAO.get_by_id(db, sueldo_id)
     
     @staticmethod
-    async def get_sueldos_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[List[Sueldo]]:
-        """Obtener todos los sueldos de un usuario"""
+    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[Sueldo]:
+        """Obtener el sueldo activo único de un usuario"""
         # Verificar que el usuario existe
         usuario = await UsuarioDAO.get_by_id(db, id_usuario)
         if not usuario:
             return None
         
-        return await SueldoDAO.get_sueldos_by_usuario(db, id_usuario)
+        return await SueldoDAO.get_sueldo_by_usuario(db, id_usuario)
     
     @staticmethod
     async def get_all_sueldos(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Sueldo]:
