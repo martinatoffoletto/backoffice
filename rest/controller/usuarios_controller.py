@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any, Union
 import uuid
 from ..schemas.usuario_schema import (
-    UsuarioCreate, UsuarioUpdate, Usuario, UsuarioCompleto, UsuarioConRol
+    UsuarioCreate, UsuarioUpdate, Usuario, UsuarioConRol
 )
 from ..service.usuario_service import UsuarioService
 from ..database import get_async_db
@@ -25,30 +25,28 @@ async def create_user(usuario: UsuarioCreate, db: AsyncSession = Depends(get_asy
         "message": "User created successfully"
     }
 
-@router.get("/", response_model=List[UsuarioConRol])
+@router.get("/", response_model=List[UsuarioConRol], response_model_exclude_none=True)
 async def get_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     status_filter: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Obtener todos los usuarios con información del rol"""
     return await UsuarioService.get_all_users(db, skip, limit, status_filter)
 
-@router.get("/search")
+@router.get("/search", response_model=List[UsuarioConRol], response_model_exclude_none=True)
 async def search_users(
-    param: str = Query(..., description="Search parameter: id, legajo, dni, email, email_institucional, email_personal, name, status"),
+    param: str = Query(..., description="Search parameter: id, legajo, dni, email_institucional, email_personal, nombre, status"),
     value: str = Query(..., description="Search value"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filter by user status: true for active, false for inactive, omit for all"),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Buscar usuarios por diferentes parámetros. Siempre retorna información completa (usuario + rol + sueldos + carreras)."""
+    """Buscar usuarios por diferentes parámetros. Retorna usuario + rol + un único sueldo o una única carrera cuando existan."""
     valid_params = [
-        "id", "id_usuario", "legajo", "dni", 
-        "email", "email_institucional", "email_personal",
-        "email_institucional", "email_personal", "email",
-        "name", "nombre_apellido", "search", "status"
+        "id", "legajo", "dni", "email_institucional", "email_personal",
+        "nombre", "status"
     ]
     if param.lower() not in valid_params:
         raise HTTPException(
@@ -56,17 +54,7 @@ async def search_users(
             detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
         )
     
-    # Obtener usuarios con información básica + rol
-    usuarios_con_rol = await UsuarioService.search(db, param, value, skip, limit)
-    
-    # Convertir cada usuario a información completa
-    usuarios_completos = []
-    for usuario_con_rol in usuarios_con_rol:
-        usuario_completo = await UsuarioService.get_user_by_id_completo(db, usuario_con_rol.id_usuario)
-        if usuario_completo:
-            usuarios_completos.append(usuario_completo)
-    
-    return usuarios_completos
+    return await UsuarioService.search(db, param, value, skip, limit, status_filter)
 
 @router.put("/{user_id}", response_model=Usuario)
 async def update_user(

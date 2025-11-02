@@ -36,8 +36,8 @@ class SueldoDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_sueldos_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> List[Sueldo]:
-        """Obtener todos los sueldos activos de un usuario"""
+    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[Sueldo]:
+        """Obtener el sueldo activo único de un usuario."""
         query = select(Sueldo).where(
             and_(
                 Sueldo.id_usuario == id_usuario,
@@ -45,7 +45,7 @@ class SueldoDAO:
             )
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        return result.scalar_one_or_none()
     
     @staticmethod
     async def get_all(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Sueldo]:
@@ -107,8 +107,8 @@ class SueldoDAO:
         elif param_lower == "id_usuario":
             try:
                 usuario_id = uuid.UUID(value)
-                sueldos = await SueldoDAO.get_sueldos_by_usuario(db, usuario_id)
-                return sueldos[skip:skip+limit] if sueldos else []
+                sueldo = await SueldoDAO.get_sueldo_by_usuario(db, usuario_id)
+                return [sueldo] if sueldo else []
             except ValueError:
                 return []
         

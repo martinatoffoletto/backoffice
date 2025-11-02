@@ -34,8 +34,8 @@ class UsuarioCarreraDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_carreras_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> List[UsuarioCarrera]:
-        """Obtener todas las carreras activas de un usuario"""
+    async def get_carrera_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[UsuarioCarrera]:
+        """Obtener la carrera activa única de un usuario."""
         query = select(UsuarioCarrera).where(
             and_(
                 UsuarioCarrera.id_usuario == id_usuario,
@@ -43,7 +43,7 @@ class UsuarioCarreraDAO:
             )
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        return result.scalar_one_or_none()
     
     @staticmethod
     async def get_usuarios_by_carrera(db: AsyncSession, id_carrera: uuid.UUID) -> List[UsuarioCarrera]:
@@ -138,8 +138,8 @@ class UsuarioCarreraDAO:
         elif param_lower == "id_usuario":
             try:
                 usuario_id = uuid.UUID(value)
-                relaciones = await UsuarioCarreraDAO.get_carreras_by_usuario(db, usuario_id)
-                return relaciones[skip:skip+limit] if relaciones else []
+                relacion = await UsuarioCarreraDAO.get_carrera_by_usuario(db, usuario_id)
+                return [relacion] if relacion else []
             except ValueError:
                 return []
         

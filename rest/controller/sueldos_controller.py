@@ -62,16 +62,16 @@ async def search_sueldos(
     sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit)
     return sueldos
 
-@router.get("/usuario/{id_usuario}", response_model=List[Sueldo])
-async def get_sueldos_by_usuario(id_usuario: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
-    """Obtener todos los sueldos de un usuario específico"""
-    sueldos = await SueldoService.get_sueldos_by_usuario(db, id_usuario)
-    if sueldos is None:
+@router.get("/usuario/{id_usuario}", response_model=Sueldo)
+async def get_sueldo_by_usuario(id_usuario: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+    """Obtener el sueldo activo de un usuario específico"""
+    sueldo = await SueldoService.get_sueldo_by_usuario(db, id_usuario)
+    if sueldo is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario no encontrado"
+            detail="Usuario no encontrado o sin sueldo activo"
         )
-    return sueldos
+    return sueldo
 
 @router.get("/{sueldo_id}", response_model=Sueldo)
 async def get_sueldo_by_id(sueldo_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
