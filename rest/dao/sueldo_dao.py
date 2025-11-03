@@ -24,26 +24,30 @@ class SueldoDAO:
         return db_sueldo
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, sueldo_id: uuid.UUID) -> Optional[Sueldo]:
+    async def get_by_id(db: AsyncSession, sueldo_id: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Sueldo]:
         """Obtener sueldo por ID"""
-        query = select(Sueldo).where(
-            and_(
-                Sueldo.id_sueldo == sueldo_id,
-                Sueldo.status == True
-            )
-        )
+        query = select(Sueldo).where(Sueldo.id_sueldo == sueldo_id)
+        
+        if status_filter is not None:
+            query = query.where(Sueldo.status == status_filter)
+        else:
+            # Por defecto solo mostrar activos
+            query = query.where(Sueldo.status == True)
+        
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[Sueldo]:
+    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Sueldo]:
         """Obtener el sueldo activo único de un usuario."""
-        query = select(Sueldo).where(
-            and_(
-                Sueldo.id_usuario == id_usuario,
-                Sueldo.status == True
-            )
-        )
+        query = select(Sueldo).where(Sueldo.id_usuario == id_usuario)
+        
+        if status_filter is not None:
+            query = query.where(Sueldo.status == status_filter)
+        else:
+            # Por defecto solo mostrar activos
+            query = query.where(Sueldo.status == True)
+        
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
@@ -110,6 +114,14 @@ class SueldoDAO:
                 sueldo = await SueldoDAO.get_sueldo_by_usuario(db, usuario_id)
                 return [sueldo] if sueldo else []
             except ValueError:
+                return []
+        
+        elif param_lower == "status":
+            try:
+                status_bool = value.lower() in ["true", "1", "active"]
+                sueldos = await SueldoDAO.get_all(db, skip, limit, status_bool)
+                return sueldos
+            except (ValueError, AttributeError):
                 return []
         
         return []

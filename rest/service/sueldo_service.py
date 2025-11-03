@@ -37,19 +37,19 @@ class SueldoService:
         return await SueldoDAO.create(db, sueldo)
     
     @staticmethod
-    async def get_sueldo_by_id(db: AsyncSession, sueldo_id: uuid.UUID) -> Optional[Sueldo]:
+    async def get_sueldo_by_id(db: AsyncSession, sueldo_id: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Sueldo]:
         """Obtener un sueldo por ID"""
-        return await SueldoDAO.get_by_id(db, sueldo_id)
+        return await SueldoDAO.get_by_id(db, sueldo_id, status_filter)
     
     @staticmethod
-    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> Optional[Sueldo]:
+    async def get_sueldo_by_usuario(db: AsyncSession, id_usuario: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Sueldo]:
         """Obtener el sueldo activo único de un usuario"""
         # Verificar que el usuario existe
         usuario = await UsuarioDAO.get_by_id(db, id_usuario)
         if not usuario:
             return None
         
-        return await SueldoDAO.get_sueldo_by_usuario(db, id_usuario)
+        return await SueldoDAO.get_sueldo_by_usuario(db, id_usuario, status_filter)
     
     @staticmethod
     async def get_all_sueldos(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Sueldo]:
@@ -77,6 +77,14 @@ class SueldoService:
         return await SueldoDAO.soft_delete(db, sueldo_id)
     
     @staticmethod
-    async def search_sueldos(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[Sueldo]:
+    async def search_sueldos(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[Sueldo]:
         """Buscar sueldos por diferentes parámetros"""
-        return await SueldoDAO.search(db, param, value, skip, limit)
+        sueldos = await SueldoDAO.search(db, param, value, skip, limit)
+        
+        # Aplicar filtro adicional de status si está presente
+        if status_filter is not None:
+            sueldos = [sueldo for sueldo in sueldos if sueldo and sueldo.status == status_filter]
+        else:
+            sueldos = [sueldo for sueldo in sueldos if sueldo]
+        
+        return sueldos
