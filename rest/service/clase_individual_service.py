@@ -31,46 +31,46 @@ class ClaseIndividualService:
         return ClaseIndividualResponse.model_validate(db_clase)
     
     @staticmethod
-    async def get_clase_by_id(db: AsyncSession, id_clase: uuid.UUID) -> Optional[ClaseIndividualResponse]:
+    async def get_clase_by_id(db: AsyncSession, id_clase: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[ClaseIndividualResponse]:
         """Obtener una clase individual por su ID"""
-        db_clase = await ClaseIndividualDAO.get_by_id(db, id_clase)
+        db_clase = await ClaseIndividualDAO.get_by_id(db, id_clase, status_filter)
         if db_clase:
             return ClaseIndividualResponse.model_validate(db_clase)
         return None
     
     @staticmethod
-    async def get_all_clases(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
-        """Obtener todas las clases individuales activas"""
-        db_clases = await ClaseIndividualDAO.get_all(db, skip, limit)
+    async def get_all_clases(db: AsyncSession, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
+        """Obtener todas las clases individuales con filtros opcionales"""
+        db_clases = await ClaseIndividualDAO.get_all(db, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
-    async def get_clases_by_curso(db: AsyncSession, id_curso: uuid.UUID, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+    async def get_clases_by_curso(db: AsyncSession, id_curso: uuid.UUID, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Obtener clases por curso"""
-        db_clases = await ClaseIndividualDAO.get_by_curso(db, id_curso, skip, limit)
+        db_clases = await ClaseIndividualDAO.get_by_curso(db, id_curso, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
-    async def get_clases_by_estado(db: AsyncSession, estado: EstadoClase, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+    async def get_clases_by_estado(db: AsyncSession, estado: EstadoClase, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Obtener clases por estado"""
         # Convertir el enum del schema al enum del modelo
         model_estado = ModelEstadoClase(estado.value)
-        db_clases = await ClaseIndividualDAO.get_by_estado(db, model_estado, skip, limit)
+        db_clases = await ClaseIndividualDAO.get_by_estado(db, model_estado, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
-    async def get_clases_by_fecha(db: AsyncSession, fecha_clase: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+    async def get_clases_by_fecha(db: AsyncSession, fecha_clase: date, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Obtener clases por fecha"""
-        db_clases = await ClaseIndividualDAO.get_by_fecha(db, fecha_clase, skip, limit)
+        db_clases = await ClaseIndividualDAO.get_by_fecha(db, fecha_clase, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
-    async def get_clases_by_fecha_range(db: AsyncSession, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+    async def get_clases_by_fecha_range(db: AsyncSession, fecha_inicio: date, fecha_fin: date, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Obtener clases por rango de fechas"""
         if fecha_inicio > fecha_fin:
             raise ValueError("La fecha de inicio no puede ser mayor que la fecha de fin")
         
-        db_clases = await ClaseIndividualDAO.get_by_fecha_range(db, fecha_inicio, fecha_fin, skip, limit)
+        db_clases = await ClaseIndividualDAO.get_by_fecha_range(db, fecha_inicio, fecha_fin, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
@@ -162,7 +162,14 @@ class ClaseIndividualService:
         return None
     
     @staticmethod
-    async def search_clases(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[ClaseIndividualResponse]:
+    async def search_clases(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Buscar clases individuales por diferentes parámetros"""
         db_clases = await ClaseIndividualDAO.search(db, param, value, skip, limit)
+        
+        # Aplicar filtro adicional de status si está presente
+        if status_filter is not None:
+            db_clases = [clase for clase in db_clases if clase and clase.status == status_filter]
+        else:
+            db_clases = [clase for clase in db_clases if clase]
+        
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]

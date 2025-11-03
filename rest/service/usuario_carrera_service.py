@@ -41,23 +41,23 @@ class UsuarioCarreraService:
         return success
     
     @staticmethod
-    async def get_carrera_by_usuario(db: AsyncSession, id_usuario: UUID) -> Optional[UsuarioCarreraSchema]:
+    async def get_carrera_by_usuario(db: AsyncSession, id_usuario: UUID, status_filter: Optional[bool] = None) -> Optional[UsuarioCarreraSchema]:
         """Obtener la carrera activa única de un usuario"""
         # Verificar que el usuario existe
         usuario = await UsuarioDAO.get_by_id(db, id_usuario)
         if not usuario:
             return None
         
-        relacion = await UsuarioCarreraDAO.get_carrera_by_usuario(db, id_usuario)
+        relacion = await UsuarioCarreraDAO.get_carrera_by_usuario(db, id_usuario, status_filter)
         if not relacion:
             return None
         return UsuarioCarreraSchema(id_usuario=relacion.id_usuario, id_carrera=relacion.id_carrera, status=relacion.status)
     
     @staticmethod
-    async def get_usuarios_by_carrera(db: AsyncSession, id_carrera: UUID) -> List[UsuarioCarreraSchema]:
+    async def get_usuarios_by_carrera(db: AsyncSession, id_carrera: UUID, status_filter: Optional[bool] = None) -> List[UsuarioCarreraSchema]:
         """Obtener todos los usuarios de una carrera"""
         # Obtener las relaciones usuario-carrera
-        relations = await UsuarioCarreraDAO.get_usuarios_by_carrera(db, id_carrera)
+        relations = await UsuarioCarreraDAO.get_usuarios_by_carrera(db, id_carrera, status_filter)
         return [UsuarioCarreraSchema(id_usuario=rel.id_usuario, id_carrera=rel.id_carrera, status=rel.status) for rel in relations]
     
     @staticmethod
@@ -72,9 +72,9 @@ class UsuarioCarreraService:
         return [UsuarioCarreraSchema(id_usuario=rel.id_usuario, id_carrera=rel.id_carrera, status=rel.status) for rel in relaciones]
     
     @staticmethod
-    async def get_usuario_carrera_by_id(db: AsyncSession, id_usuario: UUID, id_carrera: UUID) -> Optional[UsuarioCarreraSchema]:
+    async def get_usuario_carrera_by_id(db: AsyncSession, id_usuario: UUID, id_carrera: UUID, status_filter: Optional[bool] = None) -> Optional[UsuarioCarreraSchema]:
         """Obtener una relación usuario-carrera por IDs"""
-        relacion = await UsuarioCarreraDAO.get_by_id(db, id_usuario, id_carrera)
+        relacion = await UsuarioCarreraDAO.get_by_id(db, id_usuario, id_carrera, status_filter)
         if relacion:
             return UsuarioCarreraSchema(id_usuario=relacion.id_usuario, id_carrera=relacion.id_carrera, status=relacion.status)
         return None
@@ -90,8 +90,15 @@ class UsuarioCarreraService:
         return await UsuarioCarreraDAO.delete(db, id_usuario, id_carrera)
     
     @staticmethod
-    async def search_usuario_carreras(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100) -> List[UsuarioCarreraSchema]:
+    async def search_usuario_carreras(db: AsyncSession, param: str, value: str, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[UsuarioCarreraSchema]:
         """Buscar relaciones usuario-carrera por diferentes parámetros"""
         relaciones = await UsuarioCarreraDAO.search(db, param, value, skip, limit)
+        
+        # Aplicar filtro adicional de status si está presente
+        if status_filter is not None:
+            relaciones = [rel for rel in relaciones if rel and rel.status == status_filter]
+        else:
+            relaciones = [rel for rel in relaciones if rel]
+        
         return [UsuarioCarreraSchema(id_usuario=rel.id_usuario, id_carrera=rel.id_carrera, status=rel.status) for rel in relaciones]
 

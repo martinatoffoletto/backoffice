@@ -33,7 +33,7 @@ async def create_sueldo(sueldo: SueldoBase, db: AsyncSession = Depends(get_async
         )
     return created_sueldo
 
-@router.get("/", response_model=List[Sueldo])
+@router.get("/", response_model=List[Sueldo], response_model_exclude_none=True)
 async def get_all_sueldos(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -43,29 +43,34 @@ async def get_all_sueldos(
     """Obtener todos los sueldos con filtros opcionales"""
     return await SueldoService.get_all_sueldos(db, skip, limit, status)
 
-@router.get("/search", response_model=List[Sueldo])
+@router.get("/search", response_model=List[Sueldo], response_model_exclude_none=True)
 async def search_sueldos(
-    param: str = Query(..., description="Parámetro de búsqueda: id, id_sueldo, id_usuario"),
-    value: str = Query(..., description="Valor a buscar"),
+    param: str = Query(..., description="Parámetro de búsqueda: id, id_sueldo, id_usuario, status"),
+    value: str = Query(..., description="Valor a buscar (para status: true/false)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """Buscar sueldos por diferentes parámetros"""
-    valid_params = ["id", "id_sueldo", "id_usuario"]
+    valid_params = ["id", "id_sueldo", "id_usuario", "status"]
     if param.lower() not in valid_params:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
         )
     
-    sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit)
+    sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit, status_filter)
     return sueldos
 
-@router.get("/usuario/{id_usuario}", response_model=Sueldo)
-async def get_sueldo_by_usuario(id_usuario: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+@router.get("/usuario/{id_usuario}", response_model=Sueldo, response_model_exclude_none=True)
+async def get_sueldo_by_usuario(
+    id_usuario: uuid.UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
     """Obtener el sueldo activo de un usuario específico"""
-    sueldo = await SueldoService.get_sueldo_by_usuario(db, id_usuario)
+    sueldo = await SueldoService.get_sueldo_by_usuario(db, id_usuario, status)
     if sueldo is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -73,10 +78,14 @@ async def get_sueldo_by_usuario(id_usuario: uuid.UUID, db: AsyncSession = Depend
         )
     return sueldo
 
-@router.get("/{sueldo_id}", response_model=Sueldo)
-async def get_sueldo_by_id(sueldo_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+@router.get("/{sueldo_id}", response_model=Sueldo, response_model_exclude_none=True)
+async def get_sueldo_by_id(
+    sueldo_id: uuid.UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
     """Obtener un sueldo por ID"""
-    sueldo = await SueldoService.get_sueldo_by_id(db, sueldo_id)
+    sueldo = await SueldoService.get_sueldo_by_id(db, sueldo_id, status)
     if not sueldo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -8,7 +8,7 @@ from uuid import UUID
 
 router = APIRouter(prefix="/usuarios-carreras", tags=["Usuario-Carrera"])
 
-@router.get("/", response_model=List[UsuarioCarrera])
+@router.get("/", response_model=List[UsuarioCarrera], response_model_exclude_none=True)
 async def get_all_usuario_carreras(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -24,16 +24,17 @@ async def get_all_usuario_carreras(
             detail=f"Error al obtener las relaciones: {str(e)}"
         )
 
-@router.get("/search", response_model=List[UsuarioCarrera])
+@router.get("/search", response_model=List[UsuarioCarrera], response_model_exclude_none=True)
 async def search_usuario_carreras(
-    param: str = Query(..., description="Parámetro de búsqueda: id, id_usuario, id_carrera"),
-    value: str = Query(..., description="Valor a buscar (para id usar formato: usuario_id,carrera_id)"),
+    param: str = Query(..., description="Parámetro de búsqueda: id, id_usuario, id_carrera, status"),
+    value: str = Query(..., description="Valor a buscar (para id usar formato: usuario_id,carrera_id; para status: true/false)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """Buscar relaciones usuario-carrera por diferentes parámetros"""
-    valid_params = ["id", "id_usuario", "id_carrera"]
+    valid_params = ["id", "id_usuario", "id_carrera", "status"]
     if param.lower() not in valid_params:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -41,7 +42,7 @@ async def search_usuario_carreras(
         )
     
     try:
-        relaciones = await UsuarioCarreraService.search_usuario_carreras(db, param, value, skip, limit)
+        relaciones = await UsuarioCarreraService.search_usuario_carreras(db, param, value, skip, limit, status_filter)
         return relaciones
     except Exception as e:
         raise HTTPException(
@@ -49,15 +50,16 @@ async def search_usuario_carreras(
             detail=f"Error al buscar las relaciones: {str(e)}"
         )
 
-@router.get("/{id_usuario}/{id_carrera}", response_model=UsuarioCarrera)
+@router.get("/{id_usuario}/{id_carrera}", response_model=UsuarioCarrera, response_model_exclude_none=True)
 async def get_usuario_carrera_by_id(
     id_usuario: UUID,
     id_carrera: UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """Obtener una relación usuario-carrera por IDs"""
     try:
-        relacion = await UsuarioCarreraService.get_usuario_carrera_by_id(db, id_usuario, id_carrera)
+        relacion = await UsuarioCarreraService.get_usuario_carrera_by_id(db, id_usuario, id_carrera, status)
         if not relacion:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -157,14 +159,15 @@ async def remove_usuario_carrera_assignment(
             detail=f"Error al remover la asignación: {str(e)}"
         )
 
-@router.get("/usuario/{id_usuario}", response_model=UsuarioCarrera)
+@router.get("/usuario/{id_usuario}", response_model=UsuarioCarrera, response_model_exclude_none=True)
 async def get_carrera_by_usuario(
     id_usuario: UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """Obtener la carrera activa asignada a un usuario especifico."""
     try:
-        carrera = await UsuarioCarreraService.get_carrera_by_usuario(db, id_usuario)
+        carrera = await UsuarioCarreraService.get_carrera_by_usuario(db, id_usuario, status)
         if carrera is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -179,9 +182,10 @@ async def get_carrera_by_usuario(
             detail=f"Error al obtener carreras del usuario: {str(e)}"
         )
 
-@router.get("/carrera/{id_carrera}", response_model=List[UsuarioCarrera])
+@router.get("/carrera/{id_carrera}", response_model=List[UsuarioCarrera], response_model_exclude_none=True)
 async def get_usuarios_by_carrera(
     id_carrera: UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
@@ -189,7 +193,7 @@ async def get_usuarios_by_carrera(
     Retorna las relaciones usuario-carrera (solo IDs).
     """
     try:
-        return await UsuarioCarreraService.get_usuarios_by_carrera(db, id_carrera)
+        return await UsuarioCarreraService.get_usuarios_by_carrera(db, id_carrera, status)
     except HTTPException:
         raise
     except Exception as e:
