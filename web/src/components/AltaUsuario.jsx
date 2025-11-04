@@ -12,8 +12,7 @@ export default function AltaUsuario() {
     apellido: "",
     nroDocumento: "",
     correoElectronico: "",
-    telefonoPersonal: "",
-    telefonoLaboral: "",
+    telefono_Celular: "",
     carrera: "",
   });
   const [selectedValues, setSelectedValues] = useState([]);
@@ -93,9 +92,8 @@ export default function AltaUsuario() {
         />
       )}
 
-      {completed &&
-        (selectedValues.includes("Administrador") ||
-          selectedValues.includes("Docente")) && (
+      {completed && selectedValues.includes("Administrador") ||
+          selectedValues.includes("Docente") && (
           <SueldoForm onClose={cleanForm} />
         )}
 

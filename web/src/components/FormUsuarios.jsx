@@ -12,7 +12,7 @@ export default function FormUsuarios({
   handleSubmit,
   cleanForm,
 }) {
-  const options = ["Administrador", "Administrativo IT", "Docente", "Alumno"];
+  const options = ["Administrador", "Administrativo IT", "Docente", "Alumno", "Administrativo Docente", "Administrativo Biblioteca", "Chef", "Cajero", "Administrativo Academico", "Administrativo Financiero"];
 
   const toggleValue = (value) => {
     setSelectedValues((prev) =>
@@ -109,40 +109,32 @@ export default function FormUsuarios({
             />
           </Field>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          
             <Field>
               <FieldLabel>
-                Teléfono Personal <span className="text-red-500">*</span>
+                Teléfono/Celular <span className="text-red-500">*</span>
               </FieldLabel>
               <Input
-                id="telefonoPersonal"
+                id="telefono_Celular"
                 placeholder="Teléfono/Celular"
-                value={form.telefonoPersonal}
-                onChange={(e) => setForm({ ...form, telefonoPersonal: e.target.value })}
+                value={form.telefono_Celular}
+                onChange={(e) => setForm({ ...form, telefono_Celular: e.target.value })}
               />
             </Field>
-
-            <Field>
-              <FieldLabel>Teléfono Laboral</FieldLabel>
-              <Input
-                id="telefonoLaboral"
-                placeholder="Teléfono/Celular"
-                value={form.telefonoLaboral}
-                onChange={(e) => setForm({ ...form, telefonoLaboral: e.target.value })}
-              />
-            </Field>
-          </div>
+          
 
           {selectedValues.includes("Alumno") && (
             <Field>
-              <FieldLabel>Carrera</FieldLabel>
-              <Input
-                id="carrera"
-                placeholder="Carrera"
-                value={form.carrera}
-                onChange={(e) => setForm({ ...form, carrera: e.target.value })}
-              />
-            </Field>
+            <FieldLabel>
+              Carrera <span className="text-red-500">*</span>
+            </FieldLabel>
+            <Input
+              id="carrera"
+              placeholder="Carrera"
+              value={form.carrera}
+              onChange={(e) => setForm({ ...form, carrera: e.target.value })}
+            />
+          </Field>
           )}
 
           {/* Botones */}

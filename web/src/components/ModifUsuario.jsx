@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import PopUp from "@/components/PopUp";
 import CardUsuario from "./CardUsuario";
 import FormUsuarios from "./FormUsuarios";
+import SueldosForm from "./SueldosForm";
 import { modificarUsuario, usuarioPorId } from "@/api/usuariosApi";
 
 export default function ModifUsuario() {
@@ -14,8 +15,7 @@ export default function ModifUsuario() {
     apellido: "",
     nroDocumento: "",
     correoElectronico: "",
-    telefonoPersonal: "",
-    telefonoLaboral: "",
+    telefono_Celular: "",
     carrera: "",
   });
   const [selectedValues, setSelectedValues] = useState([]);
@@ -32,8 +32,7 @@ export default function ModifUsuario() {
       apellido: "",
       nroDocumento: "",
       correoElectronico: "",
-      telefonoPersonal: "",
-      telefonoLaboral: "",
+      telefono_Celular: "",
       carrera: "",
     });
     setSelectedValues([]);
@@ -61,15 +60,14 @@ export default function ModifUsuario() {
         apellido: response.apellido || "",
         nroDocumento: response.nroDocumento || "",
         correoElectronico: response.correoElectronico || "",
-        telefonoPersonal: response.telefonoPersonal || "",
-        telefonoLaboral: response.telefonoLaboral || "",
+        telefono_Celular: response.telefono_Celular || "",
         carrera: response.carrera || "",
       });
 
       setSelectedValues(tipoArray);
       setUserData(response);
       setShowForm(true);
-      setCompleted(false);
+      setCompleted(true);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -127,6 +125,18 @@ export default function ModifUsuario() {
             cleanForm={cleanForm}
           />
         )}
+        {completed && selectedValues.includes("Alumno") && (
+                <CardUsuario
+                  title="Se ha dado de alta exitosamente"
+                  user={userData}
+                  onClose={cleanForm}
+                />
+              )}
+        
+        {completed && (selectedValues.includes("Administrador") ||
+                  selectedValues.includes("Docente")) && (
+                  <SueldosForm userData={userData} onClose={cleanForm} />
+        )}              
 
         {/* Resultado exitoso */}
         {completed && userData && (

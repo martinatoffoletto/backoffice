@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -11,19 +11,29 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import CardUsuario from "./CardUsuario"
 import { useNavigate } from "react-router-dom"; 
+import { set } from "date-fns"
 
-export default function SueldoForm() {
+export default function SueldoForm( userData, onClose) {
   const navigate = useNavigate(); 
-  const [form, setForm] = useState({
-    cbu: "",
-    sueldo_fijo: "",
-    sueldo_adicional: 0,
-    sueldo_total: 0,
-    observaciones: "",
-  })
 
+  const [form, setForm] = useState({
+    cbu: userData?.cbu || "",
+    sueldo_fijo: userData?.sueldo_fijo || 0,
+    sueldo_adicional: userData?.sueldo_adicional || 0,
+    sueldo_total:
+      (parseFloat(userData?.sueldo_fijo) || 0) +
+      (parseFloat(userData?.sueldo_adicional) || 0),
+    observaciones: userData?.observaciones || "",
+  });
+  
   const [error, setError] = useState(null)
   const [completed, setCompleted]=useState(false)
+
+  useEffect(() => {
+    const fijo = parseFloat(form.sueldo_fijo) || 0;
+    const adicional = parseFloat(form.sueldo_adicional) || 0;
+    setForm((prev) => ({ ...prev, sueldo_total: fijo + adicional }));
+  }, [form.sueldo_fijo, form.sueldo_adicional]);
 
   const handleChange = (field, value) => {
     let updated = { ...form, [field]: value }
@@ -47,8 +57,8 @@ export default function SueldoForm() {
       return
     }
     try{
-      setCompleted(true)
-
+      setCompleted(true);
+      setError(null);
     }catch(err){
       setError(err)
     }

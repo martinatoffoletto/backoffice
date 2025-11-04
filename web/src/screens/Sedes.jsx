@@ -15,7 +15,7 @@ export default function Sedes() {
   const [sedes, setSedes] = useState([]);
   const [editingSede, setEditingSede] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: null, nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: false, tieneBiblioteca: false });
+  const [form, setForm] = useState({ id: null, nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: false, capComedor: '', tieneBiblioteca: false });
   const [error, setError]=useState(null)
 
   const handleEdit = (sede) => {
@@ -26,6 +26,7 @@ export default function Sedes() {
       ubicacion: sede.ubicacion,
       cantidadAulas: sede.cantidadAulas?.toString() ?? '',
       tieneComedor: sede.tieneComedor ?? false,
+      capComedor: sede.capComedor?.toString() ?? '',
       tieneBiblioteca: sede.tieneBiblioteca ?? false
     });
     setShowForm(true);
@@ -33,14 +34,14 @@ export default function Sedes() {
 
   const handleAdd = () => {
     setEditingSede(null);
-    setForm({ id:null, nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: '', tieneBiblioteca: '' });
+    setForm({ id:null, nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: '', capComedor: '', tieneBiblioteca: '' });
     setShowForm(true);
   };
 
   const handleCancel = () => {
     setShowForm(false);
     setEditingSede(null);
-    setForm({ nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: '', tieneBiblioteca: '' });
+    setForm({ nombre: '', ubicacion: '', cantidadAulas: '', tieneComedor: '', capComedor: '', tieneBiblioteca: '' });
   };
 
   const handleSubmit = (e) => {
@@ -137,7 +138,14 @@ export default function Sedes() {
                   label="¿Tiene comedor?"
                   value={form.tieneComedor}
                   options={[{ label: "Sí", value: true }, { label: "No", value: false }]}
-                  onChange={(v) => setForm({ ...form, tieneComedor:  v})}
+                  onChange={(v) => setForm({ ...form, tieneComedor:  v, capComedor: v ? form.capComedor : "",})}
+                />
+                <InputField
+                  label="Capacidad del Comedor"
+                  type="number"
+                  value={form.capComedor}
+                  onChange={(v) => setForm({ ...form, capComedor: v })}
+                  disabled={!form.tieneComedor}
                 />
                 <RadioGroupField
                   label="¿Tiene biblioteca?"
@@ -168,7 +176,7 @@ export default function Sedes() {
 }
 
 // Componentes auxiliares
-function InputField({ label, value, onChange, type = "text" }) {
+function InputField({ label, value, onChange, type = "text", disabled = false }) {
   return (
     <div className="flex-1 flex flex-col">
       <label className="text-sm font-medium mb-1">{label}</label>
@@ -176,7 +184,10 @@ function InputField({ label, value, onChange, type = "text" }) {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        disabled={disabled}
+        className={`w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 
+          ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""
+        }`}
       />
     </div>
   );

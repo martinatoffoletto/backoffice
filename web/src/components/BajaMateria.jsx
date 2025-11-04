@@ -78,7 +78,7 @@ export default function BajaMateria() {
           <CardMateria title={"Materia encontrada"} materia={found}/>
           <Button
             variant="destructive"
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
             onClick={handleBaja}
           >
             Confirmar Baja
@@ -88,11 +88,11 @@ export default function BajaMateria() {
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <div className="flex flex-col justify-center items-center border border-blue-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
             <CardMateria title={"Información eliminada exitosamente"} materia={materiaData} />
             <Button
             onClick={() => {setShowPopup(false); setValue("");setMateriaData(null)}}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+            className="bg-green-500 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-md"
             >
             OK
             </Button>

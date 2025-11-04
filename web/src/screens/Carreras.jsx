@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select.jsx";
 import { useState } from "react";
 
+
 export default function Carreras(second) {
 
     const [value, setValue] = useState("");
@@ -40,7 +41,7 @@ export default function Carreras(second) {
                     </Select>
                 </div>
             </div>
-           
+        
         </div>
     )
 }
