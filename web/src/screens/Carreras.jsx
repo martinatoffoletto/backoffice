@@ -1,3 +1,7 @@
+import AltaCarrera from "@/components/AltaCarrera";
+import BajaCarrera from "@/components/BajaCarrera";
+import BusquedaCarrera from "@/components/BusquedaCarrera";
+import ModifCarrera from "@/components/ModifCarrera";
 import {
   Select,
   SelectTrigger,
@@ -36,12 +40,16 @@ export default function Carreras(second) {
                             <SelectItem value="alta">Alta de Carrera</SelectItem>
                             <SelectItem value="baja">Baja de Carrera</SelectItem>
                             <SelectItem value="modificacion">Modificación de Carrera</SelectItem>
+                            <SelectItem value="busqueda">Busqueda de Carrera</SelectItem>
                         </SelectGroup>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
-        
+        {value==="alta" && (<AltaCarrera/>)}
+        {value==="baja" && (<BajaCarrera/>)}
+        {value==="modificacion" && (<ModifCarrera/>)}
+        {value==="busqueda" && (<BusquedaCarrera/>)}
         </div>
     )
 }

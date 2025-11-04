@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function TablaAsignaciones() {
+export default function TablaAsignaciones2() {
   const [estado, setEstado] = useState("pendientes");
 
   const asignaciones = [
-    { id: 1, profesor: "Juan Pérez", materia: "Calculo II", estado: "pendiente" },
-    { id: 2, profesor: "Laura Gómez", materia: "Programación I", estado: "aprobada" },
-    { id: 3, profesor: "Martín Díaz", materia: "Calculo I", estado: "rechazada" },
-    { id: 4, profesor: "Ana Torres", materia: "Ciencia de Datos", estado: "pendiente" },
+    { id: 1, profesor: "Juan Pérez", curso: "1000", estado: "pendiente" },
+    { id: 2, profesor: "Laura Gómez", curso: "2000", estado: "aprobada" },
+    { id: 3, profesor: "Martín Díaz", curso: "3000", estado: "rechazada" },
+    { id: 4, profesor: "Ana Torres", curso: "4000", estado: "pendiente" },
   ];
 
   const filtrarPorEstado = (estado) =>
@@ -71,7 +71,7 @@ function TablaDatos({ datos, handleAccion, mostrarAcciones = false }) {
         <TableRow>
           <TableHead>ID</TableHead>
           <TableHead>Profesor</TableHead>
-          <TableHead>Materia</TableHead>
+          <TableHead>Curso</TableHead>
           <TableHead>Estado</TableHead>
           {mostrarAcciones && <TableHead className="text-right">Acción</TableHead>}
         </TableRow>
@@ -81,7 +81,7 @@ function TablaDatos({ datos, handleAccion, mostrarAcciones = false }) {
           <TableRow key={a.id}>
             <TableCell>{a.id}</TableCell>
             <TableCell>{a.profesor}</TableCell>
-            <TableCell>{a.materia}</TableCell>
+            <TableCell>{a.curso}</TableCell>
             <TableCell className="capitalize">{a.estado}</TableCell>
             {mostrarAcciones && (
               <TableCell className="text-right space-x-2">

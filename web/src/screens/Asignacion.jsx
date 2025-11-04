@@ -1,4 +1,5 @@
 import TablaAsignaciones from "@/components/TablaAsignaciones";
+import TablaAsignaciones2 from "@/components/TablaAsignaciones2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UsersIcon, BookOpenIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -51,7 +52,7 @@ export default function Asignacion() {
                     </CardContent>
                     
                     <CardHeader className="p-0 flex justify-center text-center w-full">
-                        <CardTitle className="text-xl text-gray-800 text-center w-full">Asignación a Materias</CardTitle>
+                        <CardTitle className="text-xl text-gray-800 text-center w-full">Asignación a Cursos</CardTitle>
                     </CardHeader>
                 </Card>
 
@@ -73,7 +74,7 @@ export default function Asignacion() {
                         <h1 className="font-bold text-xl mb-4">Asignación a Cursos</h1>
                         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-                        <TablaAsignaciones/>
+                        <TablaAsignaciones2/>
                     </div>
                 )}
         </div>

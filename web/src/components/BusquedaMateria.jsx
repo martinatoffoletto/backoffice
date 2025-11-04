@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select.jsx";
 import { ca } from "date-fns/locale";
 import { useState } from "react"
-import CardUsuario from "./CardUsuario";
+import CardMateria from "./CardMateria";
 import PopUp from "./PopUp";
 
 export default function BusquedaMateria(second) {
@@ -59,7 +59,7 @@ export default function BusquedaMateria(second) {
 
         <div className="flex min-h-screen flex-col items-center justify-start my-4">
             <div className="w-full max-w-md  p-6 r">
-            <h1 className="font-bold text-xl mb-4">Buscar Usuario</h1>
+            <h1 className="font-bold text-xl mb-4">Buscar Materia</h1>
             <span className="block w-full h-[3px] bg-sky-950"></span>
 
             <div className="flex flex-row items-center justify-between my-4 gap-2">
