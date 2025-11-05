@@ -26,6 +26,7 @@ import { ca } from "date-fns/locale";
 import { useState } from "react"
 import CardMateria from "./CardMateria";
 import PopUp from "./PopUp";
+import { materiaPorId } from "@/api/materiasApi";
 
 export default function BusquedaMateria(second) {
 
@@ -33,16 +34,31 @@ export default function BusquedaMateria(second) {
     const [found, setFound] = useState(false);
     const [value, setValue] = useState("");
     const [error, setError]=useState(null)
+    const [materiaData, setMateriaData] = useState(null);
 
     const handleBaja=()=>{ 
         setFound(false);
         setName("");
         setValue("");
+        setMateriaData(null);
     }
  
     const handleSearch= async()=>{
         if(!value.trim()) return;
-        
+        try {
+                const response = await materiaPorId(value); 
+                if (response) {
+                    setMateriaData(response); 
+                    setFound(true);           
+                } else {
+                    setFound(false);          
+                    setMateriaData(null);
+                }
+            } catch (err) {
+                setError(err.message || "Error al buscar la carrera");
+                setFound(false);
+                setMateriaData(null);
+            }
         // NO BORRAR
         // try{
         //     const response= await materiaPorId(value)
@@ -62,9 +78,9 @@ export default function BusquedaMateria(second) {
             <h1 className="font-bold text-xl mb-4">Buscar Materia</h1>
             <span className="block w-full h-[3px] bg-sky-950"></span>
 
-            <div className="flex flex-row items-center justify-between my-4 gap-2">
+            {/*<div className="flex flex-row items-center justify-between my-4 gap-2">
                 <h3 className="text-sm mb-2 shrink-0">
-                    Indique carrera
+                    Buscar por carrera
                 </h3>
                 <Select>
                     <SelectTrigger className="w-full">
@@ -80,37 +96,30 @@ export default function BusquedaMateria(second) {
                         </SelectGroup>
                     </SelectContent>            
                 </Select>
-            </div>
+            </div>*/}
             
             <div className="flex flex-row items-center justify-between my-4 gap-2">
                 <h3 className="text-sm mb-2 shrink-0">
                     Buscar por nombre
                 </h3>
-                <Select>
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione una opción" />
-                    </SelectTrigger>
-
-                    <SelectContent>            
-                        <SelectGroup>
-                        <SelectLabel>Opciones</SelectLabel>
-                        <SelectItem value="alumno">Alumno</SelectItem>
-                        <SelectItem value="docente">Docente</SelectItem>          
-
-                        </SelectGroup>
-                    </SelectContent>            
-                </Select>
+                <Input
+                    className="mb-4"
+                    type="text"
+                    placeholder="Ingrese nombre"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    />
             </div>
             
             <div className="flex flex-row items-center justify-between my-4 gap-2">
                 <h3 className="text-sm mb-2 shrink-0">
-                    Buscar por legajo
+                    Buscar por identificador
                 </h3>
                 <Input
                     className="mb-4"
+                    type="text"
                     placeholder="Ingrese legajo"
                     value={value}
-                    number
                     onChange={(e) => setValue(e.target.value)}
                     />
             </div>
@@ -125,7 +134,7 @@ export default function BusquedaMateria(second) {
             </div>
             {found ? (
                 <div className="w-full max-w-md  p-6 ml-6 my-4">
-                <CardUsuario title={"Materia encontrado"} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardUsuario>
+                <CardMateria title={"Materia encontrado"} materia={materiaData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardMateria>
                 
                 </div>
             ):
