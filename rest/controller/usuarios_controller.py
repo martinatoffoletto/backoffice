@@ -29,32 +29,29 @@ async def create_user(usuario: UsuarioCreate, db: AsyncSession = Depends(get_asy
 async def get_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    param: Optional[str] = Query(None, description="Parámetro de búsqueda opcional: id, legajo, dni, email_institucional, email_personal, nombre, status"),
+    value: Optional[str] = Query(None, description="Valor a buscar cuando se usa 'param'"),
     status_filter: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_async_db)
 ):
-    return await UsuarioService.get_all_users(db, skip, limit, status_filter)
+    if param is not None:
+        valid_params = [
+            "id", "legajo", "dni", "email_institucional", "email_personal",
+            "nombre", "status"
+        ]
+        if param.lower() not in valid_params:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+            )
+        if value is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="When 'param' is provided, 'value' must also be provided"
+            )
+        return await UsuarioService.search(db, param, value, skip, limit, status_filter)
 
-@router.get("/search", response_model=List[UsuarioConRol], response_model_exclude_none=True)
-async def search_users(
-    param: str = Query(..., description="Search parameter: id, legajo, dni, email_institucional, email_personal, nombre, status"),
-    value: str = Query(..., description="Search value"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    status_filter: Optional[bool] = Query(None, description="Filter by user status: true for active, false for inactive, omit for all"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Buscar usuarios por diferentes parámetros. Retorna usuario + rol + un único sueldo o una única carrera cuando existan."""
-    valid_params = [
-        "id", "legajo", "dni", "email_institucional", "email_personal",
-        "nombre", "status"
-    ]
-    if param.lower() not in valid_params:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
-        )
-    
-    return await UsuarioService.search(db, param, value, skip, limit, status_filter)
+    return await UsuarioService.get_all_users(db, skip, limit, status_filter)
 
 @router.put("/{user_id}", response_model=Usuario)
 async def update_user(

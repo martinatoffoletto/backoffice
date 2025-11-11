@@ -37,31 +37,27 @@ async def create_sueldo(sueldo: SueldoBase, db: AsyncSession = Depends(get_async
 async def get_all_sueldos(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Obtener todos los sueldos con filtros opcionales"""
-    return await SueldoService.get_all_sueldos(db, skip, limit, status)
-
-@router.get("/search", response_model=List[Sueldo], response_model_exclude_none=True)
-async def search_sueldos(
-    param: str = Query(..., description="Parámetro de búsqueda: id, id_sueldo, id_usuario, status"),
-    value: str = Query(..., description="Valor a buscar (para status: true/false)"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    param: Optional[str] = Query(None, description="Parámetro de búsqueda opcional: id, id_sueldo, id_usuario, monto, status"),
+    value: Optional[str] = Query(None, description="Valor a buscar cuando se usa 'param'"),
     status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
-    """Buscar sueldos por diferentes parámetros"""
-    valid_params = ["id", "id_sueldo", "id_usuario", "status"]
-    if param.lower() not in valid_params:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
-        )
-    
-    sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit, status_filter)
-    return sueldos
+    if param is not None:
+        valid_params = ["id", "id_sueldo", "id_usuario", "monto", "status"]
+        if param.lower() not in valid_params:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
+            )
+        if value is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cuando se especifica 'param' también debe enviarse 'value'"
+            )
+        sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit, status_filter)
+        return sueldos
+
+    return await SueldoService.get_all_sueldos(db, skip, limit, status_filter)
 
 @router.get("/usuario/{id_usuario}", response_model=Sueldo, response_model_exclude_none=True)
 async def get_sueldo_by_usuario(

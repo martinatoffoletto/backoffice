@@ -21,9 +21,25 @@ async def create_rol(rol: RolBase, db: AsyncSession = Depends(get_async_db)):
 
 @router.get("/", response_model=List[Rol])
 async def get_all_roles(
+    param: Optional[str] = Query(None, description="Parámetro de búsqueda opcional: id, categoria, subcategoria"),
+    value: Optional[str] = Query(None, description="Valor a buscar cuando se usa 'param'"),
     status_filter: Optional[bool] = Query(None, description="Filtrar por estado: true, false o omitir para ambos"),
     db: AsyncSession = Depends(get_async_db)
 ):
+    if param is not None:
+        valid_params = ["id", "categoria", "subcategoria"]
+        if param.lower() not in valid_params:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+            )
+        if value is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="When 'param' is provided, 'value' must also be provided"
+            )
+        return await RolService.search_roles(db, param, value, status_filter)
+
     return await RolService.get_all_roles(db, status_filter)
 
 @router.get("/categories", response_model=List[Dict[str, Any]])
@@ -34,21 +50,6 @@ async def get_categories_with_subcategories(
     """Obtener todas las categorías con sus subcategorías"""
     return await RolService.get_categories_with_subcategories(db, status_filter)
 
-@router.get("/search", response_model=List[Rol])
-async def search_roles(
-    param: str = Query(..., description="Search parameter: id, categoria, subcategoria"),
-    value: str = Query(..., description="Search value"),
-    status_filter: Optional[bool] = Query(None, description="Filtrar por estado: true, false o ambos"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """Buscar roles por ID, categoría o subcategoría"""
-    valid_params = ["id", "categoria", "subcategoria"]
-    if param.lower() not in valid_params:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
-        )
-    return await RolService.search_roles(db, param, value, status_filter)
 
 @router.put("/{rol_id}", response_model=Rol)
 async def update_rol(
