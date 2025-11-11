@@ -66,13 +66,8 @@ export default function Inicio() {
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
-              to="/precios"
-              title="Listado de Precios"
-              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
-            />
-            <Link
-              to="/cursos"
-              title="Gestión de Cursos"
+              to="/carreras"
+              title="Gestión de Carreras"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
@@ -81,8 +76,23 @@ export default function Inicio() {
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
+              to="/cursos"
+              title="Gestión de Cursos"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
+              to="/precios"
+              title="Listado de Precios"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
               to="/sedes"
               title="Sedes"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
+              to="/asignacion"
+              title="Asignación de Docentes"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
           </div>

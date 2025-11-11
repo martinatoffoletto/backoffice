@@ -46,7 +46,8 @@ export default function AltaCurso(second) {
         modalidad: "",
         sede: "",
         aula: "",
-        horario: "",
+        dia:"",
+        turno: "",
         periodo: "",
         fecha_inicio: "",
         fecha_fin: "",
@@ -69,7 +70,7 @@ export default function AltaCurso(second) {
         try{
             const response= await altaCurso(form)
             console.log("Curso dado de alta exitosamente")
-            setCursoData(response)
+            setCursoData(form)
             setCompleted(true)
             setShowPopUp(true)
             setShowGestionClases(true)
@@ -194,18 +195,41 @@ export default function AltaCurso(second) {
                         }
                         />
                     </Field>
-
                     <Field>
-                        <FieldLabel htmlFor="horario">Horario</FieldLabel>
-                        <Input
-                        id="horario"
-                        placeholder="Ej: Lunes 8-10"
-                        value={form.horario}
-                        onChange={(e) =>
-                            setForm((prev) => ({ ...prev, horario: e.target.value }))
-                        }
-                        />
+                        <RadioGroupField
+                        label="Día de cursada"
+                        value={form.dia}
+                        options={[{ label: "Lunes", value: "lunes" }, { label: "Martes", value: "martes" }, { label: "Miércoles", value: "miercoles" }, { label: "Jueves", value: "jueves" }, { label: "Viernes", value: "viernes" }]}
+                        onChange={(v) => setForm({ ...form, dia: v })}/>
                     </Field>
+                    <Field>
+                        <FieldLabel>Turno</FieldLabel>
+                        <Select
+                        value={form.turno}
+                        onValueChange={(value) => setForm((prev) => ({ ...prev, turno: value }))}
+                        >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccione turno" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                            <SelectLabel>Materias</SelectLabel>
+                          
+                                <SelectItem  value="Mañana">
+                                Mañana
+                                </SelectItem>
+                                <SelectItem value="Tarde">
+                                Tarde
+                                </SelectItem>
+                                <SelectItem  value="Noche">
+                                Noche
+                                </SelectItem>
+                         
+                            </SelectGroup>
+                        </SelectContent>
+                        </Select>
+                    </Field>
+
 
                     <Field>
                         <FieldLabel htmlFor="periodo">Período</FieldLabel>
@@ -334,4 +358,25 @@ export default function AltaCurso(second) {
             )}
             </div>
     )
+}
+
+function RadioGroupField({ label, value, options, onChange }) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <span className="text-sm font-medium mb-1">{label}</span>
+      <div className="flex flex-wrap gap-4">
+        {options.map(opt => (
+          <label key={opt.value} className="flex items-center gap-1">
+            <input
+              type="radio"
+              value={opt.value}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }

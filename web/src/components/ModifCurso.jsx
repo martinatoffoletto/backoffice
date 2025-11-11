@@ -70,7 +70,8 @@ export default function ModifCurso() {
         modalidad: response.modalidad,
         sede: response.sede,
         aula: response.aula,
-        horario: response.horario,
+        dia: response.dia,
+        turno:response.turno,
         periodo: response.periodo,
         fecha_inicio: response.fecha_inicio,
         fecha_fin: response.fecha_fin,
@@ -221,12 +222,38 @@ export default function ModifCurso() {
 
               {/* Horario */}
               <Field>
-                <FieldLabel>Horario</FieldLabel>
-                <Input
-                  placeholder="Ej: Lunes 8-10"
-                  value={form.horario}
-                  onChange={(e) => setForm((prev) => ({ ...prev, horario: e.target.value }))}
-                />
+                  <RadioGroupField
+                  label="Día de cursada"
+                  value={form.dia}
+                  options={[{ label: "Lunes", value: "lunes" }, { label: "Martes", value: "martes" }, { label: "Miércoles", value: "miercoles" }, { label: "Jueves", value: "jueves" }, { label: "Viernes", value: "viernes" }]}
+                  onChange={(v) => setForm({ ...form, dia: v })}/>
+              </Field>
+              <Field>
+                  <FieldLabel>Turno</FieldLabel>
+                  <Select
+                  value={form.turno}
+                  onValueChange={(value) => setForm((prev) => ({ ...prev, turno: value }))}
+                  >
+                  <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccione turno" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectGroup>
+                      <SelectLabel>Materias</SelectLabel>
+                    
+                          <SelectItem  value="Mañana">
+                          Mañana
+                          </SelectItem>
+                          <SelectItem value="Tarde">
+                          Tarde
+                          </SelectItem>
+                          <SelectItem  value="Noche">
+                          Noche
+                          </SelectItem>
+                    
+                      </SelectGroup>
+                  </SelectContent>
+                  </Select>
               </Field>
 
               {/* Periodo */}
@@ -331,6 +358,27 @@ export default function ModifCurso() {
       {error && (
         <PopUp title={"Error al modificar el curso"} message={error} onClose={() => setError(null)} />
       )}
+    </div>
+  );
+}
+
+function RadioGroupField({ label, value, options, onChange }) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <span className="text-sm font-medium mb-1">{label}</span>
+      <div className="flex flex-wrap gap-4">
+        {options.map(opt => (
+          <label key={opt.value} className="flex items-center gap-1">
+            <input
+              type="radio"
+              value={opt.value}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

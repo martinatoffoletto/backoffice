@@ -96,11 +96,11 @@ export default function BajaUsuario(second) {
 
             {/* Resultado simulado */}
             {found && (
-                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
+                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-blue-500  p-6 rounded-xl shadow-md ml-6">
                 <CardUsuario title={"Desea dar de baja el usuario?"}/>
                 <Button
                     variant="destructive"
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
                     onClick={handleBaja}
                 >
                     Confirmar Baja
@@ -109,11 +109,11 @@ export default function BajaUsuario(second) {
             )}
 
             {deleted && (
-                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
+                <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-green-500  p-6 rounded-xl shadow-md ml-6">
                 <CardUsuario title={"Usuario dado de baja exitosamente"}/>
                 <Button
                     variant="destructive"
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
                     onClick={()=>{setDeleted(false);setValue("")}}
                 >
                     OK

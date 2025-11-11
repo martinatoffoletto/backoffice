@@ -168,9 +168,11 @@ const deletePrice = async (id) => {
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-3xl">
-        <h1 className="font-bold text-2xl mb-6 text-center">Listado de Precios</h1>
+        <h1 className="font-bold text-center text-2xl mb-4">Listado de Precios</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="overflow-x-auto">
+
+        <div className="overflow-x-auto mt-8">
           <Table className="min-w-full border border-gray-200 my-2">
             <TableCaption className="text-gray-500 text-sm mt-4">
               Valores actualizados al mes vigente
@@ -195,7 +197,7 @@ const deletePrice = async (id) => {
                       Editar
                     </Button>
                     <Button
-                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
+                      className="bg-gray.50 hover:bg-gray-200  border-1 border-gray-300 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
                       onClick={() => deletePrice(p.id)}
                     >
                       Eliminar

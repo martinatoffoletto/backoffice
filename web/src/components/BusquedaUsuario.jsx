@@ -136,46 +136,54 @@ export default function BusquedaUsuario() {
                     </FieldGroup>
                 </FieldSet>
 
-                {resultados.length > 0 && (
-                    <div className="mt-6 overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID</TableHead>
-                                    <TableHead>Legajo</TableHead>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Apellido</TableHead>
-                                    <TableHead>DNI</TableHead>
-                                    <TableHead>Email Institucional</TableHead>
-                                    <TableHead>Email Personal</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead>Subcategoría</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {resultados.map((usuario) => (
-                                    <TableRow key={usuario.id_usuario}>
-                                        <TableCell>{usuario.id_usuario}</TableCell>
-                                        <TableCell>{usuario.legajo || "-"}</TableCell>
-                                        <TableCell>{usuario.nombre}</TableCell>
-                                        <TableCell>{usuario.apellido}</TableCell>
-                                        <TableCell>{usuario.dni || "-"}</TableCell>
-                                        <TableCell>{usuario.email_institucional || "-"}</TableCell>
-                                        <TableCell>{usuario.email_personal || "-"}</TableCell>
-                                        <TableCell>{usuario.rol?.categoria || "-"}</TableCell>
-                                        <TableCell>{usuario.rol?.subcategoria || "-"}</TableCell>
-                                        <TableCell>
-                                            {usuario.status !== false ? (
-                                                <span className="text-green-600">Activo</span>
-                                            ) : (
-                                                <span className="text-red-600">Inactivo</span>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                </div>
+                <div className="flex flex-row items-center justify-between my-4 gap-2">
+                    <h3 className="text-sm mb-2 shrink-0">
+                        Buscar por nombre y apellido
+                    </h3>
+                    <Input
+                        
+                        placeholder="Ingrese nombre y/o apellido"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                </div>
+                
+                <div className="flex flex-row items-center justify-between my-4 gap-2">   
+                    <h3 className="text-sm my-2 mr-2 shrink-0">
+                        Buscar por legajo
+                    </h3>
+                    <Input
+                        
+                        placeholder="Ingrese legajo"
+                        value={value}
+                        number
+                        onChange={(e) => setValue(e.target.value)}
+                        />
+                </div>
+                
+                <Button
+                    disabled={!value.trim()}
+                    onClick={handleSearch}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                    Buscar
+                </Button>
+                </div>
+                {found && (
+                    <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-md ml-6">
+                    <h3 className="text-sm mb-2">
+                        Usuario: lmartinezp
+                    </h3>
+                    <h3 className="text-sm mb-2">
+                        Correo electronico: lmartinezp@uade.edu.ar
+                    </h3>
+                    <Button
+                        variant="destructive"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+                        onClick={()=>setFound(false)}
+                    >Volver
+                    </Button>
                     </div>
                 )}
 

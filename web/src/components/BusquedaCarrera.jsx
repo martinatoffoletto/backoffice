@@ -22,85 +22,55 @@ import {
   SelectLabel,
   SelectSeparator
 } from "@/components/ui/select.jsx";
-import { ca } from "date-fns/locale";
 import { useState } from "react"
-import CardMateria from "./CardMateria";
+import CardCarrera from "./CardCarrera";
 import PopUp from "./PopUp";
-import { materiaPorId } from "@/api/materiasApi";
+import { carreraPorId } from "@/api/carrerasApi";
 
-export default function BusquedaMateria(second) {
+export default function BusquedaCarrera(second) {
 
     const [name, setName] = useState("");
     const [found, setFound] = useState(false);
     const [value, setValue] = useState("");
     const [error, setError]=useState(null)
-    const [materiaData, setMateriaData] = useState(null);
+    const [carreraData, setCarreraData] = useState(null);
 
     const handleBaja=()=>{ 
         setFound(false);
         setName("");
         setValue("");
-        setMateriaData(null);
+        setCarreraData(null);
     }
  
     const handleSearch= async()=>{
-        if(!value.trim()) return;
-        try {
-                const response = await materiaPorId(value); 
-                if (response) {
-                    setMateriaData(response); 
-                    setFound(true);           
-                } else {
-                    setFound(false);          
-                    setMateriaData(null);
-                }
-            } catch (err) {
-                setError(err.message || "Error al buscar la carrera");
-                setFound(false);
-                setMateriaData(null);
-            }
-        // NO BORRAR
-        // try{
-        //     const response= await materiaPorId(value)
-        //     console.log("Materia encontrado")
-        //     setFound(true)
-        // }catch(err){
-        //     console.error(`Error al buscar materia: ${value}: ${err.message}`)
-        //     setError(err.message)
-        //     setFound(false)
-        // }
+    if (!value.trim()) return;
+
+    try {
+        const response = await carreraPorId(value); 
+        if (response) {
+            setCarreraData(response); 
+            setFound(true);           
+        } else {
+            setFound(false);          
+            setCarreraData(null);
+        }
+    } catch (err) {
+        setError(err.message || "Error al buscar la carrera");
+        setFound(false);
+        setCarreraData(null);
+    }
     }
 
     return(
 
         <div className="flex min-h-screen flex-col items-center justify-start my-4">
             <div className="w-full max-w-md  p-6 r">
-            <h1 className="font-bold text-xl mb-4">Buscar Materia</h1>
+            <h1 className="font-bold text-xl mb-4">Buscar Carrera</h1>
             <span className="block w-full h-[3px] bg-sky-950"></span>
 
-            {/*<div className="flex flex-row items-center justify-between my-4 gap-2">
-                <h3 className="text-sm mb-2 shrink-0">
-                    Buscar por carrera
-                </h3>
-                <Select>
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione una opción" />
-                    </SelectTrigger>
-
-                    <SelectContent>            
-                        <SelectGroup>
-                        <SelectLabel>Opciones</SelectLabel>
-                        <SelectItem value="alumno">Alumno</SelectItem>
-                        <SelectItem value="docente">Docente</SelectItem>          
-
-                        </SelectGroup>
-                    </SelectContent>            
-                </Select>
-            </div>*/}
-            
             <div className="flex flex-row items-center justify-between my-4 gap-2">
                 <h3 className="text-sm mb-2 shrink-0">
-                    Buscar por nombre
+                    Indique nombre de la carrera
                 </h3>
                 <Input
                     className="mb-4"
@@ -111,14 +81,15 @@ export default function BusquedaMateria(second) {
                     />
             </div>
             
+                        
             <div className="flex flex-row items-center justify-between my-4 gap-2">
                 <h3 className="text-sm mb-2 shrink-0">
-                    Buscar por identificador
+                    Buscar por identificador de carrera
                 </h3>
                 <Input
                     className="mb-4"
                     type="text"
-                    placeholder="Ingrese legajo"
+                    placeholder="Ingrese el identificador"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     />
@@ -132,10 +103,9 @@ export default function BusquedaMateria(second) {
                 Buscar
             </Button>
             </div>
-            {found ? (
+            {found && carreraData ? (
                 <div className="w-full max-w-md  p-6 ml-6 my-4">
-                <CardMateria title={"Materia encontrado"} materia={materiaData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardMateria>
-                
+                <CardCarrera title={"Carrera encontrada"} carrera={carreraData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardCarrera>
                 </div>
             ):
             (<div>
