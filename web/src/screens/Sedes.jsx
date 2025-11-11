@@ -7,13 +7,16 @@ import {
   SelectGroup,
   SelectLabel,
 } from "@/components/ui/select.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import SelectForm from "@/components/SelectForm";
 import AltaSede from "@/components/AltaSede";
 import ModifSede from "@/components/ModifSede";
 import BajaSede from "@/components/BajaSede";
 import BusquedaSede from "@/components/BusquedaSede";
+import PopUp from "@/components/PopUp";
+import { obtenerSedes } from "@/api/sedesApi";
 
 export default function Sedes() {
   const [value, setValue] = useState("");
@@ -94,6 +97,16 @@ export default function Sedes() {
       <div className="w-full max-w-4xl">
         <h1 className="font-bold text-center text-2xl mb-4">Sedes</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
+
+        <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl mt-8">
+          <h3 className="text-sm flex-shrink-0">Elija qué tipo de operación desea realizar</h3>
+          <SelectForm
+            title="Operaciones"
+            options={opciones}
+            value={value}
+            onValueChange={setValue}
+          />
+        </div>
 
         <div className="overflow-x-auto mt-8">
           
@@ -179,10 +192,14 @@ export default function Sedes() {
           </div>
         )}
         {error !== null && (
-        <PopUp title={"Error"} message={error.toString()} onClose={()=>setError(null)}/>
-      )}
+          <PopUp title={"Error"} message={error.toString()} onClose={()=>setError(null)}/>
+        )}
+
+        {value === "alta" && <AltaSede />}
+        {value === "baja" && <BajaSede />}
+        {value === "modif" && <ModifSede />}
+        {value === "busqueda" && <BusquedaSede />}
       </div>
-      
     </div>
   );
 }
@@ -205,10 +222,23 @@ function InputField({ label, value, onChange, type = "text", disabled = false })
   );
 }
 
-      {value === "alta" && <AltaSede />}
-      {value === "baja" && <BajaSede />}
-      {value === "modif" && <ModifSede />}
-      {value === "busqueda" && <BusquedaSede />}
+function RadioGroupField({ label, value, options, onChange }) {
+  return (
+    <div className="flex-1 flex flex-col">
+      <span className="text-sm font-medium mb-1">{label}</span>
+      <div className="flex flex-row gap-4">
+        {options.map(opt => (
+          <label key={String(opt.value)} className="flex items-center gap-1">
+            <input
+              type="radio"
+              value={String(opt.value)}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
     </div>
   );
 }
