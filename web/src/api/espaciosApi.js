@@ -57,7 +57,7 @@ export const obtenerEspacios = async (skip = 0, limit = 100, status_filter = nul
 export const buscarEspacios = async (param, value, skip = 0, limit = 100) => {
   try {
     const params = { param, value, skip, limit };
-    const response = await axiosInstance.get("/espacios/search", { params });
+    const response = await axiosInstance.get("/espacios/", { params });
     return response.data;
   } catch (error) {
     console.error("Error al buscar espacios:", error);
