@@ -1,34 +1,51 @@
-from fastapi import APIRouter, HTTPException, status
-from ..schemas.auth_schema import LoginRequest, AuthPayload
-from ..models.usuario_model import Usuario
-from sqlalchemy.orm import Session
-from fastapi import Depends
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from ..schemas.auth_schema import LoginRequest, AuthResponse, VerifyResponse
+from ..service.auth_service import AuthService
+from ..database import get_async_db
 
-router = APIRouter(tags=["Auth"], prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post(
-    "/login",
-    response_model=AuthPayload,
-    summary="Autenticar usuario",
-    description="Verifica credenciales y devuelve información del usuario autenticado.\n\nDevuelve un payload con la identidad del usuario (quién es), su rol y estado, permitiendo a los servicios conocer los permisos y datos relevantes del usuario.\n\nNo emite tokens JWT, sino que devuelve directamente la información del usuario para su uso en la aplicación.",
-    response_description="Información del usuario autenticado",
-    responses={
-        200: {"description": "Usuario autenticado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        401: {"description": "Credenciales incorrectas"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def login(login_data: LoginRequest):
-    return AuthPayload(
-        userId="placeholder-id",
-        email=login_data.email,
-        firstName="Placeholder",
-        lastName="User",
-        dni="12345678",
-        role="ALUMNO",
-        state="ACTIVO",
-        message="Authentication successful"
-    )
+@router.post("/login", response_model=AuthResponse)
+async def login(
+    login_request: LoginRequest,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Autenticar usuario por email institucional y contraseña hasheada.
+    Retorna información completa del usuario + rol.
+    """
+    try:
+        auth_response = await AuthService.authenticate_user(db, login_request)
+        
+        if not auth_response:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales incorrectas o usuario inactivo"
+            )
+        
+        return auth_response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en el login: {str(e)}"
+        )
 
-
+@router.get("/verify/{email_institucional}", response_model=VerifyResponse)
+async def verify_user_exists(
+    email_institucional: str,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Verificar si un usuario existe y está activo por email institucional
+    """
+    try:
+        return await AuthService.verify_user_exists_and_active(db, email_institucional)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al verificar usuario: {str(e)}"
+        )

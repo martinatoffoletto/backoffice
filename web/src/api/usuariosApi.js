@@ -1,69 +1,19 @@
-// import axiosInstance from "./axiosInstance";
-
-// export const altaUsuario = async (userData) => {
-//   try {
-//     const response = await axiosInstance.post("/users/", userData);
-//     return response.data; 
-//   } catch (error) {
-//     console.error("Error al crear usuario:", error);
-//     throw error; 
-//   }
-// };
-
-// export const bajaUsuario = async (id) => {
-//   try {
-//     const response = await axiosInstance.delete(`/users/${id}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error al eliminar usuario:", error);
-//     throw error;
-//   }
-// };
-
-// export const modificarUsuario = async (id, userData) => {
-//   try {
-//     const response = await axiosInstance.put(`/users/${id}`, userData);
-//     return response.data; 
-//   } catch (err) {
-//     console.error("Error al modificar el usuario:", err);
-//     throw err; 
-// }
-// };
-
-// export const usuarioPorId=async(id)=>{
-//     try{
-//         const response= await axiosInstance.get(`/users/${id}`)       
-//         return response.data
-//     }catch(err){
-//         console.error("Error al buscar usuario:", err)
-//         throw err;
-//     }
-// }
-
-// mockUsuariosService.js
-import { usuarios } from "@/data/mockData"; // importá tus datos locales
-
-// Copia local mutable (para simular alta, baja, etc.)
-let mockUsuarios = [...usuarios];
+import axiosInstance from "./axiosInstance";
 
 export const altaUsuario = async (userData) => {
   try {
-    const nuevoUsuario = {
-      id: mockUsuarios.length + 1, // simulamos autoincremental
-      ...userData,
-    };
-    mockUsuarios.push(nuevoUsuario);
-    return Promise.resolve(nuevoUsuario); // simula respuesta de API
+    const response = await axiosInstance.post("/users/", userData);
+    return response.data; 
   } catch (error) {
     console.error("Error al crear usuario:", error);
-    throw error;
+    throw error; 
   }
 };
 
 export const bajaUsuario = async (id) => {
   try {
-    mockUsuarios = mockUsuarios.filter((u) => u.id !== id);
-    return Promise.resolve({ message: "Usuario eliminado correctamente" });
+    const response = await axiosInstance.delete(`/users/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     throw error;
@@ -72,33 +22,48 @@ export const bajaUsuario = async (id) => {
 
 export const modificarUsuario = async (id, userData) => {
   try {
-    const index = mockUsuarios.findIndex((u) => u.id === id);
-    if (index === -1) throw new Error("Usuario no encontrado");
-
-    mockUsuarios[index] = { ...mockUsuarios[index], ...userData };
-    return Promise.resolve(mockUsuarios[index]);
-  } catch (error) {
-    console.error("Error al modificar el usuario:", error);
-    throw error;
+    const response = await axiosInstance.put(`/users/${id}`, userData);
+    return response.data; 
+  } catch (err) {
+    console.error("Error al modificar el usuario:", err);
+    throw err; 
   }
 };
 
 export const usuarioPorId = async (id) => {
   try {
-    const usuario = mockUsuarios.find((u) => u.id === id);
-    if (!usuario) throw new Error("Usuario no encontrado");
-    return Promise.resolve(usuario);
+    const response = await axiosInstance.get(`/users/${id}`);       
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar usuario:", err);
+    throw err;
+  }
+};
+
+export const obtenerUsuarios = async (skip = 0, limit = 100, status_filter = null) => {
+  try {
+    const params = { skip, limit };
+    if (status_filter !== null) {
+      params.status_filter = status_filter;
+    }
+    const response = await axiosInstance.get("/users/", { params });
+    return response.data;
   } catch (error) {
-    console.error("Error al buscar usuario:", error);
+    console.error("Error al obtener usuarios:", error);
     throw error;
   }
 };
 
-export const obtenerUsuarios = async () => {
+export const buscarUsuarios = async (param, value, skip = 0, limit = 100, status_filter = null) => {
   try {
-    return Promise.resolve(mockUsuarios);
+    const params = { param, value, skip, limit };
+    if (status_filter !== null) {
+      params.status_filter = status_filter;
+    }
+    const response = await axiosInstance.get("/users/search", { params });
+    return response.data;
   } catch (error) {
-    console.error("Error al obtener usuarios:", error);
+    console.error("Error al buscar usuarios:", error);
     throw error;
   }
 };

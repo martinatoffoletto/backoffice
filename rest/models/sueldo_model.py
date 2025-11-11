@@ -1,18 +1,20 @@
-from sqlalchemy import Column, Numeric, ForeignKey, String, Enum, Integer
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Numeric
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from .base import Base
 import uuid
-from .enums import Position
-
-Base = declarative_base()
 
 class Sueldo(Base):
-    __tablename__ = "salaries"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    userId = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    cbu = Column(String(22), nullable=False)
-    position = Column(Enum(Position), nullable=False)
-    baseSalary = Column(Numeric(12,2), nullable=False)
-    yearsOfService = Column(Integer, nullable=False, default=0)
-    seniorityMultiplier = Column(Numeric(5,4), nullable=False, default=1.0000)
-    amount = Column(Numeric(12,2), nullable=False)
+    __tablename__ = "sueldos"
+    id_sueldo = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
+    cbu = Column(String(22), nullable=False) 
+    sueldo_adicional = Column(Numeric(15, 2), default=0, nullable=False)
+    observaciones = Column(Text, nullable=True)
+    status = Column(Boolean, default=True, nullable=False)
+    
+    # Relación con usuario
+    usuario = relationship("Usuario", back_populates="sueldos")
+    
+    def __repr__(self):
+        return f"<Sueldo(id_sueldo={self.id_sueldo}, id_usuario={self.id_usuario}, sueldo_adicional={self.sueldo_adicional})>"

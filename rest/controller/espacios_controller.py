@@ -1,82 +1,228 @@
-from fastapi import APIRouter, Query, status, Depends
-from rest.service.auth_service import get_current_user
-from rest.schemas.espacio_schema import EspacioCreate, EspacioUpdate
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+import uuid
 
-router = APIRouter(tags=["Spaces"], prefix="/spaces")
+from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede, ComedorInfo
+from ..database import get_async_db
+from ..service.espacio_service import EspacioService
 
-@router.get(
-    "/",
-    summary="Listar espacios",
-    description="Obtiene una lista de todos los espacios registrados.",
-    response_description="Lista de espacios",
-    responses={
-        200: {"description": "Lista de espacios encontrada"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def listar_espacios(user=Depends(get_current_user)):
-    """Obtiene una lista de espacios """
-    pass
+router = APIRouter(prefix="/espacios", tags=["Espacios"])
 
-@router.post(
-    "/",
-    summary="Crear espacio",
-    description="Crea un nuevo espacio (sede, edificio, aula, sala, espacio común) con jerarquía.",
-    response_description="Espacio creado",
-    responses={
-        201: {"description": "Espacio creado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        409: {"description": "Espacio ya existe"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def crear_espacio(espacio: EspacioCreate, user=Depends(get_current_user)):
-    """Crea un nuevo espacio (sede, edificio, aula, sala, espacio común) con jerarquía."""
-    pass
+@router.post("/", response_model=Espacio, status_code=status.HTTP_201_CREATED)
+async def create_espacio(
+    espacio: EspacioCreate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Crear un nuevo espacio
+    """
+    try:
+        return await EspacioService.create_espacio(db, espacio)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear el espacio: {str(e)}"
+        )
 
-@router.get(
-    "/{espacio_id}",
-    summary="Obtener espacio por ID",
-    description="Obtiene los datos de un espacio específico por su ID.",
-    response_description="Datos del espacio",
-    responses={
-        200: {"description": "Espacio encontrado"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def obtener_espacio(espacio_id: int, user=Depends(get_current_user)):
-    """Obtiene los datos de un espacio por su ID."""
-    pass
+@router.get("/", response_model=List[Espacio])
+async def get_all_espacios(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener todos los espacios con filtro opcional por status
+    """
+    try:
+        return await EspacioService.get_all_espacios(db, skip, limit, status_filter)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener los espacios: {str(e)}"
+        )
 
-@router.put(
-    "/{espacio_id}",
-    summary="Actualizar espacio por ID",
-    description="Actualiza los datos de un espacio existente por su ID.",
-    response_description="Espacio actualizado",
-    responses={
-        200: {"description": "Espacio actualizado exitosamente"},
-        400: {"description": "Datos inválidos"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def actualizar_espacio(espacio_id: int, espacio: EspacioUpdate, user=Depends(get_current_user)):
-    """Actualiza los datos de un espacio por su ID."""
-    pass
+@router.get("/{id_espacio}", response_model=Espacio)
+async def get_espacio_by_id(
+    id_espacio: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener un espacio por su ID
+    """
+    try:
+        espacio = await EspacioService.get_espacio_by_id(db, id_espacio)
+        if not espacio:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el espacio con ID {id_espacio}"
+            )
+        return espacio
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el espacio: {str(e)}"
+        )
 
-@router.delete(
-    "/{espacio_id}",
-    summary="Eliminar espacio (soft delete)",
-    description="Marca un espacio como eliminado (soft delete), sin borrar físicamente.",
-    response_description="Espacio eliminado",
-    responses={
-        200: {"description": "Espacio eliminado exitosamente"},
-        403: {"description": "No tienes permisos para eliminar este espacio"},
-        404: {"description": "Espacio no encontrado"},
-        500: {"description": "Error interno del servidor"}
-    }
-)
-async def eliminar_espacio(espacio_id: int, user=Depends(get_current_user)):
-    """Marca un espacio como eliminado (soft delete)."""
-    pass
+@router.get("/{id_espacio}/sede", response_model=EspacioConSede)
+async def get_espacio_with_sede(
+    id_espacio: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener un espacio con información de la sede
+    """
+    try:
+        espacio = await EspacioService.get_espacio_with_sede(db, id_espacio)
+        if not espacio:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el espacio con ID {id_espacio}"
+            )
+        return espacio
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener el espacio con sede: {str(e)}"
+        )
+
+@router.get("/search", response_model=List[Espacio])
+async def search_espacios(
+    param: str = Query(..., description="Search parameter: id, nombre, tipo, estado, sede, id_sede, capacidad, status"),
+    value: str = Query(..., description="Search value"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Buscar espacios por diferentes parámetros. Parámetros válidos: id, nombre, tipo, estado, sede, id_sede, capacidad, status
+    """
+    valid_params = [
+        "id", "id_espacio", "nombre", "tipo", 
+        "estado", "estado_espacio", "sede", "id_sede",
+        "capacidad", "status"
+    ]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+        )
+    
+    try:
+        return await EspacioService.search(db, param, value, skip, limit)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al buscar espacios: {str(e)}"
+        )
+
+@router.get("/tipos/disponibles", response_model=List[str])
+async def get_available_tipos(
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener todos los tipos únicos de espacios
+    """
+    try:
+        return await EspacioService.get_available_tipos(db)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener tipos disponibles: {str(e)}"
+        )
+
+@router.get("/sede/{id_sede}/count", response_model=int)
+async def count_espacios_by_sede(
+    id_sede: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Contar espacios activos por sede
+    """
+    try:
+        return await EspacioService.count_espacios_by_sede(db, id_sede)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al contar espacios por sede: {str(e)}"
+        )
+
+@router.get("/sede/{id_sede}/comedores", response_model=List[ComedorInfo])
+async def get_comedores_by_sede(
+    id_sede: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Obtener lista de comedores de una sede con sus nombres y capacidades
+    """
+    try:
+        return await EspacioService.get_comedores_by_sede(db, id_sede)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener comedores por sede: {str(e)}"
+        )
+
+@router.put("/{id_espacio}", response_model=Espacio)
+async def update_espacio(
+    id_espacio: uuid.UUID,
+    espacio_update: EspacioUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Actualizar un espacio por su ID
+    """
+    try:
+        espacio = await EspacioService.update_espacio(db, id_espacio, espacio_update)
+        if not espacio:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el espacio con ID {id_espacio}"
+            )
+        return espacio
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el espacio: {str(e)}"
+        )
+
+@router.delete("/{id_espacio}", response_model=dict)
+async def soft_delete_espacio(
+    id_espacio: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Eliminación lógica de un espacio
+    """
+    try:
+        success = await EspacioService.delete_espacio(db, id_espacio)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el espacio con ID {id_espacio}"
+            )
+        return {"message": "Espacio eliminado exitosamente"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar el espacio: {str(e)}"
+        )

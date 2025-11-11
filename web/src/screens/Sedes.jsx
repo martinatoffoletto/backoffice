@@ -1,15 +1,27 @@
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table.jsx';
-import { Button } from '@/components/ui/button.jsx';
-import { useEffect, useState } from 'react';
-import { obtenerSedes } from '@/api/sedesApi';
-import PopUp from '@/components/PopUp';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select.jsx";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import SelectForm from "@/components/SelectForm";
+import AltaSede from "@/components/AltaSede";
+import ModifSede from "@/components/ModifSede";
+import BajaSede from "@/components/BajaSede";
+import BusquedaSede from "@/components/BusquedaSede";
 
 export default function Sedes() {
-  const initialSedes = [
-    { name: "Montserrat", address: "Lima 757, CABA" },
-    { name: "Recoleta", address: "Libertad 1340, CABA" },
-    { name: "Campus Costa", address: "Av. Intermédanos 776, Bs.As" },
-    { name: "Belgrano", address: "11 de Septiembre de 1888 1990, CABA" }
+  const [value, setValue] = useState("");
+  const opciones = [
+    { value: "alta", label: "Alta de Sede" },
+    { value: "baja", label: "Baja de Sede" },
+    { value: "modif", label: "Modificación de Sede" },
+    { value: "busqueda", label: "Búsqueda de Sede" }
   ];
 
   const [sedes, setSedes] = useState([]);
@@ -193,22 +205,10 @@ function InputField({ label, value, onChange, type = "text", disabled = false })
   );
 }
 
-function RadioGroupField({ label, value, options, onChange }) {
-  return (
-    <div className="flex-1 flex flex-col">
-      <span className="text-sm font-medium mb-1">{label}</span>
-      <div className="flex flex-row gap-4">
-        {options.map(opt => (
-          <label key={opt.label} className="flex items-center gap-1">
-            <input
-              type="radio"
-              checked={value === opt.value}
-              onChange={() => onChange(opt.value)}
-            />
-            {opt.label}
-          </label>
-        ))}
-      </div>
+      {value === "alta" && <AltaSede />}
+      {value === "baja" && <BajaSede />}
+      {value === "modif" && <ModifSede />}
+      {value === "busqueda" && <BusquedaSede />}
     </div>
   );
 }

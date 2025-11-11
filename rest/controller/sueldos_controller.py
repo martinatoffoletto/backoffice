@@ -1,86 +1,124 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from rest.service.auth_service import get_current_user
-from typing import List
-from pydantic import BaseModel
-from rest.schemas.sueldo_schema import SueldoCreate, SueldoUpdate
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+import uuid
+from ..schemas.sueldo_schema import Sueldo, SueldoBase, SueldoUpdate
+from ..service.sueldo_service import SueldoService
+from ..database import get_async_db
 
+router = APIRouter(prefix="/sueldos", tags=["Sueldos"])
 
-router = APIRouter(prefix="/salaries", tags=["Salaries"])
+@router.post("/", response_model=Sueldo, status_code=status.HTTP_201_CREATED)
+async def create_sueldo(sueldo: SueldoBase, db: AsyncSession = Depends(get_async_db)):
+    """Crear un nuevo sueldo para un usuario"""
+    # Verificar si se puede crear el sueldo
+    can_create, error_message = await SueldoService.can_create_sueldo(db, sueldo)
+    if not can_create:
+        if "no encontrado" in error_message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=error_message
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message
+            )
+    
+    created_sueldo = await SueldoService.create_sueldo(db, sueldo)
+    if not created_sueldo:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al crear el sueldo"
+        )
+    return created_sueldo
 
-@router.get(
-	"/",
-	summary="Listar sueldos",
-	description="Obtiene la lista de sueldos.",
-	response_description="Lista de sueldos",
-	responses={
-		200: {"description": "Lista de sueldos encontrada"},
-		500: {"description": "Error interno del servidor"}
-	}
-)
-async def listar_sueldos(user=Depends(get_current_user)):
-	"""Obtiene la lista de sueldos."""
-	pass
+@router.get("/", response_model=List[Sueldo], response_model_exclude_none=True)
+async def get_all_sueldos(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Obtener todos los sueldos con filtros opcionales"""
+    return await SueldoService.get_all_sueldos(db, skip, limit, status)
 
-@router.post(
-	"/",
-	summary="Crear sueldo",
-	description="Crea un nuevo sueldo.",
-	response_description="Sueldo creado",
-	responses={
-		201: {"description": "Sueldo creado exitosamente"},
-		400: {"description": "Datos inválidos"},
-		409: {"description": "Sueldo ya existe"},
-		500: {"description": "Error interno del servidor"}
-	}
-)
-async def crear_sueldo(sueldo: SueldoCreate, user=Depends(get_current_user)):
-	"""Crea un nuevo sueldo."""
-	pass
+@router.get("/search", response_model=List[Sueldo], response_model_exclude_none=True)
+async def search_sueldos(
+    param: str = Query(..., description="Parámetro de búsqueda: id, id_sueldo, id_usuario, status"),
+    value: str = Query(..., description="Valor a buscar (para status: true/false)"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Buscar sueldos por diferentes parámetros"""
+    valid_params = ["id", "id_sueldo", "id_usuario", "status"]
+    if param.lower() not in valid_params:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
+        )
+    
+    sueldos = await SueldoService.search_sueldos(db, param, value, skip, limit, status_filter)
+    return sueldos
 
-@router.get(
-	"/{sueldo_id}",
-	summary="Obtener sueldo por ID",
-	description="Obtiene los datos de un sueldo por su ID.",
-	response_description="Datos del sueldo",
-	responses={
-		200: {"description": "Sueldo encontrado"},
-		404: {"description": "Sueldo no encontrado"},
-		500: {"description": "Error interno del servidor"}
-	}
-)
-async def obtener_sueldo(sueldo_id: str, user=Depends(get_current_user)):
-	"""Obtiene los datos de un sueldo por su ID."""
-	pass
+@router.get("/usuario/{id_usuario}", response_model=Sueldo, response_model_exclude_none=True)
+async def get_sueldo_by_usuario(
+    id_usuario: uuid.UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Obtener el sueldo activo de un usuario específico"""
+    sueldo = await SueldoService.get_sueldo_by_usuario(db, id_usuario, status)
+    if sueldo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado o sin sueldo activo"
+        )
+    return sueldo
 
-@router.put(
-	"/{sueldo_id}",
-	summary="Actualizar sueldo por ID",
-	description="Actualiza los datos de un sueldo por su ID.",
-	response_description="Sueldo actualizado",
-	responses={
-		200: {"description": "Sueldo actualizado exitosamente"},
-		400: {"description": "Datos inválidos"},
-		404: {"description": "Sueldo no encontrado"},
-		500: {"description": "Error interno del servidor"}
-	}
-)
-async def actualizar_sueldo(sueldo_id: str, sueldo: SueldoUpdate, user=Depends(get_current_user)):
-	"""Actualiza los datos de un sueldo por su ID."""
-	pass
+@router.get("/{sueldo_id}", response_model=Sueldo, response_model_exclude_none=True)
+async def get_sueldo_by_id(
+    sueldo_id: uuid.UUID,
+    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Obtener un sueldo por ID"""
+    sueldo = await SueldoService.get_sueldo_by_id(db, sueldo_id, status)
+    if not sueldo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sueldo no encontrado"
+        )
+    return sueldo
 
-@router.delete(
-	"/{sueldo_id}",
-	summary="Eliminar sueldo",
-	description="Elimina un sueldo por su ID.",
-	response_description="Sueldo eliminado",
-	responses={
-		200: {"description": "Sueldo eliminado exitosamente"},
-		403: {"description": "No tienes permisos para eliminar este sueldo"},
-		404: {"description": "Sueldo no encontrado"},
-		500: {"description": "Error interno del servidor"}
-	}
-)
-async def eliminar_sueldo(sueldo_id: str, user=Depends(get_current_user)):
-	"""Elimina un sueldo por su ID."""
-	pass
+@router.put("/{sueldo_id}", response_model=Sueldo)
+async def update_sueldo(
+    sueldo_id: uuid.UUID,
+    sueldo_update: SueldoUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Actualizar un sueldo existente"""
+    updated_sueldo = await SueldoService.update_sueldo(db, sueldo_id, sueldo_update)
+    if not updated_sueldo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sueldo no encontrado"
+        )
+    return updated_sueldo
 
+@router.delete("/{sueldo_id}", response_model=dict, status_code=status.HTTP_200_OK)
+async def delete_sueldo(sueldo_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+    """Eliminar (desactivar) un sueldo"""
+    success = await SueldoService.delete_sueldo(db, sueldo_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sueldo no encontrado"
+        )
+    return {
+        "message": "Sueldo eliminado exitosamente",
+        "sueldo_id": str(sueldo_id),
+        "status": False
+    }

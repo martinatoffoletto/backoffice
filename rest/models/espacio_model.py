@@ -1,17 +1,36 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Enum, Text, Numeric
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, Enum, Integer
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from .base import Base
+import enum
 import uuid
 
-Base = declarative_base()
+class TipoEspacio(enum.Enum):
+    AULA = "aula"
+    LABORATORIO = "laboratorio"
+    ESPACIO_COMUN = "espacio_comun"
+    OFICINA = "oficina"
+    OTROS = "otros"
+
+class EstadoEspacio(enum.Enum):
+    DISPONIBLE = "disponible"
+    OCUPADO = "ocupado"
+    EN_MANTENIMIENTO = "en_mantenimiento"
 
 class Espacio(Base):
-    __tablename__ = "spaces"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    parentId = Column(UUID(as_uuid=True), ForeignKey("spaces.id"))
-    type = Column(Enum("Sedes", "Aula", "Sala de Reuniones", "Espacio Común","Edificio", name="space_type"), nullable=False)
-    code = Column(String, unique=True, nullable=False)
-    name = Column(String, nullable=False)
-    description = Column(Text)
-    capacity = Column(Integer)
-    address = Column(Text)
+    __tablename__ = "espacios"
+    
+    id_espacio = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nombre = Column(String(100), unique=True, nullable=False, index=True)
+    tipo = Column(Enum(TipoEspacio), nullable=False)
+    capacidad = Column(Integer, nullable=False)
+    ubicacion = Column(Text, nullable=False)
+    estado = Column(Enum(EstadoEspacio), default=EstadoEspacio.DISPONIBLE, nullable=False)
+    id_sede = Column(UUID(as_uuid=True), ForeignKey("sedes.id_sede", ondelete="CASCADE"), nullable=False)
+    status = Column(Boolean, default=True, nullable=False)
+    
+    # Relación con sede
+    sede = relationship("Sede", back_populates="espacios")
+    
+    def __repr__(self):
+        return f"<Espacio(id_espacio={self.id_espacio}, nombre='{self.nombre}', tipo='{self.tipo.value}')>"
