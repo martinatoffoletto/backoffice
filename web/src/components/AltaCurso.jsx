@@ -35,6 +35,7 @@ import { altaCurso } from "@/api/cursosApi";
 import CardCurso from "@/components/CardCurso";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
+import GestionClases from "@/components/GestionClases";
 
 export default function AltaCurso(second) {
     const [date, setDate] = useState();
@@ -61,6 +62,7 @@ export default function AltaCurso(second) {
     const [fechaInicio, setFechaInicio] = useState(null);
     const [fechaFin, setFechaFin] = useState(null);
     const [cursoData, setCursoData]=useState(null)
+    const [showGestionClases, setShowGestionClases] = useState(false)
     
     const handleSubmit = async(e) => {
         e.preventDefault();
@@ -70,6 +72,7 @@ export default function AltaCurso(second) {
             setCursoData(response)
             setCompleted(true)
             setShowPopUp(true)
+            setShowGestionClases(true)
         }catch(err){
             console.error(`Error al dar de alta el curso: ${err.message}`)
             setError(err.message)
@@ -317,6 +320,12 @@ export default function AltaCurso(second) {
                                    OK
                                    </Button>
                                </div>
+            )}
+
+            {showGestionClases && cursoData && (
+                <div className="w-full max-w-4xl mt-6">
+                    <GestionClases id_curso={cursoData.id_curso || cursoData.id} />
+                </div>
             )}
 
  

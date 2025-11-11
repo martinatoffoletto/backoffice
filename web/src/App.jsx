@@ -9,6 +9,9 @@ import Cursos from "./screens/Cursos"
 import Sedes from "./screens/Sedes"
 import Sede from "./screens/Sede"
 import Materias from "./screens/Materias"
+import Espacios from "./screens/Espacios"
+import Roles from "./screens/Roles"
+import Parametros from "./screens/Parametros"
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -29,6 +32,9 @@ function App() {
             <Route path="/sedes" element={<Sedes />} />
             <Route path="/sede" element={<Sede />} />
             <Route path="/materias" element={<Materias />} />
+            <Route path="/espacios" element={<Espacios />} />
+            <Route path="/roles" element={<Roles />} />
+            <Route path="/parametros" element={<Parametros />} />
           </Routes>
         </main>
 

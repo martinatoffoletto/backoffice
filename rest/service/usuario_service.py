@@ -13,13 +13,60 @@ import string
 import random
 import bcrypt
 import uuid
+import re
+import unicodedata
 
 class UsuarioService:
     
     @staticmethod
+    def _normalize_text(text: str) -> str:
+        """
+        Normaliza un texto para uso en email:
+        - Convierte a minúsculas
+        - Elimina acentos y caracteres especiales
+        - Elimina espacios y caracteres no alfanuméricos
+        - Mantiene solo letras y números
+        """
+        if not text:
+            return ""
+        
+        # Normalizar unicode (NFD = descompone caracteres con acentos)
+        text = unicodedata.normalize('NFD', text)
+        
+        # Eliminar diacríticos (acentos, tildes, etc.)
+        text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+        
+        # Convertir a minúsculas
+        text = text.lower()
+        
+        # Eliminar todo lo que no sea letra o número
+        text = re.sub(r'[^a-z0-9]', '', text)
+        
+        return text
+    
+    @staticmethod
     async def _generate_unique_email(db: AsyncSession, nombre: str, apellido: str) -> str:
-        """Generar un email institucional único"""
-        base_email = f"{apellido.lower()}.{nombre.lower()}"
+        """
+        Generar un email institucional único con formato:
+        Primera letra del nombre + apellido completo (normalizado) @uade.edu.ar
+        Ejemplo: Marcos Cavicchia -> mcavicchia@uade.edu.ar
+        """
+        # Obtener primera letra del nombre (normalizada)
+        primera_letra = ""
+        if nombre:
+            nombre_normalizado = UsuarioService._normalize_text(nombre)
+            if nombre_normalizado:
+                primera_letra = nombre_normalizado[0]
+        
+        # Normalizar apellido completo
+        apellido_normalizado = UsuarioService._normalize_text(apellido)
+        
+        if not primera_letra or not apellido_normalizado:
+            # Fallback si no hay nombre o apellido válido
+            base_email = f"{apellido_normalizado or 'user'}"
+        else:
+            base_email = f"{primera_letra}{apellido_normalizado}"
+        
         counter = 1
         
         while True:

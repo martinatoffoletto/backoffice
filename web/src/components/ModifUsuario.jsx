@@ -22,24 +22,20 @@ import {
   SelectLabel,
   SelectSeparator
 } from "@/components/ui/select.jsx";
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar"
+import { useState, useEffect } from "react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover"
-import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
 import { modificarUsuario, usuarioPorId } from "@/api/usuariosApi";
-import { data } from "react-router-dom";
 import CardUsuario from "./CardUsuario";
 import { Checkbox } from "./ui/checkbox";
+import { obtenerRoles, buscarRoles } from "@/api/rolesApi";
 
-export default function ModifUsuario(second) {
-    const [date, setDate] = useState();
+export default function ModifUsuario() {
     const [form, setForm] = useState({
-        tipoUsuario: [],       
         nombre: "",
         apellido: "",
         nroDocumento: "",
@@ -49,24 +45,68 @@ export default function ModifUsuario(second) {
         carrera: "",            
     });
 
+    const [categorias_seleccionadas, setCategoriasSeleccionadas] = useState([]);
+    const [subcategoria_seleccionada, setSubcategoriaSeleccionada] = useState("");
+    const [subcategorias_disponibles, setSubcategoriasDisponibles] = useState([]);
+    const [loadingSubcategorias, setLoadingSubcategorias] = useState(false);
+    const [roles, setRoles] = useState([]);
+    const [id_rol, setIdRol] = useState("");
+
     const [completed, setCompleted] = useState(false);
     const [error, setError] = useState(null);
     const [value, setValue] = useState("");
     const [userData, setUserData]=useState(null)
     const [showForm, setShowForm] = useState(false);
-    const [selectedValues, setSelectedValues] = useState([]);
-    const options = ["Administrador", "Docente", "Alumno"];
 
-    // Función para agregar o quitar valores en el array de selección
-    const toggleValue = (opt) => {
-    setSelectedValues((prev) => {
-        if (prev.includes(opt)) {
-        return prev.filter((v) => v !== opt)
-        } else {
-        return [...prev, opt]
-        }
-    })
-    }
+    const CATEGORIAS_DISPONIBLES = ["ADMINISTRADOR", "ALUMNO", "DOCENTE"];
+
+    // Cargar roles al iniciar
+    useEffect(() => {
+        const cargarRoles = async () => {
+            try {
+                const rolesData = await obtenerRoles(true);
+                setRoles(rolesData);
+            } catch (err) {
+                console.error("Error al cargar roles:", err);
+            }
+        };
+        cargarRoles();
+    }, []);
+
+    // Cargar subcategorías cuando se selecciona ADMINISTRADOR
+    useEffect(() => {
+        const cargarSubcategorias = async () => {
+            if (categorias_seleccionadas.includes("ADMINISTRADOR")) {
+                setLoadingSubcategorias(true);
+                try {
+                    const rolesAdmin = await buscarRoles("categoria", "ADMINISTRADOR", true);
+                    const subcategorias = rolesAdmin
+                        .map((rol) => rol.subcategoria)
+                        .filter((sub) => sub && sub.trim() !== "");
+                    setSubcategoriasDisponibles([...new Set(subcategorias)]);
+                } catch (err) {
+                    console.error("Error al cargar subcategorías:", err);
+                    setSubcategoriasDisponibles([]);
+                } finally {
+                    setLoadingSubcategorias(false);
+                }
+            } else {
+                setSubcategoriasDisponibles([]);
+                setSubcategoriaSeleccionada("");
+            }
+        };
+        cargarSubcategorias();
+    }, [categorias_seleccionadas]);
+
+    const toggleCategoria = (categoria) => {
+        setCategoriasSeleccionadas((prev) => {
+            if (prev.includes(categoria)) {
+                return prev.filter((c) => c !== categoria);
+            } else {
+                return [...prev, categoria];
+            }
+        });
+    };
 
 
     const handleSearch = async () => {
@@ -75,33 +115,87 @@ export default function ModifUsuario(second) {
             const response = await usuarioPorId(parseInt(value))
             console.log("Usuario encontrado exitosamente")
 
-            // Inicializamos selectedValues con el tipo de usuario actual
-            const tipoArray = Array.isArray(response.tipoUsuario)
-            ? response.tipoUsuario
-            : [response.tipoUsuario]
+            // Obtener categoría y subcategoría del rol del usuario
+            const rol_usuario = response.rol || response.rol_data;
+            let categorias_iniciales = [];
+            let subcategoria_inicial = "";
+
+            if (rol_usuario) {
+                if (rol_usuario.categoria) {
+                    categorias_iniciales = [rol_usuario.categoria];
+                }
+                if (rol_usuario.subcategoria) {
+                    subcategoria_inicial = rol_usuario.subcategoria;
+                }
+                if (rol_usuario.id_rol) {
+                    setIdRol(rol_usuario.id_rol);
+                }
+            }
 
             setForm({
-            tipoUsuario: response.tipoUsuario,
-            nombre: response.nombre,
-            apellido: response.apellido,
-            nroDocumento: response.nroDocumento,
-            correoElectronico: response.correoElectronico,
-            telefonoPersonal: response.telefonoPersonal,
-            telefonoLaboral: response.telefonoLaboral,
-            carrera: response.carrera || "",
+                nombre: response.nombre || "",
+                apellido: response.apellido || "",
+                nroDocumento: response.nroDocumento || response.dni || "",
+                correoElectronico: response.correoElectronico || response.email_personal || "",
+                telefonoPersonal: response.telefonoPersonal || response.telefono_personal || "",
+                telefonoLaboral: response.telefonoLaboral || response.telefono_laboral || "",
+                carrera: response.carrera || "",
             })
-            setSelectedValues(tipoArray)
+            setCategoriasSeleccionadas(categorias_iniciales);
+            setSubcategoriaSeleccionada(subcategoria_inicial);
             setUserData(response)
             setShowForm(true)
         } catch (err) {
             setError(err.message)
             setShowForm(false)
         }
-        }
+    }
 
     const handleSubmit = async () => {
         try {
-            const dataToSend = { ...form, tipoUsuario: selectedValues }
+            // Validar que si se seleccionó ADMINISTRADOR, se debe seleccionar una subcategoría
+            if (categorias_seleccionadas.includes("ADMINISTRADOR") && !subcategoria_seleccionada) {
+                setError("Si seleccionaste ADMINISTRADOR, debes seleccionar una subcategoría.");
+                return;
+            }
+
+            // Buscar el rol correspondiente
+            let rol_encontrado = null;
+            
+            if (categorias_seleccionadas.includes("ADMINISTRADOR") && subcategoria_seleccionada) {
+                rol_encontrado = roles.find(
+                    (rol) => 
+                        rol.categoria === "ADMINISTRADOR" && 
+                        rol.subcategoria === subcategoria_seleccionada
+                );
+            }
+            
+            // Si no se encontró, buscar el primer rol de las categorías seleccionadas
+            if (!rol_encontrado) {
+                for (const categoria of categorias_seleccionadas) {
+                    rol_encontrado = roles.find(
+                        (rol) => rol.categoria === categoria && !rol.subcategoria
+                    );
+                    if (rol_encontrado) break;
+                }
+            }
+
+            // Si aún no se encontró, usar el primer rol de la primera categoría
+            if (!rol_encontrado && roles.length > 0) {
+                rol_encontrado = roles.find(
+                    (rol) => categorias_seleccionadas.includes(rol.categoria)
+                );
+            }
+
+            if (!rol_encontrado && categorias_seleccionadas.length > 0) {
+                setError("No se encontró un rol válido para las categorías seleccionadas.");
+                return;
+            }
+
+            const dataToSend = { 
+                ...form,
+                id_rol: rol_encontrado ? rol_encontrado.id_rol : id_rol
+            };
             console.log(dataToSend)
             const response = await modificarUsuario(value, dataToSend)
             console.log("Usuario modificado exitosamente")
@@ -116,16 +210,18 @@ export default function ModifUsuario(second) {
 
     const cleanForm = () => {
         setForm({
-        tipoUsuario: [],
-        nombre: "",
-        apellido: "",
-        nroDocumento: "",
-        correoElectronico: "",
-        telefonoPersonal: "",
-        telefonoLaboral: "",
-        carrera: "",
+            nombre: "",
+            apellido: "",
+            nroDocumento: "",
+            correoElectronico: "",
+            telefonoPersonal: "",
+            telefonoLaboral: "",
+            carrera: "",
         });
-        setSelectedValues([]);
+        setCategoriasSeleccionadas([]);
+        setSubcategoriaSeleccionada("");
+        setSubcategoriasDisponibles([]);
+        setIdRol("");
         setError(null);
         setCompleted(false);
         setUserData(null);
@@ -167,10 +263,10 @@ export default function ModifUsuario(second) {
 
                     <FieldSet className="my-8">
                 <FieldGroup className="space-y-5">
-                    {/* Tipo de usuario */}
+                    {/* Categoría de usuario */}
                     <Field>
                     <FieldLabel>
-                        Tipo de Usuario <span className="text-red-500">*</span>
+                        Categoría <span className="text-red-500">*</span>
                     </FieldLabel>
                     <Popover>
                         <PopoverTrigger asChild>
@@ -178,25 +274,55 @@ export default function ModifUsuario(second) {
                             variant="outline"
                             className="w-full sm:w-[80%] md:w-[70%] justify-start"
                         >
-                            {selectedValues.length > 0
-                            ? selectedValues.join(", ")
-                            : "Seleccioná tipo(s) de usuario"}
+                            {categorias_seleccionadas.length > 0
+                            ? categorias_seleccionadas.join(", ")
+                            : "Seleccioná categoría(s)"}
                         </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[250px] p-2">
-                        {options.map((opt) => (
+                        {CATEGORIAS_DISPONIBLES.map((categoria) => (
                             <div
-                            key={opt}
+                            key={categoria}
                             className="flex items-center space-x-2 py-1 cursor-pointer"
-                            onClick={() => toggleValue(opt)}
+                            onClick={() => toggleCategoria(categoria)}
                             >
-                            <Checkbox checked={selectedValues.includes(opt)} />
-                            <label>{opt}</label>
+                            <Checkbox checked={categorias_seleccionadas.includes(categoria)} />
+                            <label className="cursor-pointer">{categoria}</label>
                             </div>
                         ))}
                         </PopoverContent>
                     </Popover>
                     </Field>
+
+                    {/* Subcategoría - solo aparece si ADMINISTRADOR está seleccionado */}
+                    {categorias_seleccionadas.includes("ADMINISTRADOR") && (
+                        <Field>
+                            <FieldLabel>
+                                Subcategoría <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            {loadingSubcategorias ? (
+                                <Input disabled placeholder="Cargando subcategorías..." />
+                            ) : subcategorias_disponibles.length > 0 ? (
+                                <Select
+                                    value={subcategoria_seleccionada}
+                                    onValueChange={setSubcategoriaSeleccionada}
+                                >
+                                    <SelectTrigger className="w-full sm:w-[80%] md:w-[70%]">
+                                        <SelectValue placeholder="Seleccioná una subcategoría" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {subcategorias_disponibles.map((subcategoria) => (
+                                            <SelectItem key={subcategoria} value={subcategoria}>
+                                                {subcategoria}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <Input disabled placeholder="No hay subcategorías disponibles" />
+                            )}
+                        </Field>
+                    )}
 
                     {/* Datos personales */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -294,7 +420,7 @@ export default function ModifUsuario(second) {
                     </Field>
                     </div>
 
-                    {selectedValues.includes("Alumno") && (
+                    {categorias_seleccionadas.includes("ALUMNO") && (
                     <Field>
                         <FieldLabel>Carrera</FieldLabel>
                         <Input
@@ -318,7 +444,10 @@ export default function ModifUsuario(second) {
                     </Button>
                     <Button
                         type="button"
-                        onClick={()=>setShowForm(false)}
+                        onClick={() => {
+                            setShowForm(false);
+                            cleanForm();
+                        }}
                         className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded-md w-full sm:w-auto"
                     >
                         Cancelar

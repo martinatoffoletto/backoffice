@@ -26,6 +26,9 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         <Link to="/materias" title="Gestión de Materias" onClick={() => setMenuOpen(false)} />
         <Link to="/precios" title="Listado de Precios" onClick={() => setMenuOpen(false)} />
         <Link to="/sedes" title="Sedes" onClick={() => setMenuOpen(false)} />
+        <Link to="/espacios" title="Espacios" onClick={() => setMenuOpen(false)} />
+        <Link to="/roles" title="Roles" onClick={() => setMenuOpen(false)} />
+        <Link to="/parametros" title="Parámetros" onClick={() => setMenuOpen(false)} />
       </div>
 
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
