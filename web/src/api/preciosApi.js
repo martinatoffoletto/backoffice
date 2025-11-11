@@ -1,58 +1,12 @@
-// import axiosInstance from "./axiosInstance";
+import axiosInstance from "./axiosInstance";
 
-// export const altaPrecio = async (precioData) => {
-//   try {
-//     const response = await axiosInstance.post("/params/", precioData);
-//     return response.data; 
-//   } catch (error) {
-//     console.error("Error al crear precio:", error);
-//     throw error; 
-//   }
-// };
-
-// export const bajaPrecio = async (id) => {
-//   try {
-//     const response = await axiosInstance.delete(`/params/${id}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error al eliminar precio:", error);
-//     throw error;
-//   }
-// };
-
-// export const modificarPrecio = async (id, precioData) => {
-//   try {
-//     const response = await axiosInstance.put(`/params/${id}`, precioData);
-//     return response.data; 
-//   } catch (err) {
-//     console.error("Error al modificar el precio:", err);
-//     throw err; 
-// }
-// };
-
-// export const precioPorId=async(id)=>{
-//     try{
-//         const response= await axiosInstance.get(`/params/${id}`)       
-//         return response.data
-//     }catch(err){
-//         console.error("Error al buscar precio:", err)
-//         throw err;
-//     }
-// }
-
-import { parametros } from "@/data/mockData";
-import axios from "axios";
-
-let mockParametros=[...parametros];
+// Nota: El backend usa "parametros" en lugar de "precios"
+// Estos métodos están mapeados al endpoint /parametros del backend
 
 export const altaParametro = async (parametroData) => {
   try {
-    const nuevoParametro = {
-      id: mockParametros.length + 1, // simulamos autoincremental
-      ...parametroData,
-    };
-    mockParametros.push(nuevoParametro);
-    return Promise.resolve(nuevoParametro); 
+    const response = await axiosInstance.post("/parametros/", parametroData);
+    return response.data; 
   } catch (error) {
     console.error("Error al crear parametro:", error);
     throw error; 
@@ -61,8 +15,8 @@ export const altaParametro = async (parametroData) => {
 
 export const bajaParametro = async (id) => {
   try {
-    mockParametros = mockParametros.filter((s) => s.id !== id);
-    return Promise.resolve({message:"Parametro eliminada exitosamente"});
+    const response = await axiosInstance.delete(`/parametros/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error al eliminar parametro:", error);
     throw error;
@@ -71,32 +25,61 @@ export const bajaParametro = async (id) => {
 
 export const modifcarParametro = async (id, parametroData) => {
   try {
-    const index = mockParametros.findIndex((s)=>s.id === id)
-    if (index === -1) throw new Error("Parametro no encontrado");
-    mockParametros[index] = { ...mockParametros[index], ...parametroData };
-    return Promise.resolve(mockParametros[index]); 
+    const response = await axiosInstance.put(`/parametros/${id}`, parametroData);
+    return response.data; 
   } catch (err) {
     console.error("Error al modificar el parametro:", err);
     throw err; 
-}
+  }
 };
 
-export const ParametroPorId=async(id)=>{
-    try{
-        const parametro= mockParametros.find((s)=>s.id === id)
-        if (!parametro) throw new Error("Paramtero no encontrada")       
-        return Promise.resolve(parametro)
-    }catch(err){
-        console.error("Error al buscar parametro:", err)
-        throw err;
-    }
-}
-
-export const obtenerParametros = async () => {
+export const ParametroPorId = async (id) => {
   try {
-    return Promise.resolve(mockParametros);
+    const response = await axiosInstance.get(`/parametros/${id}`);       
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar parametro:", err);
+    throw err;
+  }
+};
+
+export const obtenerParametros = async (skip = 0, limit = 100, status_filter = null) => {
+  try {
+    const params = { skip, limit };
+    if (status_filter !== null) {
+      params.status_filter = status_filter;
+    }
+    const response = await axiosInstance.get("/parametros/", { params });
+    return response.data;
   } catch (error) {
     console.error("Error al obtener parametros:", error);
     throw error;
   }
 };
+
+export const buscarParametros = async (param, value, skip = 0, limit = 100) => {
+  try {
+    const params = { param, value, skip, limit };
+    const response = await axiosInstance.get("/parametros/search", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error al buscar parametros:", error);
+    throw error;
+  }
+};
+
+export const obtenerTiposParametros = async () => {
+  try {
+    const response = await axiosInstance.get("/parametros/tipos");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener tipos de parametros:", error);
+    throw error;
+  }
+};
+
+// Alias para mantener compatibilidad con código existente
+export const altaPrecio = altaParametro;
+export const bajaPrecio = bajaParametro;
+export const modificarPrecio = modifcarParametro;
+export const precioPorId = ParametroPorId;

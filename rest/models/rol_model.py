@@ -10,7 +10,7 @@ class Rol(Base):
     
     id_rol = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     descripcion = Column(Text, nullable=True)
-    categoria = Column(String(50), nullable=False, unique=True, comment="Categoría principal del rol")
+    categoria = Column(String(50), nullable=False, comment="Categoría principal del rol")
     subcategoria = Column(String(50), nullable=True, comment="Subcategoría específica del rol")
     sueldo_base = Column(Numeric(15, 2), default=0, nullable=False)
     status = Column(Boolean, default=True, nullable=False)

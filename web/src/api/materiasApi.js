@@ -1,3 +1,7 @@
+// NOTA: El endpoint /materias no existe en el backend actual
+// Este módulo está usando datos mock temporalmente
+// Para conectarlo al backend, primero se debe crear el endpoint /api/v1/materias en el backend
+
 // import axiosInstance from "./axiosInstance";
 
 // export const altaMateria = async (materiaData) => {
@@ -42,7 +46,6 @@
 
 
 import { carreras,  materias, materias_carrera } from "@/data/mockData";
-import axios from "axios";
 
 let mockMaterias=[...materias];
 let mockCarreras=[...carreras];

@@ -10,24 +10,24 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import SelectForm from "@/components/SelectForm";
-import AltaSede from "@/components/AltaSede";
-import ModifSede from "@/components/ModifSede";
-import BajaSede from "@/components/BajaSede";
-import BusquedaSede from "@/components/BusquedaSede";
+import AltaParametro from "@/components/AltaParametro";
+import ModifParametro from "@/components/ModifParametro";
+import BajaParametro from "@/components/BajaParametro";
+import BusquedaParametro from "@/components/BusquedaParametro";
 
-export default function Sedes() {
+export default function Parametros() {
   const [value, setValue] = useState("");
   const opciones = [
-    { value: "alta", label: "Alta de Sede" },
-    { value: "baja", label: "Baja de Sede" },
-    { value: "modif", label: "Modificación de Sede" },
-    { value: "busqueda", label: "Búsqueda de Sede" }
+    { value: "alta", label: "Alta de Parámetro" },
+    { value: "baja", label: "Baja de Parámetro" },
+    { value: "modif", label: "Modificación de Parámetro" },
+    { value: "busqueda", label: "Búsqueda de Parámetro" }
   ];
 
   return (
     <div className="flex flex-col min-h-screen max-w-2xl bg-white shadow-lg rounded-2xl items-start justify-start mt-4 space-y-6">
       <div className="w-full max-w-2xl p-6">
-        <h1 className="font-bold text-xl mb-4">Gestión de Sedes</h1>
+        <h1 className="font-bold text-xl mb-4">Gestión de Parámetros</h1>
         <span className="block w-full h-[2px] bg-sky-950"></span>
 
         <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl mt-8">
@@ -42,10 +42,11 @@ export default function Sedes() {
         </div>
       </div>
 
-      {value === "alta" && <AltaSede />}
-      {value === "baja" && <BajaSede />}
-      {value === "modif" && <ModifSede />}
-      {value === "busqueda" && <BusquedaSede />}
+      {value === "alta" && <AltaParametro />}
+      {value === "baja" && <BajaParametro />}
+      {value === "modif" && <ModifParametro />}
+      {value === "busqueda" && <BusquedaParametro />}
     </div>
   );
 }
+

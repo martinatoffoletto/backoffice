@@ -46,6 +46,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="API de BackOffice", version="1.0.0", lifespan=lifespan)
 
+# Configurar CORS para permitir peticiones desde el frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:3000",  # React dev server alternativo
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Permite todos los headers
+)
+
 API_PREFIX = "/api/v1"
 
 # Incluir routers
