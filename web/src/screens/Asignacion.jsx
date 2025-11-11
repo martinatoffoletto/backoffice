@@ -14,12 +14,10 @@ export default function Asignacion() {
     };
 
     return(
-        // Contenedor principal: Max-width centrado, sombra y fondo consistentes.
-        <div className="flex flex-col min-h-screen max-w-2xl bg-white shadow-lg rounded-2xl items-start justify-start mt-4 space-y-6 p-4">
-            
+        <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
             <div className="w-full ">
                 {/* Título: Mayor tamaño, más peso visual y color corporativo */}
-                <h1 className="font-bold text-xl mb-4">Asignación de Profesores</h1>
+                <h1 className="font-bold text-center text-xl mb-4">Asignación de Profesores</h1>
                 <span className="block w-full h-[3px] bg-sky-950"></span>
             </div>
 

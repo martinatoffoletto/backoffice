@@ -14,8 +14,8 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
       style={{ backgroundColor: '#1E3A5F' }}
     >
       <div className="flex flex-col items-center py-6 border-b border-gray-300">
-        <img src="/uade.png" alt="Logo" className="w-[150px] mb-2" />
-        <div className="text-white px-3 py-1 rounded-md text-sm font-medium"
+        <img src="/uade.png" alt="Logo" className="w-[148px] mb-2" />
+        <div className="text-white px-4 py-1 rounded-md text-sm font-medium"
              style={{ backgroundColor: '#2C7DA0' }}>
           Campus Connect
         </div>
@@ -33,11 +33,11 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
       </div>
 
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
-        <Avatar>
-          <AvatarImage src="/usuario.jpg" alt="Foto de usuario" />
+        <Avatar style={{ width: '70px', height: '70px'}}>
+          <AvatarImage src="/usuario.jpg" alt="Foto de usuario" style={{ width: '70px', height: '70px'}}/>
           <AvatarFallback>NU</AvatarFallback>
         </Avatar>
-        <p className="text-sm mt-2 font-medium">nombre de usuario</p>
+        <p className="text-sm mt-2 font-medium">Roberto López</p>
       </div>
     </div>
   )

@@ -41,8 +41,7 @@ export default function Materias() {
   // }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-2xl bg-white shadow-lg rounded-2xl items-start justify-start mt-4 space-y-6">
-      
+    <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-2xl  p-6 ">
         <h1 className="font-bold text-xl mb-4 text-center">Gestión de Materias</h1>
         <span className="block w-full h-[2px] bg-sky-950"></span>
