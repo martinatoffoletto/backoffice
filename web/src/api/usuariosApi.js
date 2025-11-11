@@ -3,10 +3,10 @@ import axiosInstance from "./axiosInstance";
 export const altaUsuario = async (userData) => {
   try {
     const response = await axiosInstance.post("/users/", userData);
-    return response.data; 
+    return response.data;
   } catch (error) {
     console.error("Error al crear usuario:", error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -23,26 +23,38 @@ export const bajaUsuario = async (id) => {
 export const modificarUsuario = async (id, userData) => {
   try {
     const response = await axiosInstance.put(`/users/${id}`, userData);
-    return response.data; 
+    return response.data;
   } catch (err) {
     console.error("Error al modificar el usuario:", err);
-    throw err; 
+    throw err;
   }
 };
 
-export const usuarioPorId = async (id) => {
+export const obtenerUsuarioPorId = async (id) => {
   try {
-    const response = await axiosInstance.get(`/users/${id}`);       
-    return response.data;
+    const response = await axiosInstance.get("/users/", {
+      params: { param: "id", value: id },
+    });
+    return response.data[0] || null;
   } catch (err) {
     console.error("Error al buscar usuario:", err);
     throw err;
   }
 };
 
-export const obtenerUsuarios = async (skip = 0, limit = 100, status_filter = null) => {
+export const obtenerUsuarios = async (
+  skip = 0,
+  limit = 100,
+  param = null,
+  value = null,
+  status_filter = null
+) => {
   try {
     const params = { skip, limit };
+    if (param !== null && value !== null) {
+      params.param = param;
+      params.value = value;
+    }
     if (status_filter !== null) {
       params.status_filter = status_filter;
     }
@@ -50,20 +62,6 @@ export const obtenerUsuarios = async (skip = 0, limit = 100, status_filter = nul
     return response.data;
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
-    throw error;
-  }
-};
-
-export const buscarUsuarios = async (param, value, skip = 0, limit = 100, status_filter = null) => {
-  try {
-    const params = { param, value, skip, limit };
-    if (status_filter !== null) {
-      params.status_filter = status_filter;
-    }
-    const response = await axiosInstance.get("/users/search", { params });
-    return response.data;
-  } catch (error) {
-    console.error("Error al buscar usuarios:", error);
     throw error;
   }
 };

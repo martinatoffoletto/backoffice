@@ -84,6 +84,14 @@ class SueldoDAO:
         return result.rowcount > 0
     
     @staticmethod
+    async def reactivate(db: AsyncSession, id_usuario: uuid.UUID) -> bool:
+        """Reactivar sueldo de un usuario (cambiar status a True)"""
+        query = update(Sueldo).where(Sueldo.id_usuario == id_usuario).values(status=True)
+        result = await db.execute(query)
+        await db.commit()
+        return result.rowcount > 0
+    
+    @staticmethod
     async def exists_by_usuario(db: AsyncSession, id_usuario: uuid.UUID) -> bool:
         """Verificar si existe un sueldo activo para el usuario"""
         query = select(Sueldo).where(

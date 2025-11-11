@@ -155,36 +155,37 @@ class UsuarioService:
         param_lower = param.lower()
         usuarios = []
         
+        search_value = value.strip()
+        
         if param_lower in ["id"]:
             try:
-                user_uuid = uuid.UUID(value)
+                user_uuid = uuid.UUID(search_value)
                 user = await UsuarioDAO.get_by_id(db, user_uuid)
                 usuarios = [user] if user else []
             except ValueError:
                 usuarios = []
         
         elif param_lower == "legajo":
-            user = await UsuarioDAO.get_by_legajo(db, value)
+            user = await UsuarioDAO.get_by_legajo(db, search_value)
             usuarios = [user] if user else []
         
         elif param_lower == "dni":
-            user = await UsuarioDAO.get_by_dni(db, value)
-            usuarios = [user] if user else []
+            usuarios = await UsuarioDAO.get_by_dni(db, search_value)
         
         elif param_lower in ["email_institucional"]:
-            user = await UsuarioDAO.get_by_email_institucional(db, value)
+            user = await UsuarioDAO.get_by_email_institucional(db, search_value)
             usuarios = [user] if user else []
         
         elif param_lower in ["email_personal"]:
-            user = await UsuarioDAO.get_by_email_personal(db, value)
+            user = await UsuarioDAO.get_by_email_personal(db, search_value)
             usuarios = [user] if user else []
         
         
         elif param_lower in ["nombre"]:
-            usuarios = await UsuarioDAO.search_by_name(db, value, skip, limit)
+            usuarios = await UsuarioDAO.search_by_name(db, search_value, skip, limit)
         
         elif param_lower == "status":
-            status_bool = value.lower() in ["true", "1", "active"]
+            status_bool = search_value.lower() in ["true", "1", "active"]
             usuarios = await UsuarioDAO.get_all(db, skip, limit, status_bool)
         
         if status_filter is not None:
@@ -205,9 +206,28 @@ class UsuarioService:
     
     @staticmethod
     async def update_user(db: AsyncSession, user_id: uuid.UUID, usuario_update: UsuarioUpdate):
-        # Hash de la contraseña si se está actualizando
+        existing_user = await UsuarioDAO.get_by_id(db, user_id)
+        if not existing_user:
+            return None, "User not found"
+        
+        if usuario_update.id_rol is not None and usuario_update.id_rol != existing_user.id_rol:
+            return None, "No se puede modificar el rol. Elimine el usuario y créelo nuevamente"
+        
+        if usuario_update.email_personal and usuario_update.email_personal != existing_user.email_personal:
+            existing_by_email = await UsuarioDAO.get_by_email_personal(db, usuario_update.email_personal)
+            if existing_by_email and existing_by_email.id_usuario != user_id:
+                return None, "El email personal ingresado ya está registrado en otro usuario"
+        
         if usuario_update.contraseña:
             usuario_update.contraseña = UsuarioService._hash_password(usuario_update.contraseña)
+        
+        if usuario_update.status is True and not existing_user.status:
+            sueldo_inactivo = await SueldoDAO.get_sueldo_by_usuario(db, user_id, False)
+            if sueldo_inactivo:
+                await SueldoDAO.reactivate(db, user_id)
+            carrera_inactiva = await UsuarioCarreraDAO.get_carrera_by_usuario(db, user_id, False)
+            if carrera_inactiva:
+                await UsuarioCarreraDAO.reactivate(db, user_id)
         
         updated_user = await UsuarioDAO.update(db, user_id, usuario_update)
         return updated_user, "User updated successfully"
@@ -218,13 +238,13 @@ class UsuarioService:
         if not usuario:
             return False
 
-        sueldo = await SueldoDAO.get_sueldo_by_usuario(db, user_id)
+        sueldo = await SueldoDAO.get_sueldo_by_usuario(db, user_id, True)
         if sueldo:
             await SueldoDAO.soft_delete(db, sueldo.id_sueldo)
-        else:
-            carrera = await UsuarioCarreraDAO.get_carrera_by_usuario(db, user_id)
-            if carrera:
-                await UsuarioCarreraDAO.soft_delete(db, carrera.id_usuario, carrera.id_carrera)
+        
+        carrera = await UsuarioCarreraDAO.get_carrera_by_usuario(db, user_id, True)
+        if carrera:
+            await UsuarioCarreraDAO.soft_delete(db, carrera.id_usuario, carrera.id_carrera)
 
         return await UsuarioDAO.delete(db, user_id)
     
@@ -234,7 +254,6 @@ class UsuarioService:
         if not usuario:
             return None
 
-        # Aseguramos tener datos de rol disponibles incluso si no se cargaron previamente.
         rol = getattr(usuario, "rol", None)
         if not rol:
             await db.refresh(usuario, attribute_names=["rol"])

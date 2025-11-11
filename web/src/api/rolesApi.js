@@ -44,8 +44,10 @@ export const obtenerCategorias = async (status_filter = null) => {
 
 export const rolPorId = async (id) => {
   try {
-    const response = await axiosInstance.get(`/roles/${id}`);
-    return response.data;
+    const response = await axiosInstance.get("/roles/", {
+      params: { param: "id", value: id },
+    });
+    return response.data[0] || null;
   } catch (err) {
     console.error("Error al buscar rol:", err);
     throw err;
@@ -55,10 +57,10 @@ export const rolPorId = async (id) => {
 export const altaRol = async (rolData) => {
   try {
     const response = await axiosInstance.post("/roles/", rolData);
-    return response.data; 
+    return response.data;
   } catch (error) {
     console.error("Error al crear rol:", error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -75,10 +77,9 @@ export const bajaRol = async (id) => {
 export const modificarRol = async (id, rolData) => {
   try {
     const response = await axiosInstance.put(`/roles/${id}`, rolData);
-    return response.data; 
+    return response.data;
   } catch (err) {
     console.error("Error al modificar el rol:", err);
-    throw err; 
+    throw err;
   }
 };
-
