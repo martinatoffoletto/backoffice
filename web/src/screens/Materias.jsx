@@ -16,9 +16,8 @@ import AltaMateria from "@/components/AltaMateria";
 import BusquedaMateria from "@/components/BusquedaMateria";
 import BajaMateria from "@/components/BajaMateria";
 import ModifMateria from "@/components/ModifMateria";
-// import AltaUsuario from "@/components/AltaUsuario";
-// import ModifUsuario from "@/components/ModifUsuario";
-// import BajaUsuario from "@/components/BajaUsuario";
+import GestionCorrelativas from "@/components/GestionCorrelativas";
+
 
 export default function Materias() {
 
@@ -29,7 +28,8 @@ export default function Materias() {
     { value: "alta", label: "Alta de Materia" },
     { value: "baja", label: "Baja de Materia" },
     { value: "modif", label: "Modificación de Materia" },
-    { value: "busqueda", label: "Búsqueda de Materia" }
+    { value: "busqueda", label: "Búsqueda de Materia" },
+    { value: "correlativas", label: "Gestión de Correlativas" }
   ];
 
   
@@ -81,6 +81,10 @@ export default function Materias() {
 
       {value==="busqueda" && (
         <BusquedaMateria/>
+      )}
+
+      {value==="correlativas" && (
+        <GestionCorrelativas/>
       )}
 
     </div>

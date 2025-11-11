@@ -177,7 +177,7 @@ export default function ModifMateria(second) {
 
             {completed && (
                 <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-                    <CardMateria title={"Información modificada exitosamente"} materia={form} />
+                    <CardMateria title={"Información modificada exitosamente"} materia={form}/>
                     <Button
                     onClick={() => {setCompleted(false); setValue("")}}
                     className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
