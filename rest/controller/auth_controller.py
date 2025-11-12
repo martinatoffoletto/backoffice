@@ -12,7 +12,8 @@ async def login(
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Autenticar usuario por email institucional y contraseña hasheada.
+    Autenticar usuario por email institucional y contraseña.
+    La contraseña se envía en texto plano y se compara con el hash almacenado.
     Retorna información completa del usuario + rol.
     """
     try:

@@ -4,7 +4,7 @@ from uuid import UUID
 
 class LoginRequest(BaseModel):
     email_institucional: EmailStr
-    contraseña: str  # Ya viene hasheada
+    contraseña: str  # Contraseña en texto plano (se compara con hash almacenado)
 
 class RolInfo(BaseModel):
     id_rol: UUID
