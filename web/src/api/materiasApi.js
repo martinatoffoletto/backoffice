@@ -101,6 +101,17 @@ export const materiaPorId=async(id)=>{
         throw err;
     }
 }
+export const materiaPorNombre=async(name)=>{
+    try{
+        console.log(name)
+        const materia= mockMaterias.find((m)=>m.nombre === name)
+        if (!materia) throw new Error("Materia no encontrada")       
+        return Promise.resolve(materia)
+    }catch(err){
+        console.error("Error al buscar materia:", err)
+        throw err;
+    }
+}
 
 export const obtenerMaterias = async () => {
   try {

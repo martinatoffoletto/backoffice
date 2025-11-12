@@ -26,7 +26,7 @@ import { ca } from "date-fns/locale";
 import { useState } from "react"
 import CardMateria from "./CardMateria";
 import PopUp from "./PopUp";
-import { materiaPorId } from "@/api/materiasApi";
+import { materiaPorId, materiaPorNombre } from "@/api/materiasApi";
 
 export default function BusquedaMateria(second) {
 
@@ -44,21 +44,31 @@ export default function BusquedaMateria(second) {
     }
  
     const handleSearch= async()=>{
-        if(!value.trim()) return;
+        const id = value.trim();
+        const nombre = name.trim();
+        if (!id && !nombre) return;;
         try {
-                const response = await materiaPorId(value); 
-                if (response) {
-                    setMateriaData(response); 
-                    setFound(true);           
-                } else {
-                    setFound(false);          
-                    setMateriaData(null);
-                }
-            } catch (err) {
-                setError(err.message || "Error al buscar la carrera");
-                setFound(false);
-                setMateriaData(null);
+                let response = null;
+
+            if (id) {
+            response = await materiaPorId(id);
+            } else {
+            response = await materiaPorNombre(nombre);
             }
+
+            if (response) {
+            setMateriaData(response);
+            setFound(true);
+            } else {
+            setFound(false);
+            setMateriaData(null);
+            }
+        } catch (err) {
+            setError(err.message || "Error al buscar la materia");
+            setFound(false);
+            setMateriaData(null);
+        }
+}
         // NO BORRAR
         // try{
         //     const response= await materiaPorId(value)
@@ -69,7 +79,6 @@ export default function BusquedaMateria(second) {
         //     setError(err.message)
         //     setFound(false)
         // }
-    }
 
     return(
 
@@ -126,7 +135,7 @@ export default function BusquedaMateria(second) {
             
             <div className="flex justify-center">
             <Button
-                disabled={!value.trim()}
+                disabled={!value.trim() && !name.trim()}
                 onClick={handleSearch}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             >
@@ -135,9 +144,14 @@ export default function BusquedaMateria(second) {
             </div>
             </div>
             {found ? (
-                <div className="w-full max-w-2xl p-6">
+                <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
                 <CardMateria title={"Materia encontrada"} materia={materiaData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardMateria>
-                
+                <Button
+                        onClick={() => {setFound(false); setValue("")}}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                        >
+                        OK
+                    </Button>
                 </div>
             ):
             (!found && value && (

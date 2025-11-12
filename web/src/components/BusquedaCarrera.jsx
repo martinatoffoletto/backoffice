@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import CardCarrera from "./CardCarrera";
 import PopUp from "./PopUp";
-import { carreraPorId } from "@/api/carrerasApi";
+import { carreraPorId, carreraPorNombre } from "@/api/carrerasApi";
 
 export default function BusquedaCarrera(second) {
 
@@ -20,23 +20,32 @@ export default function BusquedaCarrera(second) {
         setCarreraData(null);
     }
  
-    const handleSearch= async()=>{
-    if (!value.trim()) return;
+    const handleSearch= async()=> {
+        const id = value.trim();
+        const nombre = name.trim();
+        if (!id && !nombre) return;
 
-    try {
-        const response = await carreraPorId(value); 
-        if (response) {
-            setCarreraData(response); 
-            setFound(true);           
-        } else {
-            setFound(false);          
+        try {
+            let response = null;
+
+            if (id) {
+                response = await carreraPorId(id);
+            } else {
+                response = await carreraPorNombre(nombre);
+            }
+
+            if (response) {
+                setCarreraData(response);
+                setFound(true);
+            } else {
+                setFound(false);
+                setCarreraData(null);
+            }
+        } catch (err) {
+            setError(err.message || "Error al buscar la carrera");
+            setFound(false);
             setCarreraData(null);
         }
-    } catch (err) {
-        setError(err.message || "Error al buscar la carrera");
-        setFound(false);
-        setCarreraData(null);
-    }
     }
 
     return(
@@ -75,7 +84,7 @@ export default function BusquedaCarrera(second) {
             
             <div className="flex justify-center">
             <Button
-                disabled={!value.trim()}
+                disabled={!value.trim() && !name.trim()}
                 onClick={handleSearch}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             >
