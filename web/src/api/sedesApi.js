@@ -57,7 +57,7 @@ export const obtenerSedes = async (skip = 0, limit = 100, status_filter = null) 
 export const buscarSedes = async (param, value, skip = 0, limit = 100) => {
   try {
     const params = { param, value, skip, limit };
-    const response = await axiosInstance.get("/sedes/search", { params });
+    const response = await axiosInstance.get("/sedes/", { params });
     return response.data;
   } catch (error) {
     console.error("Error al buscar sedes:", error);

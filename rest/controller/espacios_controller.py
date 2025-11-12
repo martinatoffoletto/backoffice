@@ -35,12 +35,31 @@ async def get_all_espacios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
+    param: Optional[str] = Query(None, description="Parámetro de búsqueda. Valores válidos: id, id_espacio, nombre, tipo, estado, estado_espacio, sede, id_sede, capacidad, status"),
+    value: Optional[str] = Query(None, description="Valor a buscar para el parámetro indicado"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todos los espacios con filtro opcional por status
+    Obtener todos los espacios con filtro opcional por status o realizar búsquedas
     """
     try:
+        if param:
+            if not value:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El parámetro 'value' es obligatorio cuando se envía 'param'."
+                )
+            valid_params = [
+                "id", "id_espacio", "nombre", "tipo",
+                "estado", "estado_espacio", "sede", "id_sede",
+                "capacidad", "status"
+            ]
+            if param.lower() not in valid_params:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
+                )
+            return await EspacioService.search(db, param, value, skip, limit)
         return await EspacioService.get_all_espacios(db, skip, limit, status_filter)
     except Exception as e:
         raise HTTPException(
@@ -94,36 +113,6 @@ async def get_espacio_with_sede(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener el espacio con sede: {str(e)}"
-        )
-
-@router.get("/search", response_model=List[Espacio])
-async def search_espacios(
-    param: str = Query(..., description="Search parameter: id, nombre, tipo, estado, sede, id_sede, capacidad, status"),
-    value: str = Query(..., description="Search value"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Buscar espacios por diferentes parámetros. Parámetros válidos: id, nombre, tipo, estado, sede, id_sede, capacidad, status
-    """
-    valid_params = [
-        "id", "id_espacio", "nombre", "tipo", 
-        "estado", "estado_espacio", "sede", "id_sede",
-        "capacidad", "status"
-    ]
-    if param.lower() not in valid_params:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid search parameter: {param}. Valid parameters: {', '.join(valid_params)}"
-        )
-    
-    try:
-        return await EspacioService.search(db, param, value, skip, limit)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar espacios: {str(e)}"
         )
 
 @router.get("/tipos/disponibles", response_model=List[str])
