@@ -106,7 +106,13 @@ const DatosPersonales = ({ form, setForm }) => (
           id="nombre"
           placeholder="Nombre/s"
           value={form.nombre}
-          onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+          onChange={(e) => {
+            const value = e.target.value
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+            setForm({ ...form, nombre: value });
+          }}
         />
       </Field>
 
@@ -118,7 +124,13 @@ const DatosPersonales = ({ form, setForm }) => (
           id="apellido"
           placeholder="Apellido/s"
           value={form.apellido}
-          onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+          onChange={(e) => {
+            const value = e.target.value
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+            setForm({ ...form, apellido: value });
+          }}
         />
       </Field>
     </div>
@@ -131,7 +143,10 @@ const DatosPersonales = ({ form, setForm }) => (
         id="dni"
         placeholder="DNI sin puntos"
         value={form.dni}
-        onChange={(e) => setForm({ ...form, dni: e.target.value })}
+        onChange={(e) => {
+          const value = e.target.value.replace(/\D/g, "");
+          setForm({ ...form, dni: value });
+        }}
         maxLength={10}
       />
       <p className="text-gray-500 text-xs mt-1">
@@ -160,9 +175,11 @@ const DatosPersonales = ({ form, setForm }) => (
         id="telefono_personal"
         placeholder="Ej: 1234567890"
         value={form.telefono_personal}
-        onChange={(e) =>
-          setForm({ ...form, telefono_personal: e.target.value })
-        }
+        onChange={(e) => {
+          const value = e.target.value.replace(/\D/g, "");
+          setForm({ ...form, telefono_personal: value });
+        }}
+        maxLength={15}
       />
     </Field>
   </>
@@ -183,7 +200,10 @@ const DatosSueldo = ({ sueldoForm, onChange, errors = {} }) => (
         id="cbu"
         placeholder="Número de CBU (22 dígitos)"
         value={sueldoForm.cbu}
-        onChange={(e) => onChange("cbu", e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value.replace(/\D/g, "");
+          onChange("cbu", value);
+        }}
         maxLength={22}
         className={errors.cbu ? "border-red-500" : ""}
       />
