@@ -173,6 +173,7 @@ export default function ModifCurso({ cursoInicial = null }) {
                       <SelectLabel>Modalidad</SelectLabel>
                       <SelectItem value="Presencial">Presencial</SelectItem>
                       <SelectItem value="Virtual">Virtual</SelectItem>
+                      <SelectItem value="Hibrida">Híbrida</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

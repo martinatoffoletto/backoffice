@@ -17,11 +17,9 @@ import { useState } from "react";
 const Cursos = () => {
   const [operacion_seleccionada, setOperacionSeleccionada] = useState("");
   const [curso_seleccionado, setCursoSeleccionado] = useState(null);
-  const [accion_curso, setAccionCurso] = useState(null);
 
   const handleCursoSeleccionado = (curso, accion) => {
     setCursoSeleccionado(curso);
-    setAccionCurso(accion);
     if (accion === "modificar") {
       setOperacionSeleccionada("modificacion");
     } else if (accion === "gestionar") {
@@ -31,7 +29,6 @@ const Cursos = () => {
 
   const handleResetOperacion = () => {
     setCursoSeleccionado(null);
-    setAccionCurso(null);
   };
 
   return (

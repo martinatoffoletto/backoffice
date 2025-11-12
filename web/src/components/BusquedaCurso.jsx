@@ -61,10 +61,10 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
             obtenerMaterias(),
             obtenerSedes(),
           ]);
-        setCursosState(cursos_respuesta || []);
-        setMateriasState(materias_respuesta || []);
-        setSedesState(sedes_respuesta || []);
-        setResultadosState(cursos_respuesta || []);
+        setCursosState(Array.isArray(cursos_respuesta) ? cursos_respuesta : []);
+        setMateriasState(Array.isArray(materias_respuesta) ? materias_respuesta : []);
+        setSedesState(Array.isArray(sedes_respuesta) ? sedes_respuesta : []);
+        setResultadosState(Array.isArray(cursos_respuesta) ? cursos_respuesta : []);
       } catch (error) {
         console.error("Error al cargar datos de cursos:", error);
         setErrorState(
@@ -72,6 +72,11 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
             error.message ||
             "Error al cargar cursos"
         );
+        // En caso de error, asegurar arrays vacíos
+        setCursosState([]);
+        setMateriasState([]);
+        setSedesState([]);
+        setResultadosState([]);
       } finally {
         setLoadingState(false);
       }
@@ -260,14 +265,19 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Materias</SelectLabel>
-                      {materias_state.map((materia) => (
-                        <SelectItem
-                          key={materia.id_materia || materia.id}
-                          value={materia.id_materia || materia.id}
-                        >
-                          {materia.nombre}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(materias_state) && materias_state.map((materia) => {
+                        if (!materia || !materia.nombre) return null;
+                        const materiaId = materia.id_materia || materia.id || materia.uuid_materia;
+                        if (!materiaId) return null;
+                        return (
+                          <SelectItem
+                            key={materiaId}
+                            value={materiaId}
+                          >
+                            {materia.nombre}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -364,14 +374,17 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Sedes</SelectLabel>
-                      {sedes_state.map((sede) => (
-                        <SelectItem
-                          key={sede.id_sede || sede.id}
-                          value={sede.nombre}
-                        >
-                          {sede.nombre}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(sedes_state) && sedes_state.map((sede) => {
+                        if (!sede || !sede.nombre) return null;
+                        return (
+                          <SelectItem
+                            key={sede.id_sede || sede.id || `sede-${sede.nombre}`}
+                            value={sede.nombre}
+                          >
+                            {sede.nombre}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -448,13 +461,13 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {resultados_state.map((curso) => (
+                  {Array.isArray(resultados_state) && resultados_state.map((curso) => (
                     <TableRow 
-                      key={curso.id_curso || curso.id}
+                      key={curso.id_curso || curso.id || Math.random()}
                       className="cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleCursoClick(curso)}
                     >
-                      <TableCell>{curso.id_curso || curso.id}</TableCell>
+                      <TableCell>{curso.id_curso || curso.id || "-"}</TableCell>
                       <TableCell>
                         {obtenerMateriaNombre(curso.uuid_materia)}
                       </TableCell>

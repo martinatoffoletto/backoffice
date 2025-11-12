@@ -53,15 +53,20 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
   const [selectedDateBox, setSelectedDateBox] = useState(null);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [pendingEstadoChange, setPendingEstadoChange] = useState({ id_clase: null, nuevo_estado: null });
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const cargarClases = useCallback(async () => {
     setLoading(true);
     try {
       const response = await obtenerClasesPorCurso(id_curso, true);
-      setClases(response);
+      // Asegurar que siempre sea un array
+      setClases(Array.isArray(response) ? response : []);
     } catch (err) {
       console.error("Error al cargar clases:", err);
       setError("Error al cargar las clases del curso.");
+      // En caso de error, asegurar array vacío
+      setClases([]);
     } finally {
       setLoading(false);
     }
@@ -209,14 +214,29 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
     });
   };
 
-  const handleDelete = async (id_clase) => {
-    if (!confirm("¿Estás seguro de que querés eliminar esta clase?")) return;
+  const handleDelete = (id_clase) => {
+    setPendingDeleteId(id_clase);
+    setShowConfirmDelete(true);
+  };
+
+  const confirmarEliminacion = async () => {
+    if (!pendingDeleteId) return;
+    
     try {
-      await bajaClase(id_clase);
+      await bajaClase(pendingDeleteId);
       await cargarClases();
+      setShowConfirmDelete(false);
+      setPendingDeleteId(null);
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Error al eliminar la clase");
+      setShowConfirmDelete(false);
+      setPendingDeleteId(null);
     }
+  };
+
+  const cancelarEliminacion = () => {
+    setShowConfirmDelete(false);
+    setPendingDeleteId(null);
   };
 
   const handleCambiarEstado = async (id_clase, nuevo_estado) => {
@@ -300,8 +320,11 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
     const fechaNormalizada = normalizarFecha(fecha);
     if (!fechaNormalizada) return null;
     
+    // Asegurar que clases sea un array antes de usar .find()
+    if (!Array.isArray(clases)) return null;
+    
     const claseEncontrada = clases.find((c) => {
-      if (!c.fecha_clase) return false;
+      if (!c || !c.fecha_clase) return false;
       const claseFechaNormalizada = normalizarFecha(c.fecha_clase);
       if (!claseFechaNormalizada) return false;
       const coincide = fechaNormalizada.getTime() === claseFechaNormalizada.getTime();
@@ -536,7 +559,7 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
         {/* Lista de clases */}
         {loading ? (
           <p className="text-gray-500">Cargando clases...</p>
-        ) : clases.length > 0 ? (
+        ) : Array.isArray(clases) && clases.length > 0 ? (
           <div className="mt-6 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -629,6 +652,32 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
                 className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
               >
                 Confirmar Cancelación
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup de confirmación para eliminar clase */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-red-500 w-96 max-w-md mx-4">
+            <h2 className="text-xl font-bold mb-4 text-red-600">Confirmar Eliminación</h2>
+            <p className="mb-6 text-gray-700">
+              ¿Estás seguro de que deseas eliminar esta clase? Esta acción es permanente y no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={cancelarEliminacion}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmarEliminacion}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+              >
+                Eliminar
               </Button>
             </div>
           </div>

@@ -36,7 +36,7 @@ import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 
-export default function AltaCurso() {
+
 export default function AltaCurso() {
     const [form, setForm] = useState({
         id_curso: "",
@@ -69,8 +69,7 @@ export default function AltaCurso() {
             console.log("Curso dado de alta exitosamente")
             setCursoData(nuevo_curso)
             setCompleted(true)
-            setClases(mockClases)
-            setShowClassEditor(true);
+            setShowPopUp(true)
         }catch(err){
             console.error(`Error al dar de alta el curso: ${err.message}`)
             setError(err.message)
@@ -82,35 +81,25 @@ export default function AltaCurso() {
         try {
             const sedes = await obtenerSedes();
             const materias = await obtenerMaterias();
-            setFilteredSedes(sedes);
-            setFilteredMaterias(materias);
+            // Asegurar que sean arrays
+            setFilteredSedes(Array.isArray(sedes) ? sedes : []);
+            setFilteredMaterias(Array.isArray(materias) ? materias : []);
         } catch (err) {
             console.error(err);
+            // En caso de error, asegurar arrays vacíos
+            setFilteredSedes([]);
+            setFilteredMaterias([]);
         }
         };
         fetchData();
     }, []);
-
-    if (showSuccessScreen) {
-                return (
-                    <div className="flex flex-col justify-center items-center min-h-screen">
-                        <CardCurso title={"Curso dado de alta exitosamente"} curso={cursoData} />
-                        <Button
-                        onClick={() => setShowSuccessScreen(false)}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md mt-4"
-                        >
-                        OK
-                        </Button>
-                    </div>
-                );
-            }
             
     return(
         <div className="w-full flex flex-col items-center">
-           { !completed && ( 
+           {!completed && ( 
             <div className="w-full max-w-2xl p-6">
                 <h1 className="font-bold text-center text-2xl mb-4">Alta Curso</h1>
-                <span className="block w-full h-[3px] bg-sky-950"></span>
+                <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
 
 
                 <FieldSet className="my-4">
@@ -131,6 +120,7 @@ export default function AltaCurso() {
                             <SelectLabel>Modalidad</SelectLabel>
                             <SelectItem value="Presencial">Presencial</SelectItem>
                             <SelectItem value="Virtual">Virtual</SelectItem>
+                            <SelectItem value="Hibrida">Híbrida</SelectItem>
                             </SelectGroup>
                         </SelectContent>
                         </Select>
@@ -149,9 +139,9 @@ export default function AltaCurso() {
                         <SelectContent>
                             <SelectGroup>
                             <SelectLabel>Sedes</SelectLabel>
-                            {filteredSedes.map((sede) => (
-                                <SelectItem key={sede.id_sede || sede.id} value={sede.nombre}>
-                                {sede.nombre}
+                            {filteredSedes && Array.isArray(filteredSedes) && filteredSedes.length > 0 && filteredSedes.map((sede) => (
+                                <SelectItem key={sede.id_sede || sede.id || Math.random()} value={sede.nombre || ""}>
+                                    {sede.nombre || "Sin nombre"}
                                 </SelectItem>
                             ))}
                             </SelectGroup>
@@ -173,7 +163,7 @@ export default function AltaCurso() {
                             <SelectGroup>
                             <SelectLabel>Materias</SelectLabel>
                             {filteredMaterias.map((materia) => (
-                                <SelectItem key={materia.id_materia} value={materia.id_materia}>
+                                <SelectItem key={materia.id_materia || materia.uuid_materia || materia.id} value={materia.id_materia || materia.uuid_materia || materia.id}>
                                 {materia.nombre}
                                 </SelectItem>
                             ))}
@@ -357,7 +347,11 @@ export default function AltaCurso() {
                        <div className="w-full space-y-2 text-left">
                            <p className="text-gray-700">
                                <span className="font-semibold">Materia:</span> {
-                                   filteredMaterias.find(m => m.uuid_materia === cursoData.uuid_materia)?.nombre || cursoData.uuid_materia
+                                   filteredMaterias.find(m => 
+                                       (m.uuid_materia === cursoData.uuid_materia) || 
+                                       (m.id_materia === cursoData.uuid_materia) ||
+                                       (m.id === cursoData.uuid_materia)
+                                   )?.nombre || cursoData.uuid_materia || "N/A"
                                }
                            </p>
                            <p className="text-gray-700">
@@ -376,7 +370,10 @@ export default function AltaCurso() {
                            </p>
                        </div>
                        <Button
-                           onClick={() => {setShowPopUp(false);  }}
+                           onClick={() => {
+                               setShowPopUp(false);
+                               setShowGestionClases(true);
+                           }}
                            className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
                        >
                            OK
