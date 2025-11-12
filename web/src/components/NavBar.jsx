@@ -61,7 +61,12 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         />
         <LinkNavBar
           to="/sedes"
-          title="Sedes"
+          title="Gestión de Sedes"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/espacios"
+          title="Gestión de Espacios"
           onClick={() => setMenuOpen(false)}
         />
         <LinkNavBar
