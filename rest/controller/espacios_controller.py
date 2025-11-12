@@ -34,7 +34,7 @@ async def create_espacio(
 async def get_all_espacios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True=activos, False=inactivos, None=todos)"),
     param: Optional[str] = Query(None, description="Parámetro de búsqueda. Valores válidos: id, id_espacio, nombre, tipo, estado, estado_espacio, sede, id_sede, capacidad, status"),
     value: Optional[str] = Query(None, description="Valor a buscar para el parámetro indicado"),
     db: AsyncSession = Depends(get_async_db)

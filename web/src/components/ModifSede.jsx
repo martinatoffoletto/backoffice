@@ -21,7 +21,6 @@ export default function ModifSede() {
   const [form, setForm] = useState({
     nombre: "",
     ubicacion: "",
-    status: true,
   });
   const [id_sede, setIdSede] = useState("");
   const [error, setError] = useState(null);
@@ -36,7 +35,6 @@ export default function ModifSede() {
       setForm({
         nombre: response.nombre || "",
         ubicacion: response.ubicacion || "",
-        status: response.status !== undefined ? response.status : true,
       });
       setSedeData(response);
       setShowForm(true);
@@ -51,7 +49,6 @@ export default function ModifSede() {
       const sedeDataToSend = {
         nombre: form.nombre.trim(),
         ubicacion: form.ubicacion.trim(),
-        status: form.status,
       };
 
       const response = await modifcarSede(id_sede, sedeDataToSend);
@@ -66,7 +63,6 @@ export default function ModifSede() {
     setForm({
       nombre: "",
       ubicacion: "",
-      status: true,
     });
     setIdSede("");
     setError(null);
@@ -136,24 +132,6 @@ export default function ModifSede() {
                     setForm({ ...form, ubicacion: e.target.value })
                   }
                 />
-              </Field>
-
-              <Field>
-                <FieldLabel>Estado</FieldLabel>
-                <Select
-                  value={form.status ? "activo" : "inactivo"}
-                  onValueChange={(value) =>
-                    setForm({ ...form, status: value === "activo" })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="inactivo">Inactivo</SelectItem>
-                  </SelectContent>
-                </Select>
               </Field>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">

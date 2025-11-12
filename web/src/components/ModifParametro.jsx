@@ -23,7 +23,6 @@ export default function ModifParametro() {
     tipo: "",
     valor_numerico: "",
     valor_texto: "",
-    status: true,
   });
   const [tipos, setTipos] = useState([]);
   const [id_parametro, setIdParametro] = useState("");
@@ -53,7 +52,6 @@ export default function ModifParametro() {
         tipo: response.tipo || "",
         valor_numerico: response.valor_numerico?.toString() || "",
         valor_texto: response.valor_texto || "",
-        status: response.status !== undefined ? response.status : true,
       });
       setParametroData(response);
       setShowForm(true);
@@ -70,7 +68,6 @@ export default function ModifParametro() {
         tipo: form.tipo,
         valor_numerico: form.valor_numerico ? parseFloat(form.valor_numerico) : null,
         valor_texto: form.valor_texto || null,
-        status: form.status,
       };
 
       const response = await modifcarParametro(id_parametro, parametroDataToSend);
@@ -87,7 +84,6 @@ export default function ModifParametro() {
       tipo: "",
       valor_numerico: "",
       valor_texto: "",
-      status: true,
     });
     setIdParametro("");
     setError(null);
@@ -208,24 +204,6 @@ export default function ModifParametro() {
                   />
                 </Field>
               </div>
-
-              <Field>
-                <FieldLabel>Estado</FieldLabel>
-                <Select
-                  value={form.status ? "activo" : "inactivo"}
-                  onValueChange={(value) =>
-                    setForm({ ...form, status: value === "activo" })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="inactivo">Inactivo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
                 <Button

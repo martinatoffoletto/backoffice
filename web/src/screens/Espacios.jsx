@@ -58,7 +58,6 @@ export default function Espacios() {
     ubicacion: "",
     estado: "DISPONIBLE",
     id_sede: "",
-    status: true,
   });
 
   const initialFormState = useMemo(
@@ -69,7 +68,6 @@ export default function Espacios() {
       ubicacion: "",
       estado: "DISPONIBLE",
       id_sede: "",
-      status: true,
     }),
     []
   );
@@ -101,7 +99,7 @@ export default function Espacios() {
     setError(null);
     try {
       const [espaciosResponse, sedesResponse] = await Promise.all([
-        obtenerEspacios(),
+        obtenerEspacios(0, 100, null), // null para obtener todos (activos e inactivos)
         obtenerSedes(0, 100, true),
       ]);
 
@@ -154,7 +152,6 @@ export default function Espacios() {
       ubicacion: espacio.ubicacion ?? "",
       estado: espacio.estado ?? "DISPONIBLE",
       id_sede: espacio.id_sede ?? "",
-      status: espacio.status !== undefined ? espacio.status : true,
     });
     setShowForm(true);
     setError(null);
@@ -195,9 +192,7 @@ export default function Espacios() {
       estado: form.estado,
     };
 
-    if (editingEspacio?.id_espacio) {
-      payload.status = form.status;
-    } else {
+    if (!editingEspacio?.id_espacio) {
       payload.id_sede = form.id_sede;
     }
 
@@ -258,9 +253,9 @@ export default function Espacios() {
   const handleDelete = (espacio) => {
     if (!espacio?.id_espacio) return;
     setConfirmDialog({
-      title: "Confirmar eliminación",
-      message: `¿Confirmás eliminar el espacio "${espacio.nombre}"?`,
-      confirmText: "Eliminar",
+      title: "Confirmar desactivación",
+      message: `¿Confirmás desactivar el espacio "${espacio.nombre}"?`,
+      confirmText: "Desactivar",
       onConfirm: async () => {
         try {
           await actualizarEspacio(espacio.id_espacio, {
@@ -269,10 +264,13 @@ export default function Espacios() {
           });
           await fetchInitialData();
 
+          // Cambiar el filtro a "all" para mostrar el espacio desactivado
+          setStatusFilter("all");
+          
           // Mostrar éxito en el mismo modal
           setConfirmDialog({
             title: "Operación exitosa",
-            message: "Espacio eliminado correctamente.",
+            message: "Espacio desactivado correctamente.",
             confirmText: "Aceptar",
             hideCancel: true,
             onConfirm: () => {
@@ -288,8 +286,8 @@ export default function Espacios() {
           const message =
             err.response?.data?.detail ||
             err.message ||
-            "Ocurrió un error al eliminar el espacio.";
-          console.error("Error al eliminar el espacio:", err);
+            "Ocurrió un error al desactivar el espacio.";
+          console.error("Error al desactivar el espacio:", err);
           setError(message);
           setConfirmDialog(null);
         }
@@ -348,7 +346,7 @@ export default function Espacios() {
         <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Estado
+              Status
             </Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger id="statusFilter" className="min-w-[150px]">
@@ -451,7 +449,7 @@ export default function Espacios() {
                                 className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
                                 onClick={() => handleDelete(espacio)}
                               >
-                                Eliminar
+                                Desactivar
                               </Button>
                             </div>
                           )}
@@ -546,15 +544,6 @@ export default function Espacios() {
                 required={!editingEspacio}
                 disabled={Boolean(editingEspacio)}
               />
-
-              {editingEspacio && (
-                <StatusToggle
-                  value={form.status}
-                  onChange={(value) =>
-                    setForm((prev) => ({ ...prev, status: value }))
-                  }
-                />
-              )}
 
               <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
                 <Button
@@ -670,30 +659,3 @@ function SelectField({
   );
 }
 
-function StatusToggle({ value, onChange }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium">Estado general:</span>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={value ? "default" : "outline"}
-          className={`px-4 py-1 ${
-            value ? "bg-green-600 hover:bg-green-700" : ""
-          }`}
-          onClick={() => onChange(true)}
-        >
-          Activo
-        </Button>
-        <Button
-          type="button"
-          variant={!value ? "default" : "outline"}
-          className={`px-4 py-1 ${!value ? "bg-red-600 hover:bg-red-700" : ""}`}
-          onClick={() => onChange(false)}
-        >
-          Inactivo
-        </Button>
-      </div>
-    </div>
-  );
-}
