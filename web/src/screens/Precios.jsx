@@ -8,7 +8,7 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PopUp from "@/components/PopUp";
 import {
   altaParametro,
@@ -16,11 +16,21 @@ import {
   actualizarParametro,
   obtenerParametros,
 } from "@/api/preciosApi";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Precios() {
   const [prices, setPrices] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingParametro, setEditingParametro] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [form, setForm] = useState({
     nombre: "",
     tipo: "",
@@ -32,6 +42,7 @@ export default function Precios() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const initialFormState = {
     nombre: "",
@@ -68,6 +79,19 @@ export default function Precios() {
   useEffect(() => {
     fetchPrecios();
   }, [fetchPrecios]);
+
+  const filteredPrices = useMemo(() => {
+    return prices.filter((parametro) => {
+      if (statusFilter === "all") return true;
+      const isActive = parametro.status !== false;
+      return statusFilter === "active" ? isActive : !isActive;
+    });
+  }, [prices, statusFilter]);
+
+  const emptyMessage =
+    prices.length === 0
+      ? "No hay precios disponibles."
+      : "No hay precios para el filtro seleccionado.";
 
   const handleAdd = () => {
     setEditingParametro(null);
@@ -123,46 +147,66 @@ export default function Precios() {
       payload.status = form.status;
     }
 
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      if (editingParametro?.id_parametro) {
-        await actualizarParametro(editingParametro.id_parametro, payload);
-        setSuccessMessage("Precio actualizado correctamente.");
-      } else {
-        await altaParametro(payload);
-        setSuccessMessage("Precio creado correctamente.");
-      }
-      await fetchPrecios();
-      setShowForm(false);
-      setEditingParametro(null);
-      setForm(initialFormState);
-    } catch (err) {
-      const message =
-        err.response?.data?.detail ||
-        err.message ||
-        "Ocurrió un error al guardar el precio.";
-      console.error("Error al guardar el precio:", err);
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const isEdit = Boolean(editingParametro?.id_parametro);
+    setConfirmDialog({
+      title: isEdit ? "Confirmar actualización" : "Confirmar creación",
+      message: `¿Confirmás ${
+        isEdit ? "actualizar" : "crear"
+      } el precio "${form.nombre.trim()}"?`,
+      confirmText: isEdit ? "Actualizar" : "Guardar",
+      onConfirm: async () => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+          if (isEdit) {
+            await actualizarParametro(editingParametro.id_parametro, payload);
+            setSuccessMessage("Precio actualizado correctamente.");
+          } else {
+            await altaParametro(payload);
+            setSuccessMessage("Precio creado correctamente.");
+          }
+          await fetchPrecios();
+          setShowForm(false);
+          setEditingParametro(null);
+          setForm(initialFormState);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al guardar el precio.";
+          console.error("Error al guardar el precio:", err);
+          setError(message);
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
   };
 
-  const deletePrice = async (id_parametro) => {
-    try {
-      await bajaParametro(id_parametro);
-      setPrices((prev) =>
-        prev.filter((parametro) => parametro.id_parametro !== id_parametro)
-      );
-    } catch (err) {
-      const message =
-        err.response?.data?.detail ||
-        err.message ||
-        "Ocurrió un error al eliminar el precio.";
-      console.error("Error al eliminar el precio:", err);
-      setError(message);
-    }
+  const requestDeletePrice = (parametro) => {
+    if (!parametro) return;
+    const id = parametro.id_parametro || parametro.id;
+    if (!id) return;
+    setConfirmDialog({
+      title: "Confirmar eliminación",
+      message: `¿Confirmás eliminar el precio "${parametro.nombre}"?`,
+      confirmText: "Eliminar",
+      onConfirm: async () => {
+        try {
+          await bajaParametro(id);
+          setPrices((prev) =>
+            prev.filter((item) => (item.id_parametro || item.id) !== id)
+          );
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al eliminar el precio.";
+          console.error("Error al eliminar el precio:", err);
+          setError(message);
+        }
+      },
+    });
   };
 
   return (
@@ -170,6 +214,24 @@ export default function Precios() {
       <div className="w-full max-w-3xl">
         <h1 className="font-bold text-center text-2xl mb-4">Listado de Precios</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="statusFilter" className="text-sm font-semibold">
+              Filtrar por status
+            </Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <div className="overflow-x-auto mt-8">
           <Table className="min-w-full border border-gray-200 my-2">
@@ -186,10 +248,10 @@ export default function Precios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!loading && prices.length === 0 && (
+              {!loading && filteredPrices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-gray-500">
-                    No hay precios disponibles.
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               )}
@@ -203,7 +265,7 @@ export default function Precios() {
               )}
 
               {!loading &&
-                prices.map((parametro) => (
+                filteredPrices.map((parametro) => (
                   <TableRow
                     key={parametro.id_parametro || parametro.id}
                     className="hover:bg-gray-50"
@@ -227,9 +289,7 @@ export default function Precios() {
                       </Button>
                       <Button
                         className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300"
-                        onClick={() =>
-                          deletePrice(parametro.id_parametro || parametro.id)
-                        }
+                        onClick={() => requestDeletePrice(parametro)}
                       >
                         Eliminar
                       </Button>
@@ -326,6 +386,24 @@ export default function Precios() {
           title="Operación exitosa"
           message={successMessage}
           onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText}
+          onConfirm={async () => {
+            const currentDialog = confirmDialog;
+            setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+            try {
+              await currentDialog.onConfirm?.();
+            } finally {
+              setConfirmDialog(null);
+            }
+          }}
+          onCancel={() => setConfirmDialog(null)}
+          loading={Boolean(confirmDialog.loading)}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,11 +12,20 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import PopUp from "@/components/PopUp";
 import { altaSede, obtenerSedes, actualizarSede } from "@/api/sedesApi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Sedes() {
   const [sedes, setSedes] = useState([]);
   const [editingSede, setEditingSede] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [form, setForm] = useState({
     nombre: "",
     ubicacion: "",
@@ -26,6 +35,7 @@ export default function Sedes() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const initialFormState = {
     nombre: "",
@@ -76,29 +86,39 @@ export default function Sedes() {
       payload.status = form.status;
     }
 
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      if (editingSede?.id_sede) {
-        await actualizarSede(editingSede.id_sede, payload);
-        setSuccessMessage("Sede actualizada correctamente.");
-      } else {
-        await altaSede(payload);
-        setSuccessMessage("Sede creada correctamente.");
-      }
-      await fetchSedes();
-      setShowForm(false);
-      setEditingSede(null);
-      setForm(initialFormState);
-    } catch (err) {
-      const message =
-        err.response?.data?.detail ||
-        err.message ||
-        "Ocurrió un error al guardar la sede.";
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const isEdit = Boolean(editingSede?.id_sede);
+    setConfirmDialog({
+      title: isEdit ? "Confirmar actualización" : "Confirmar creación",
+      message: `¿Confirmás ${
+        isEdit ? "actualizar" : "crear"
+      } la sede "${form.nombre.trim()}"?`,
+      confirmText: isEdit ? "Actualizar" : "Agregar",
+      onConfirm: async () => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+          if (isEdit) {
+            await actualizarSede(editingSede.id_sede, payload);
+            setSuccessMessage("Sede actualizada correctamente.");
+          } else {
+            await altaSede(payload);
+            setSuccessMessage("Sede creada correctamente.");
+          }
+          await fetchSedes();
+          setShowForm(false);
+          setEditingSede(null);
+          setForm(initialFormState);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al guardar la sede.";
+          setError(message);
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
   };
 
   const fetchSedes = useCallback(async () => {
@@ -127,11 +147,42 @@ export default function Sedes() {
     fetchSedes();
   }, [fetchSedes]);
 
+  const filteredSedes = useMemo(() => {
+    return sedes.filter((sede) => {
+      if (statusFilter === "all") return true;
+      const isActive = sede.status !== false;
+      return statusFilter === "active" ? isActive : !isActive;
+    });
+  }, [sedes, statusFilter]);
+
+  const emptyMessage =
+    sedes.length === 0
+      ? "No hay sedes disponibles."
+      : "No hay sedes para el filtro seleccionado.";
+
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-4xl">
         <h1 className="font-bold text-center text-2xl mb-4">Sedes</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="statusFilter" className="text-sm font-semibold">
+              Filtrar por status
+            </Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <div className="overflow-x-auto mt-8">
           <Table className="min-w-full border rounded-lg shadow-sm ">
@@ -144,10 +195,10 @@ export default function Sedes() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!loading && sedes.length === 0 && (
+              {!loading && filteredSedes.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-gray-500">
-                    No hay sedes disponibles.
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               )}
@@ -161,7 +212,7 @@ export default function Sedes() {
               )}
 
               {!loading &&
-                sedes.map((sede) => (
+                filteredSedes.map((sede) => (
                   <TableRow
                     key={sede.id_sede || sede.id}
                     className="hover:bg-gray-50"
@@ -269,6 +320,24 @@ export default function Sedes() {
             title={"Operación exitosa"}
             message={successMessage}
             onClose={() => setSuccessMessage(null)}
+          />
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
+            title={confirmDialog.title}
+            message={confirmDialog.message}
+            confirmText={confirmDialog.confirmText}
+            onConfirm={async () => {
+              const currentDialog = confirmDialog;
+              setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+              try {
+                await currentDialog.onConfirm?.();
+              } finally {
+                setConfirmDialog(null);
+              }
+            }}
+            onCancel={() => setConfirmDialog(null)}
+            loading={Boolean(confirmDialog.loading)}
           />
         )}
       </div>

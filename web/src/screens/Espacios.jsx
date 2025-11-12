@@ -18,6 +18,15 @@ import {
   obtenerTiposEspacios,
 } from "@/api/espaciosApi";
 import { obtenerSedes } from "@/api/sedesApi";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const ESTADOS = [
   { label: "Disponible", value: "disponible" },
@@ -37,6 +46,8 @@ export default function Espacios() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const [form, setForm] = useState({
     nombre: "",
     tipo: "",
@@ -68,6 +79,19 @@ export default function Espacios() {
       return acc;
     }, {});
   }, [sedes]);
+
+  const filteredEspacios = useMemo(() => {
+    return espacios.filter((espacio) => {
+      if (statusFilter === "all") return true;
+      const isActive = espacio.status !== false;
+      return statusFilter === "active" ? isActive : !isActive;
+    });
+  }, [espacios, statusFilter]);
+
+  const emptyMessage =
+    espacios.length === 0
+      ? "No hay espacios disponibles."
+      : "No hay espacios para el filtro seleccionado.";
 
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
@@ -182,47 +206,64 @@ export default function Espacios() {
       payload.id_sede = form.id_sede;
     }
 
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      if (editingEspacio?.id_espacio) {
-        await actualizarEspacio(editingEspacio.id_espacio, payload);
-        setSuccessMessage("Espacio actualizado correctamente.");
-      } else {
-        await altaEspacio(payload);
-        setSuccessMessage("Espacio creado correctamente.");
-      }
-      await fetchInitialData();
-      setShowForm(false);
-      setEditingEspacio(null);
-      setForm(initialFormState);
-    } catch (err) {
-      const message =
-        err.response?.data?.detail ||
-        err.message ||
-        "Ocurrió un error al guardar el espacio.";
-      console.error("Error al guardar el espacio:", err);
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const isEdit = Boolean(editingEspacio?.id_espacio);
+    setConfirmDialog({
+      title: isEdit ? "Confirmar actualización" : "Confirmar creación",
+      message: `¿Confirmás ${
+        isEdit ? "actualizar" : "crear"
+      } el espacio "${form.nombre.trim()}"?`,
+      confirmText: isEdit ? "Actualizar" : "Guardar",
+      onConfirm: async () => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+          if (isEdit) {
+            await actualizarEspacio(editingEspacio.id_espacio, payload);
+            setSuccessMessage("Espacio actualizado correctamente.");
+          } else {
+            await altaEspacio(payload);
+            setSuccessMessage("Espacio creado correctamente.");
+          }
+          await fetchInitialData();
+          setShowForm(false);
+          setEditingEspacio(null);
+          setForm(initialFormState);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al guardar el espacio.";
+          console.error("Error al guardar el espacio:", err);
+          setError(message);
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
   };
 
-  const handleDelete = async (espacioId) => {
-    if (!espacioId) return;
-    try {
-      await bajaEspacio(espacioId);
-      setEspacios((prev) =>
-        prev.filter((espacio) => espacio.id_espacio !== espacioId)
-      );
-    } catch (err) {
-      const message =
-        err.response?.data?.detail ||
-        err.message ||
-        "Ocurrió un error al eliminar el espacio.";
-      console.error("Error al eliminar el espacio:", err);
-      setError(message);
-    }
+  const handleDelete = (espacio) => {
+    if (!espacio?.id_espacio) return;
+    setConfirmDialog({
+      title: "Confirmar eliminación",
+      message: `¿Confirmás eliminar el espacio "${espacio.nombre}"?`,
+      confirmText: "Eliminar",
+      onConfirm: async () => {
+        try {
+          await bajaEspacio(espacio.id_espacio);
+          setEspacios((prev) =>
+            prev.filter((item) => item.id_espacio !== espacio.id_espacio)
+          );
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al eliminar el espacio.";
+          console.error("Error al eliminar el espacio:", err);
+          setError(message);
+        }
+      },
+    });
   };
 
   return (
@@ -230,6 +271,24 @@ export default function Espacios() {
       <div className="w-full max-w-5xl">
         <h1 className="font-bold text-center text-2xl mb-4">Espacios</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="statusFilter" className="text-sm font-semibold">
+              Filtrar por status
+            </Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <div className="overflow-x-auto mt-8">
           <Table className="min-w-full border border-gray-200 my-2">
@@ -248,10 +307,10 @@ export default function Espacios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!loading && espacios.length === 0 && (
+              {!loading && filteredEspacios.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-500">
-                    No hay espacios disponibles.
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               )}
@@ -265,7 +324,7 @@ export default function Espacios() {
               )}
 
               {!loading &&
-                espacios.map((espacio) => {
+                filteredEspacios.map((espacio) => {
                   const sedeInfo = sedesMap[espacio.id_sede];
                   return (
                     <TableRow key={espacio.id_espacio} className="hover:bg-gray-50">
@@ -304,7 +363,7 @@ export default function Espacios() {
                         </Button>
                         <Button
                           className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300"
-                          onClick={() => handleDelete(espacio.id_espacio)}
+                          onClick={() => handleDelete(espacio)}
                         >
                           Eliminar
                         </Button>
@@ -432,6 +491,24 @@ export default function Espacios() {
           title="Operación exitosa"
           message={successMessage}
           onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText}
+          onConfirm={async () => {
+            const currentDialog = confirmDialog;
+            setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+            try {
+              await currentDialog.onConfirm?.();
+            } finally {
+              setConfirmDialog(null);
+            }
+          }}
+          onCancel={() => setConfirmDialog(null)}
+          loading={Boolean(confirmDialog.loading)}
         />
       )}
     </div>
