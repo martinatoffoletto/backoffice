@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PopUp from "@/components/PopUp";
 import { useState } from "react";
-import { bajaRol, rolPorId } from "@/api/rolesApi";
+import { bajaRol, obtenerRolPorId } from "@/api/rolesApi";
 
 export default function BajaRol() {
   const [id_rol, setIdRol] = useState("");
@@ -14,12 +14,14 @@ export default function BajaRol() {
   const handleSearch = async () => {
     try {
       if (!id_rol.trim()) return;
-      const response = await rolPorId(id_rol);
+      const response = await obtenerRolPorId(id_rol);
       setRolData(response);
       setShowConfirm(true);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || "Error al buscar el rol");
+      setError(
+        err.response?.data?.detail || err.message || "Error al buscar el rol"
+      );
       setRolData(null);
       setShowConfirm(false);
     }
@@ -31,7 +33,9 @@ export default function BajaRol() {
       setCompleted(true);
       setShowConfirm(false);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || "Error al eliminar el rol");
+      setError(
+        err.response?.data?.detail || err.message || "Error al eliminar el rol"
+      );
     }
   };
 
@@ -116,13 +120,8 @@ export default function BajaRol() {
       )}
 
       {error && (
-        <PopUp
-          title="Error"
-          message={error}
-          onClose={() => setError(null)}
-        />
+        <PopUp title="Error" message={error} onClose={() => setError(null)} />
       )}
     </div>
   );
 }
-

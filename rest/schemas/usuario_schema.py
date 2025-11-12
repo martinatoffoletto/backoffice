@@ -95,7 +95,7 @@ class UsuarioCreate(BaseModel):
     dni: str = Field(..., min_length=7, max_length=10, description="DNI único del usuario")
     email_personal: EmailStr = Field(..., description="Email personal (obligatorio)")
     telefono_personal: str = Field(..., max_length=20, description="Teléfono personal (obligatorio)")
-    contraseña: str = Field(..., min_length=8, description="Contraseña del usuario")
+    contraseña: Optional[str] = Field(None, min_length=8, description="Contraseña del usuario (se genera automáticamente si no se proporciona)")
     id_rol: uuid.UUID = Field(..., description="UUID del rol a asignar al usuario")
     
     class Config:
@@ -106,7 +106,6 @@ class UsuarioCreate(BaseModel):
                 "dni": "12345678",
                 "email_personal": "juan.perez@gmail.com",
                 "telefono_personal": "1234567890",
-                "contraseña": "password123",
                 "id_rol": "550e8400-e29b-41d4-a716-446655440000"
             }
         }

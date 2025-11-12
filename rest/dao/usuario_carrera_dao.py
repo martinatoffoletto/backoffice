@@ -22,18 +22,6 @@ class UsuarioCarreraDAO:
         return db_usuario_carrera
     
     @staticmethod
-    async def get_by_usuario_carrera(db: AsyncSession, id_usuario: uuid.UUID, id_carrera: uuid.UUID) -> Optional[UsuarioCarrera]:
-        """Obtener relación específica usuario-carrera (sin filtro de status)"""
-        query = select(UsuarioCarrera).where(
-            and_(
-                UsuarioCarrera.id_usuario == id_usuario,
-                UsuarioCarrera.id_carrera == id_carrera
-            )
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
-    
-    @staticmethod
     async def get_carrera_by_usuario(db: AsyncSession, id_usuario: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[UsuarioCarrera]:
         """Obtener la carrera única de un usuario."""
         query = select(UsuarioCarrera).where(UsuarioCarrera.id_usuario == id_usuario)
@@ -78,6 +66,14 @@ class UsuarioCarreraDAO:
     async def delete(db: AsyncSession, id_usuario: uuid.UUID, id_carrera: uuid.UUID) -> bool:
         """Remover una carrera específica de un usuario (soft delete)"""
         return await UsuarioCarreraDAO.soft_delete(db, id_usuario, id_carrera)
+    
+    @staticmethod
+    async def reactivate(db: AsyncSession, id_usuario: uuid.UUID) -> bool:
+        """Reactivar carrera de un usuario (cambiar status a True)"""
+        query = update(UsuarioCarrera).where(UsuarioCarrera.id_usuario == id_usuario).values(status=True)
+        result = await db.execute(query)
+        await db.commit()
+        return result.rowcount > 0
     
     @staticmethod
     async def exists(db: AsyncSession, id_usuario: uuid.UUID, id_carrera: uuid.UUID) -> bool:

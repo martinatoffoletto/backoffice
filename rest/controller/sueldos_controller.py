@@ -106,12 +106,11 @@ async def update_sueldo(
 
 @router.delete("/{sueldo_id}", response_model=dict, status_code=status.HTTP_200_OK)
 async def delete_sueldo(sueldo_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
-    """Eliminar (desactivar) un sueldo"""
-    success = await SueldoService.delete_sueldo(db, sueldo_id)
+    success, error_message = await SueldoService.delete_sueldo(db, sueldo_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sueldo no encontrado"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
         )
     return {
         "message": "Sueldo eliminado exitosamente",
