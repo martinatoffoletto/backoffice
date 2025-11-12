@@ -192,6 +192,36 @@ async def update_espacio(
             detail=f"Error al actualizar el espacio: {str(e)}"
         )
 
+@router.patch("/{id_espacio}", response_model=Espacio)
+async def partial_update_espacio(
+    id_espacio: uuid.UUID,
+    espacio_update: EspacioUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Actualizar parcialmente un espacio por su ID
+    """
+    try:
+        espacio = await EspacioService.update_espacio(db, id_espacio, espacio_update)
+        if not espacio:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el espacio con ID {id_espacio}"
+            )
+        return espacio
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el espacio: {str(e)}"
+        )
+
 @router.delete("/{id_espacio}", response_model=dict)
 async def soft_delete_espacio(
     id_espacio: uuid.UUID,

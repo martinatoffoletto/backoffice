@@ -107,7 +107,7 @@ class ParametroService:
     async def update_parametro(db: AsyncSession, id_parametro: uuid.UUID, parametro_update: ParametroUpdate) -> dict:
         """Actualizar parámetro con validaciones"""
         # Verificar que existe
-        existing_parametro = await ParametroDAO.get_by_id(db, id_parametro)
+        existing_parametro = await ParametroDAO.get_by_id(db, id_parametro, include_inactive=True)
         if not existing_parametro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
