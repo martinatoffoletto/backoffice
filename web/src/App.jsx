@@ -20,7 +20,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex h-screen flex-col md:flex-row">
+      <div className="flex min-h-screen flex-col md:flex-row">
         {/* Navbar */}
         <NavBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 

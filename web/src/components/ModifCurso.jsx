@@ -133,7 +133,7 @@ export default function ModifCurso({ cursoInicial = null }) {
           <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
           <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
             <Input
-            className="lg:mb-4"
+            
                 placeholder="Número de Curso"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}

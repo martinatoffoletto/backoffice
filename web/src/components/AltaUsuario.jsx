@@ -10,6 +10,7 @@ import {
   INITIAL_FORM_STATE,
   INITIAL_SUELDO_STATE,
 } from "@/constants/formConstants";
+import { carreras } from "@/data/mockData";
 
 export default function AltaUsuario() {
   const [rolesOptions, setRolesOptions] = useState([]);
@@ -134,7 +135,7 @@ export default function AltaUsuario() {
         <h1 className="font-bold text-center text-2xl mb-4">
           Alta de Usuario
         </h1>
-        <span className="block w-full h-[3px] bg-sky-950"></span>
+        <span className="block w-full h-[3px] bg-sky-950 mb-8"></span>
 
         {!completed && (
           <FormUsuarios
@@ -143,11 +144,12 @@ export default function AltaUsuario() {
             initialCarreraSeleccionada=""
             initialSueldoForm={INITIAL_SUELDO_STATE}
             rolesOptions={rolesOptions}
-            carrerasMock={CARRERAS_MOCK}
+            carrerasMock={carreras}
             loadingRoles={loadingRoles}
             loadingSubmit={loadingSubmit}
             onSubmit={handleSubmit}
             onCancel={cleanForm}
+            
           />
         )}
       </div>

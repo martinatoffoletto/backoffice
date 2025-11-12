@@ -106,7 +106,7 @@ export const cursoPorId=async(id)=>{
           (m)=> (m.id_curso || m.id) === id
         )
         console.log(curso)
-        if (!curso) throw new Error("Curso no encontrada")       
+        if (!curso) throw new Error("Curso no encontrado")       
         return Promise.resolve(curso)
     }catch(err){
         console.error("Error al buscar curso:", err)
