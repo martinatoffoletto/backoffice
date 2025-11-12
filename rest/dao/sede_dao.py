@@ -46,10 +46,10 @@ class SedeDAO:
         """Obtener todas las sedes con filtro opcional por status"""
         query = select(Sede)
         
+        # Solo aplicar filtro si status_filter no es None
         if status_filter is not None:
             query = query.where(Sede.status == status_filter)
-        else:
-            query = query.where(Sede.status == True)
+        # Si es None, no filtrar y devolver todos los registros
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)

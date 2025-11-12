@@ -39,7 +39,6 @@ export default function Precios() {
     status: true,
   });
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -56,13 +55,20 @@ export default function Precios() {
     setLoading(true);
     setError(null);
     try {
-      const response = await obtenerParametros();
-      const normalized =
-        Array.isArray(response)
-          ? response
-          : Array.isArray(response?.parametros)
-          ? response.parametros
-          : [];
+      // Convertir el filtro del frontend al formato que espera el backend
+      let filter = null; // null muestra todos
+      if (statusFilter === "active") {
+        filter = true; // true muestra solo activos
+      } else if (statusFilter === "inactive") {
+        filter = false; // false muestra solo inactivos
+      }
+
+      const response = await obtenerParametros(0, 100, filter);
+      const normalized = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.parametros)
+        ? response.parametros
+        : [];
       setPrices(normalized);
     } catch (err) {
       const message =
@@ -74,19 +80,14 @@ export default function Precios() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchPrecios();
   }, [fetchPrecios]);
 
-  const filteredPrices = useMemo(() => {
-    return prices.filter((parametro) => {
-      if (statusFilter === "all") return true;
-      const isActive = parametro.status !== false;
-      return statusFilter === "active" ? isActive : !isActive;
-    });
-  }, [prices, statusFilter]);
+  // Ya no necesitamos filtrar en el frontend porque el backend lo hace
+  const filteredPrices = prices;
 
   const emptyMessage =
     prices.length === 0
@@ -98,7 +99,6 @@ export default function Precios() {
     setForm(initialFormState);
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleEdit = (parametro) => {
@@ -107,7 +107,8 @@ export default function Precios() {
       nombre: parametro.nombre ?? "",
       tipo: parametro.tipo ?? "",
       valor_numerico:
-        parametro.valor_numerico !== null && parametro.valor_numerico !== undefined
+        parametro.valor_numerico !== null &&
+        parametro.valor_numerico !== undefined
           ? String(parametro.valor_numerico)
           : "",
       valor_texto: parametro.valor_texto ?? "",
@@ -115,7 +116,6 @@ export default function Precios() {
     });
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleCancel = () => {
@@ -160,12 +160,29 @@ export default function Precios() {
         try {
           if (isEdit) {
             await actualizarParametro(editingParametro.id_parametro, payload);
-            setSuccessMessage("Precio actualizado correctamente.");
           } else {
             await altaParametro(payload);
-            setSuccessMessage("Precio creado correctamente.");
           }
           await fetchPrecios();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: isEdit
+              ? "Precio actualizado correctamente."
+              : "Precio creado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+
           setShowForm(false);
           setEditingParametro(null);
           setForm(initialFormState);
@@ -176,6 +193,7 @@ export default function Precios() {
             "Ocurrió un error al guardar el precio.";
           console.error("Error al guardar el precio:", err);
           setError(message);
+          setConfirmDialog(null);
         } finally {
           setIsSubmitting(false);
         }
@@ -194,9 +212,23 @@ export default function Precios() {
       onConfirm: async () => {
         try {
           await bajaParametro(id);
-          setPrices((prev) =>
-            prev.filter((item) => (item.id_parametro || item.id) !== id)
-          );
+          await fetchPrecios();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Precio eliminado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
         } catch (err) {
           const message =
             err.response?.data?.detail ||
@@ -204,6 +236,55 @@ export default function Precios() {
             "Ocurrió un error al eliminar el precio.";
           console.error("Error al eliminar el precio:", err);
           setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
+  };
+
+  const handleActivate = (parametro) => {
+    if (!parametro) return;
+    const id = parametro.id_parametro || parametro.id;
+    if (!id) return;
+    setConfirmDialog({
+      title: "Confirmar activación",
+      message: `¿Confirmás activar el precio "${parametro.nombre}"?`,
+      confirmText: "Activar",
+      onConfirm: async () => {
+        try {
+          const payload = {
+            nombre: parametro.nombre,
+            tipo: parametro.tipo,
+            valor_numerico: parametro.valor_numerico,
+            valor_texto: parametro.valor_texto,
+            status: true,
+          };
+          await actualizarParametro(id, payload);
+          await fetchPrecios();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Precio activado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al activar el precio.";
+          console.error("Error al activar el precio:", err);
+          setError(message);
+          setConfirmDialog(null);
         }
       },
     });
@@ -212,13 +293,15 @@ export default function Precios() {
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-3xl">
-        <h1 className="font-bold text-center text-2xl mb-4">Listado de Precios</h1>
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Listado de Precios
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Filtrar por status
+              Estado
             </Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger id="statusFilter" className="min-w-[150px]">
@@ -272,7 +355,9 @@ export default function Precios() {
                   >
                     <TableCell>{parametro.nombre}</TableCell>
                     <TableCell>{parametro.tipo || "-"}</TableCell>
-                    <TableCell>${String(parametro.valor_numerico ?? 0)}</TableCell>
+                    <TableCell>
+                      ${String(parametro.valor_numerico ?? 0)}
+                    </TableCell>
                     <TableCell>
                       {parametro.status !== false ? (
                         <span className="text-green-600">Activo</span>
@@ -280,19 +365,35 @@ export default function Precios() {
                         <span className="text-red-600">Inactivo</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center space-x-2">
-                      <Button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded"
-                        onClick={() => handleEdit(parametro)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300"
-                        onClick={() => requestDeletePrice(parametro)}
-                      >
-                        Eliminar
-                      </Button>
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
+                        {parametro.status === false ? (
+                          <div className="w-44">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                              onClick={() => handleActivate(parametro)}
+                            >
+                              Activar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="w-44 flex gap-2">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                              onClick={() => handleEdit(parametro)}
+                            >
+                              Editar
+                            </Button>
+
+                            <Button
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                              onClick={() => requestDeletePrice(parametro)}
+                            >
+                              Eliminar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -321,12 +422,26 @@ export default function Precios() {
                 onChange={(v) => setForm({ ...form, nombre: v })}
                 required
               />
-              <InputField
-                label="Tipo"
-                value={form.tipo}
-                onChange={(v) => setForm({ ...form, tipo: v })}
-                required
-              />
+              <div className="flex-1 flex flex-col">
+                <label className="text-sm font-medium mb-1">
+                  Tipo <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(val) => setForm({ ...form, tipo: val })}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="multa">Multa</SelectItem>
+                    <SelectItem value="sancion">Sanción</SelectItem>
+                    <SelectItem value="reserva">Reserva</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <InputField
                 label="Precio"
                 type="number"
@@ -381,25 +496,26 @@ export default function Precios() {
       {error && (
         <PopUp title="Error" message={error} onClose={() => setError(null)} />
       )}
-      {successMessage && (
-        <PopUp
-          title="Operación exitosa"
-          message={successMessage}
-          onClose={() => setSuccessMessage(null)}
-        />
-      )}
       {confirmDialog && (
         <ConfirmDialog
           title={confirmDialog.title}
           message={confirmDialog.message}
           confirmText={confirmDialog.confirmText}
+          hideCancel={confirmDialog.hideCancel}
           onConfirm={async () => {
             const currentDialog = confirmDialog;
-            setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+            if (currentDialog.hideCancel) {
+              // Si es el modal de éxito, solo ejecutar el callback
+              currentDialog.onConfirm?.();
+              return;
+            }
+            setConfirmDialog((prev) =>
+              prev ? { ...prev, loading: true } : prev
+            );
             try {
               await currentDialog.onConfirm?.();
             } finally {
-              setConfirmDialog(null);
+              // No cerrar aquí, el onConfirm interno lo maneja
             }
           }}
           onCancel={() => setConfirmDialog(null)}
@@ -445,7 +561,9 @@ function StatusToggle({ value, onChange }) {
         <Button
           type="button"
           variant={value ? "default" : "outline"}
-          className={`px-4 py-1 ${value ? "bg-green-600 hover:bg-green-700" : ""}`}
+          className={`px-4 py-1 ${
+            value ? "bg-green-600 hover:bg-green-700" : ""
+          }`}
           onClick={() => onChange(true)}
         >
           Activo
@@ -462,4 +580,3 @@ function StatusToggle({ value, onChange }) {
     </div>
   );
 }
-

@@ -15,7 +15,6 @@ import {
   actualizarEspacio,
   bajaEspacio,
   obtenerEspacios,
-  obtenerTiposEspacios,
 } from "@/api/espaciosApi";
 import { obtenerSedes } from "@/api/sedesApi";
 import { Label } from "@/components/ui/label";
@@ -29,23 +28,27 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const ESTADOS = [
-  { label: "Disponible", value: "disponible" },
-  { label: "Ocupado", value: "ocupado" },
-  { label: "En mantenimiento", value: "en_mantenimiento" },
+  { label: "Disponible", value: "DISPONIBLE" },
+  { label: "Ocupado", value: "OCUPADO" },
+  { label: "En mantenimiento", value: "EN_MANTENIMIENTO" },
 ];
 
-const DEFAULT_TIPOS = ["aula", "laboratorio", "espacio_comun", "oficina"];
+const TIPOS = [
+  { label: "Aula", value: "AULA" },
+  { label: "Laboratorio", value: "LABORATORIO" },
+  { label: "Espacio común", value: "ESPACIO_COMUN" },
+  { label: "Oficina", value: "OFICINA" },
+  { label: "Otros", value: "OTROS" },
+];
 
 export default function Espacios() {
   const [espacios, setEspacios] = useState([]);
   const [sedes, setSedes] = useState([]);
-  const [tipos, setTipos] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingEspacio, setEditingEspacio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [form, setForm] = useState({
@@ -53,7 +56,7 @@ export default function Espacios() {
     tipo: "",
     capacidad: "",
     ubicacion: "",
-    estado: "disponible",
+    estado: "DISPONIBLE",
     id_sede: "",
     status: true,
   });
@@ -64,7 +67,7 @@ export default function Espacios() {
       tipo: "",
       capacidad: "",
       ubicacion: "",
-      estado: "disponible",
+      estado: "DISPONIBLE",
       id_sede: "",
       status: true,
     }),
@@ -97,10 +100,9 @@ export default function Espacios() {
     setLoading(true);
     setError(null);
     try {
-      const [espaciosResponse, sedesResponse, tiposResponse] = await Promise.all([
+      const [espaciosResponse, sedesResponse] = await Promise.all([
         obtenerEspacios(),
         obtenerSedes(0, 100, true),
-        obtenerTiposEspacios(),
       ]);
 
       const normalizedEspacios = Array.isArray(espaciosResponse)
@@ -117,10 +119,6 @@ export default function Espacios() {
 
       setEspacios(normalizedEspacios);
       setSedes(normalizedSedes);
-      const normalizedTipos = Array.isArray(tiposResponse)
-        ? tiposResponse.map((tipo) => (typeof tipo === "string" ? tipo.toLowerCase() : tipo))
-        : [];
-      setTipos(normalizedTipos.length ? normalizedTipos : DEFAULT_TIPOS);
     } catch (err) {
       const message =
         err.response?.data?.detail ||
@@ -128,7 +126,6 @@ export default function Espacios() {
         "Ocurrió un error al cargar los espacios.";
       console.error("Error al cargar espacios:", err);
       setError(message);
-      setTipos(DEFAULT_TIPOS);
     } finally {
       setLoading(false);
     }
@@ -143,7 +140,6 @@ export default function Espacios() {
     setForm(initialFormState);
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleEdit = (espacio) => {
@@ -156,13 +152,12 @@ export default function Espacios() {
           ? String(espacio.capacidad)
           : "",
       ubicacion: espacio.ubicacion ?? "",
-      estado: espacio.estado ?? "disponible",
+      estado: espacio.estado ?? "DISPONIBLE",
       id_sede: espacio.id_sede ?? "",
       status: espacio.status !== undefined ? espacio.status : true,
     });
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleCancel = () => {
@@ -219,15 +214,32 @@ export default function Espacios() {
         try {
           if (isEdit) {
             await actualizarEspacio(editingEspacio.id_espacio, payload);
-            setSuccessMessage("Espacio actualizado correctamente.");
           } else {
             await altaEspacio(payload);
-            setSuccessMessage("Espacio creado correctamente.");
           }
           await fetchInitialData();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: isEdit
+              ? "Espacio actualizado correctamente."
+              : "Espacio creado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
           setShowForm(false);
           setEditingEspacio(null);
           setForm(initialFormState);
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
         } catch (err) {
           const message =
             err.response?.data?.detail ||
@@ -235,6 +247,7 @@ export default function Espacios() {
             "Ocurrió un error al guardar el espacio.";
           console.error("Error al guardar el espacio:", err);
           setError(message);
+          setConfirmDialog(null);
         } finally {
           setIsSubmitting(false);
         }
@@ -250,10 +263,27 @@ export default function Espacios() {
       confirmText: "Eliminar",
       onConfirm: async () => {
         try {
-          await bajaEspacio(espacio.id_espacio);
-          setEspacios((prev) =>
-            prev.filter((item) => item.id_espacio !== espacio.id_espacio)
-          );
+          await actualizarEspacio(espacio.id_espacio, {
+            ...espacio,
+            status: false,
+          });
+          await fetchInitialData();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Espacio eliminado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
         } catch (err) {
           const message =
             err.response?.data?.detail ||
@@ -261,6 +291,49 @@ export default function Espacios() {
             "Ocurrió un error al eliminar el espacio.";
           console.error("Error al eliminar el espacio:", err);
           setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
+  };
+
+  const handleActivate = (espacio) => {
+    if (!espacio?.id_espacio) return;
+    setConfirmDialog({
+      title: "Confirmar activación",
+      message: `¿Confirmás activar el espacio "${espacio.nombre}"?`,
+      confirmText: "Activar",
+      onConfirm: async () => {
+        try {
+          await actualizarEspacio(espacio.id_espacio, {
+            ...espacio,
+            status: true,
+          });
+          await fetchInitialData();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Espacio activado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al activar el espacio.";
+          console.error("Error al activar el espacio:", err);
+          setError(message);
+          setConfirmDialog(null);
         }
       },
     });
@@ -272,10 +345,10 @@ export default function Espacios() {
         <h1 className="font-bold text-center text-2xl mb-4">Espacios</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Filtrar por status
+              Estado
             </Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger id="statusFilter" className="min-w-[150px]">
@@ -290,11 +363,8 @@ export default function Espacios() {
           </div>
         </div>
 
-        <div className="overflow-x-auto mt-8">
-          <Table className="min-w-full border border-gray-200 my-2">
-            <TableCaption className="text-gray-500 text-sm mt-4">
-              Gestión de espacios institucionales
-            </TableCaption>
+        <div className="overflow-x-auto mt-4">
+          <Table className="min-w-full border rounded-lg shadow-sm ">
             <TableHeader>
               <TableRow className="bg-gray-100">
                 <TableHead>Nombre</TableHead>
@@ -327,7 +397,10 @@ export default function Espacios() {
                 filteredEspacios.map((espacio) => {
                   const sedeInfo = sedesMap[espacio.id_sede];
                   return (
-                    <TableRow key={espacio.id_espacio} className="hover:bg-gray-50">
+                    <TableRow
+                      key={espacio.id_espacio}
+                      className="hover:bg-gray-50"
+                    >
                       <TableCell>{espacio.nombre}</TableCell>
                       <TableCell>
                         {espacio.tipo
@@ -354,19 +427,35 @@ export default function Espacios() {
                           <span className="text-red-600">Inactivo</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-center space-x-2">
-                        <Button
-                          className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded"
-                          onClick={() => handleEdit(espacio)}
-                        >
-                          Ver / Editar
-                        </Button>
-                        <Button
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300"
-                          onClick={() => handleDelete(espacio)}
-                        >
-                          Eliminar
-                        </Button>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          {espacio.status === false ? (
+                            <div className="w-44">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                                onClick={() => handleActivate(espacio)}
+                              >
+                                Activar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="w-44 flex gap-2">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                                onClick={() => handleEdit(espacio)}
+                              >
+                                Editar
+                              </Button>
+
+                              <Button
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                                onClick={() => handleDelete(espacio)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -394,17 +483,18 @@ export default function Espacios() {
                 <InputField
                   label="Nombre"
                   value={form.nombre}
-                  onChange={(value) => setForm((prev) => ({ ...prev, nombre: value }))}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, nombre: value }))
+                  }
                   required
                 />
                 <SelectField
                   label="Tipo"
                   value={form.tipo}
-                  onChange={(value) => setForm((prev) => ({ ...prev, tipo: value }))}
-                  options={tipos.map((tipo) => ({
-                    label: tipo.charAt(0).toUpperCase() + tipo.slice(1).replace("_", " "),
-                    value: tipo,
-                  }))}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, tipo: value }))
+                  }
+                  options={TIPOS}
                   placeholder="Seleccioná el tipo"
                   required
                 />
@@ -416,13 +506,17 @@ export default function Espacios() {
                   type="number"
                   min="1"
                   value={form.capacidad}
-                  onChange={(value) => setForm((prev) => ({ ...prev, capacidad: value }))}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, capacidad: value }))
+                  }
                   required
                 />
                 <SelectField
                   label="Estado"
                   value={form.estado}
-                  onChange={(value) => setForm((prev) => ({ ...prev, estado: value }))}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, estado: value }))
+                  }
                   options={ESTADOS}
                   placeholder="Seleccioná el estado"
                   required
@@ -432,14 +526,18 @@ export default function Espacios() {
               <InputField
                 label="Ubicación"
                 value={form.ubicacion}
-                onChange={(value) => setForm((prev) => ({ ...prev, ubicacion: value }))}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, ubicacion: value }))
+                }
                 required
               />
 
               <SelectField
                 label="Sede"
                 value={form.id_sede}
-                onChange={(value) => setForm((prev) => ({ ...prev, id_sede: value }))}
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, id_sede: value }))
+                }
                 options={sedes.map((sede) => ({
                   label: `${sede.nombre} (${sede.ubicacion})`,
                   value: sede.id_sede,
@@ -452,7 +550,9 @@ export default function Espacios() {
               {editingEspacio && (
                 <StatusToggle
                   value={form.status}
-                  onChange={(value) => setForm((prev) => ({ ...prev, status: value }))}
+                  onChange={(value) =>
+                    setForm((prev) => ({ ...prev, status: value }))
+                  }
                 />
               )}
 
@@ -486,25 +586,25 @@ export default function Espacios() {
       {error && (
         <PopUp title="Error" message={error} onClose={() => setError(null)} />
       )}
-      {successMessage && (
-        <PopUp
-          title="Operación exitosa"
-          message={successMessage}
-          onClose={() => setSuccessMessage(null)}
-        />
-      )}
       {confirmDialog && (
         <ConfirmDialog
           title={confirmDialog.title}
           message={confirmDialog.message}
           confirmText={confirmDialog.confirmText}
+          hideCancel={confirmDialog.hideCancel}
           onConfirm={async () => {
             const currentDialog = confirmDialog;
-            setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+            if (currentDialog.hideCancel) {
+              // Si es el modal de éxito, solo ejecutar el callback
+              currentDialog.onConfirm?.();
+              return;
+            }
+            setConfirmDialog((prev) =>
+              prev ? { ...prev, loading: true } : prev
+            );
             try {
               await currentDialog.onConfirm?.();
             } finally {
-              setConfirmDialog(null);
             }
           }}
           onCancel={() => setConfirmDialog(null)}
@@ -578,7 +678,9 @@ function StatusToggle({ value, onChange }) {
         <Button
           type="button"
           variant={value ? "default" : "outline"}
-          className={`px-4 py-1 ${value ? "bg-green-600 hover:bg-green-700" : ""}`}
+          className={`px-4 py-1 ${
+            value ? "bg-green-600 hover:bg-green-700" : ""
+          }`}
           onClick={() => onChange(true)}
         >
           Activo

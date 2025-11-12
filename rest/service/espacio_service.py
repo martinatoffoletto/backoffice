@@ -102,11 +102,6 @@ class EspacioService:
         return await EspacioDAO.soft_delete(db, id_espacio)
     
     @staticmethod
-    async def get_available_tipos(db: AsyncSession) -> List[str]:
-        """Obtener todos los tipos únicos de espacios"""
-        return await EspacioDAO.get_all_tipos(db)
-    
-    @staticmethod
     async def count_espacios_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> int:
         """Contar espacios activos por sede"""
         return await EspacioDAO.count_by_sede(db, id_sede)
