@@ -42,10 +42,10 @@ export default function Materias() {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-2xl  p-6 ">
-        <h1 className="font-bold text-xl mb-4 text-center">Gestión de Materias</h1>
-        <span className="block w-full h-[2px] bg-sky-950"></span>
-        <div className="flex flex-col items-start  lg:flex-row  gap-4 min-w-xl mt-8">
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Gestión de Materias</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
+        <div className="flex flex-col items-center lg:flex-row lg:items-center gap-4 mt-8">
           <h3 className="text-sm flex-shrink-0">Elija qué tipo de operación desea realizar</h3>
 
           <SelectForm

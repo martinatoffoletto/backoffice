@@ -228,14 +228,14 @@ export default function ModifUsuario() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 py-4 sm:px-8">
-      <div className="w-full max-w-4xl">
+    <div className="w-full flex flex-col items-center">
+      <div className="w-full max-w-2xl p-6">
         {!completed && !showForm && (
           <div>
-            <h1 className="font-bold text-start text-xl mb-4 text-black">
+            <h1 className="font-bold text-center text-2xl mb-4">
               Modificación de Usuario
             </h1>
-            <span className="block w-full h-[2px] bg-sky-950 mb-6" />
+            <span className="block w-full h-[3px] bg-sky-950 mb-6" />
 
             <FieldSet>
               <FieldGroup className="space-y-5">
@@ -284,10 +284,10 @@ export default function ModifUsuario() {
         {/* Formulario de modificación */}
         {showForm && userData && (
           <div>
-            <h1 className="font-bold text-start text-xl mb-4 text-black">
+            <h1 className="font-bold text-center text-2xl mb-4">
               Modificar Usuario - {userData.legajo}
             </h1>
-            <span className="block w-full h-[2px] bg-sky-950 mb-6" />
+            <span className="block w-full h-[3px] bg-sky-950 mb-6" />
 
             {!userData.status ? (
               // Usuario inactivo - Solo mostrar opción de activar

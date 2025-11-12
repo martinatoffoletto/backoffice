@@ -70,10 +70,10 @@ export default function AltaCarrera(second) {
     }
 
     return(
-    <div className="flex min-h-screen min-w-2xl  items-start justify-start">
-      <div className="w-full max-w-2xl p-8">
-        <h1 className="font-bold text-xl mb-4">Alta de Carrera</h1>
-        <span className="block w-full h-[2px] bg-sky-950"></span>
+    <div className="w-full flex flex-col items-center">
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Alta de Carrera</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
 
         {!completed &&(
           <form onSubmit={handleSubmit} className="space-y-5 mt-8">
@@ -93,7 +93,7 @@ export default function AltaCarrera(second) {
               </Field>
 
 
-              <div className="flex justify-start">
+              <div className="flex justify-center">
                 <Button
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
