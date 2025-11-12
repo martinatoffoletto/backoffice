@@ -129,12 +129,12 @@ export default function AltaUsuario() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 py-4 sm:px-8">
-      <div className="w-full max-w-3xl">
-        <h1 className="font-bold text-start text-xl mb-4 text-black">
+    <div className="w-full flex flex-col items-center">
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">
           Alta de Usuario
         </h1>
-        <span className="block w-full h-[2px] bg-sky-950 mb-6"></span>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
 
         {!completed && (
           <FormUsuarios

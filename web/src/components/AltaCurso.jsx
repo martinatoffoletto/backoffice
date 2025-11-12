@@ -132,10 +132,10 @@ export default function AltaCurso() {
             }
             
     return(
-        <div className="flex min-h-screen min-w-3xl  items-center justify-start ">
+        <div className="w-full flex flex-col items-center">
            { !completed && ( 
-            <div className="w-full max-w-md md:max-w-2xl p-6 ">
-                <h1 className="font-bold text-xl mb-4">Alta Curso</h1>
+            <div className="w-full max-w-2xl p-6">
+                <h1 className="font-bold text-center text-2xl mb-4">Alta Curso</h1>
                 <span className="block w-full h-[3px] bg-sky-950"></span>
 
 
@@ -360,7 +360,7 @@ export default function AltaCurso() {
                     </FieldGroup>
                 </FieldSet>
 
-          <div className="flex justify-end mt-4 gap-4">
+          <div className="flex justify-center mt-4 gap-4">
             <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"

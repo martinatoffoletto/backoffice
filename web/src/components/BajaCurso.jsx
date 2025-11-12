@@ -38,16 +38,16 @@ export default function BajaCurso() {
       
   }
   return (
-    <div className="flex min-h-screen items-start justify-center">
+    <div className="w-full flex flex-col items-center">
       {/* Sección de búsqueda */}
-      <div className="w-full max-w-2xl bg-white p-6 rounded-xl ">
-        <h1 className="font-bold text-xl mb-4">Baja de Curso</h1>
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Baja de Curso</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <h3 className="text-sm mb-4 mt-8">
+        <h3 className="text-sm mb-4 mt-8 text-center">
             Ingrese el número de curso para proceder a la baja
         </h3>
-        <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
+        <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
           
 
           {/* Input controlado */}
@@ -70,29 +70,33 @@ export default function BajaCurso() {
         </div>
          {/* Resultado simulado */}
       {found && (
-        <div className="flex flex-col justify-center items-center border w-full max-w-md bg-white  border-red-500  p-6 rounded-xl shadow-md ml-6">
-          <CardCurso title={"Desea eliminar el curso?"} curso={cursoData}/>
-          <Button
-            variant="destructive"
-            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
-            onClick={handleBaja}
-          >
-            Confirmar Baja
-          </Button>
+        <div className="w-full max-w-2xl p-6">
+          <div className="flex flex-col justify-center items-center border w-full bg-white border-red-500 p-6 rounded-xl shadow-md">
+            <CardCurso title={"Desea eliminar el curso?"} curso={cursoData}/>
+            <Button
+              variant="destructive"
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4"
+              onClick={handleBaja}
+            >
+              Confirmar Baja
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-                    <CardCurso title={"Curso eliminado exitosamente"} curso={cursoData} />
-                    <Button
-                    onClick={() => {setShowPopup(false); setValue("")}}
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-md"
-                    >
-                    OK
-                    </Button>
-                </div>
+        <div className="w-full max-w-2xl p-6">
+          <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
+            <CardCurso title={"Curso eliminado exitosamente"} curso={cursoData} />
+            <Button
+            onClick={() => {setShowPopup(false); setValue("")}}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-md"
+            >
+            OK
+            </Button>
+          </div>
+        </div>
       )}
 
       { error && (<PopUp title={"Error"} message={error} onClose={()=>setError(null)}/>)}

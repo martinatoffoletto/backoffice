@@ -91,15 +91,15 @@ export default function ModifMateria(second) {
     }) 
 
     return(
-        <div className="flex min-h-screen min-w-2xl flex-col items-start justify-start  my-4">
-            <div className="w-full max-w-md p-6 ">
-                <h1 className="font-bold text-xl mb-4">Modificación de Materia</h1>
-                        <span className="block w-full h-[2px] bg-sky-950"></span>
+        <div className="w-full flex flex-col items-center">
+            <div className="w-full max-w-2xl p-6">
+                <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
+                <span className="block w-full h-[3px] bg-sky-950"></span>
 
-                <h3 className="text-sm mb-2 mt-8">
+                <h3 className="text-sm mb-2 mt-8 text-center">
                 Ingrese el numero de materia a modificar
                 </h3>
-                <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
+                <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
                 {/* Input controlado */}
                 <Input
                 className="mb-4"
@@ -117,12 +117,12 @@ export default function ModifMateria(second) {
                 Buscar
                 </Button>
                 </div>
-                {searchError && <p className="text-red-500 mt-2">{searchError}</p>}
+                {searchError && <p className="text-red-500 mt-2 text-center">{searchError}</p>}
             </div>
             { showForm &&( 
-                <div className="w-full max-w-md bg-white p-6 my-4">
-                    <h1 className="font-bold text-xl mb-4">Modificación de Materia</h1>
-                    <span className="block w-full h-[2px] bg-sky-950"></span>
+                <div className="w-full max-w-2xl p-6">
+                    <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
+                    <span className="block w-full h-[3px] bg-sky-950"></span>
 
                     <FieldSet className={"my-4"}>
                     <FieldGroup>
@@ -176,14 +176,16 @@ export default function ModifMateria(second) {
             )}
 
             {completed && (
-                <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-                    <CardMateria title={"Información modificada exitosamente"} materia={form}/>
-                    <Button
-                    onClick={() => {setCompleted(false); setValue("")}}
-                    className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
-                    >
-                    OK
-                    </Button>
+                <div className="w-full max-w-2xl p-6">
+                    <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
+                        <CardMateria title={"Información modificada exitosamente"} materia={form}/>
+                        <Button
+                        onClick={() => {setCompleted(false); setValue("")}}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                        >
+                        OK
+                        </Button>
+                    </div>
                 </div>
             )}
             {addError && (

@@ -101,13 +101,13 @@ export default function ModifCurso() {
   };
 
   return (
-    <div className="flex min-h-screen min-w-3xl flex-col items-start justify-start py-4">
+    <div className="w-full flex flex-col items-center">
       {/* Búsqueda de curso */}
       {!showForm && (
-        <div className="w-full max-w-md md:max-w-2xl p-6">
-          <h1 className="font-bold text-xl mb-4">Modificar Curso</h1>
+        <div className="w-full max-w-2xl p-6">
+          <h1 className="font-bold text-center text-2xl mb-4">Modificar Curso</h1>
           <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
-          <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
+          <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
             <Input
             className="lg:mb-4"
                 placeholder="Número de Curso"
@@ -128,8 +128,8 @@ export default function ModifCurso() {
 
       {/* Formulario */}
       {showForm && (
-        <div className="w-full max-w-2xl p-6 mt-4">
-          <h1 className="font-bold text-xl mb-4 ">Modificar Curso</h1>
+        <div className="w-full max-w-2xl p-6">
+          <h1 className="font-bold text-center text-2xl mb-4">Modificar Curso</h1>
            <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
           <FieldSet className="my-6">
             <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -331,7 +331,7 @@ export default function ModifCurso() {
             </FieldGroup>
           </FieldSet>
 
-          <div className="flex justify-end mt-4 gap-4">
+          <div className="flex justify-center mt-4 gap-4">
             <Button
               onClick={handleSubmit}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
@@ -344,14 +344,16 @@ export default function ModifCurso() {
 
       {/* PopUp de éxito */}
       {completed && (
-        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-          <CardCurso title={"Curso modificado exitosamente"} curso={cursoData} />
-          <Button
-            onClick={() => setCompleted(false)}
-            className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
-          >
-            OK
-          </Button>
+        <div className="w-full max-w-2xl p-6">
+          <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
+            <CardCurso title={"Curso modificado exitosamente"} curso={cursoData} />
+            <Button
+              onClick={() => setCompleted(false)}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+            >
+              OK
+            </Button>
+          </div>
         </div>
       )}
 
