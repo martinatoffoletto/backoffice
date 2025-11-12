@@ -29,6 +29,7 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         <LinkNavBar to="/cursos" title="Gestión de Cursos" onClick={() => setMenuOpen(false)} />
         <LinkNavBar to="/precios" title="Listado de Precios" onClick={() => setMenuOpen(false)} />
         <LinkNavBar to="/sedes" title="Sedes" onClick={() => setMenuOpen(false)} />
+        <LinkNavBar to="/espacios" title="Espacios" onClick={() => setMenuOpen(false)} />
         <LinkNavBar to="/Asignacion" title="Asignación de Docentes" onClick={() => setMenuOpen(false)} />
       </div>
 
