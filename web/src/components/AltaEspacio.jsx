@@ -18,6 +18,8 @@ import { useState, useEffect } from "react";
 import { altaEspacio, obtenerTiposEspacios } from "@/api/espaciosApi";
 import { obtenerSedes } from "@/api/sedesApi";
 
+const DEFAULT_TIPOS = ["aula", "laboratorio", "espacio_comun", "oficina"];
+
 export default function AltaEspacio() {
   const [form, setForm] = useState({
     nombre: "",
@@ -36,15 +38,24 @@ export default function AltaEspacio() {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const [sedesData, tiposData] = await Promise.all([
-          obtenerSedes(true),
-          obtenerTiposEspacios()
+        const [sedesResponse, tiposData] = await Promise.all([
+          obtenerSedes(0, 100, true),
+          obtenerTiposEspacios(),
         ]);
-        setSedes(sedesData);
-        setTipos(tiposData);
+        const normalizedSedes = Array.isArray(sedesResponse)
+          ? sedesResponse
+          : Array.isArray(sedesResponse?.sedes)
+          ? sedesResponse.sedes
+          : [];
+        setSedes(normalizedSedes);
+        const normalizedTipos = Array.isArray(tiposData)
+          ? tiposData.map((tipo) => (typeof tipo === "string" ? tipo.toLowerCase() : tipo))
+          : [];
+        setTipos(normalizedTipos.length ? normalizedTipos : DEFAULT_TIPOS);
       } catch (err) {
         console.error("Error al cargar datos:", err);
         setError("Error al cargar los datos. Por favor, recargá la página.");
+        setTipos(DEFAULT_TIPOS);
       }
     };
     cargarDatos();

@@ -77,7 +77,7 @@ class EspacioService:
     async def update_espacio(db: AsyncSession, id_espacio: uuid.UUID, espacio_update: EspacioUpdate) -> Optional[Espacio]:
         """Actualizar un espacio existente"""
         # Verificar que el espacio existe
-        existing_espacio = await EspacioDAO.get_by_id(db, id_espacio)
+        existing_espacio = await EspacioDAO.get_by_id(db, id_espacio, include_inactive=True)
         if not existing_espacio:
             return None
         

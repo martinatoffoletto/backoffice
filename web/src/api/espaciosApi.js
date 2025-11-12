@@ -20,15 +20,17 @@ export const bajaEspacio = async (id) => {
   }
 };
 
-export const modificarEspacio = async (id, espacioData) => {
+export const actualizarEspacio = async (id, espacioData) => {
   try {
-    const response = await axiosInstance.put(`/espacios/${id}`, espacioData);
+    const response = await axiosInstance.patch(`/espacios/${id}`, espacioData);
     return response.data; 
   } catch (err) {
     console.error("Error al modificar el espacio:", err);
     throw err; 
   }
 };
+
+export const modificarEspacio = actualizarEspacio;
 
 export const espacioPorId = async (id) => {
   try {

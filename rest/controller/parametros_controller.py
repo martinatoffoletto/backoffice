@@ -109,6 +109,25 @@ async def update_parametro(
             detail=f"Error al actualizar el parámetro: {str(e)}"
         )
 
+@router.patch("/{id_parametro}", response_model=Parametro)
+async def partial_update_parametro(
+    id_parametro: uuid.UUID,
+    parametro_update: ParametroUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Actualizar parcialmente un parámetro por su ID"""
+    try:
+        resultado = await ParametroService.update_parametro(db, id_parametro, parametro_update)
+        return resultado["parametro"]
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el parámetro: {str(e)}"
+        )
+
 @router.delete("/{id_parametro}", status_code=status.HTTP_200_OK)
 async def delete_parametro(
     id_parametro: uuid.UUID,

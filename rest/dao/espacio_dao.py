@@ -26,14 +26,11 @@ class EspacioDAO:
         return db_espacio
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_espacio: uuid.UUID) -> Optional[Espacio]:
+    async def get_by_id(db: AsyncSession, id_espacio: uuid.UUID, include_inactive: bool = False) -> Optional[Espacio]:
         """Obtener espacio por ID"""
-        query = select(Espacio).where(
-            and_(
-                Espacio.id_espacio == id_espacio,
-                Espacio.status == True
-            )
-        )
+        query = select(Espacio).where(Espacio.id_espacio == id_espacio)
+        if not include_inactive:
+            query = query.where(Espacio.status == True)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
@@ -171,7 +168,7 @@ class EspacioDAO:
             await db.execute(query)
             await db.commit()
         
-        return await EspacioDAO.get_by_id(db, id_espacio)
+        return await EspacioDAO.get_by_id(db, id_espacio, include_inactive=True)
     
     @staticmethod
     async def soft_delete(db: AsyncSession, id_espacio: uuid.UUID) -> bool:
