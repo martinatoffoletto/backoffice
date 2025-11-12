@@ -55,13 +55,15 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
   const [pendingEstadoChange, setPendingEstadoChange] = useState({ id_clase: null, nuevo_estado: null });
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Para forzar re-render de las cajas
 
   const cargarClases = useCallback(async () => {
     setLoading(true);
     try {
       const response = await obtenerClasesPorCurso(id_curso, true);
       // Asegurar que siempre sea un array
-      setClases(Array.isArray(response) ? response : []);
+      const clasesActualizadas = Array.isArray(response) ? response : [];
+      setClases(clasesActualizadas);
     } catch (err) {
       console.error("Error al cargar clases:", err);
       setError("Error al cargar las clases del curso.");
@@ -78,55 +80,109 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
     }
   }, [id_curso, cargarClases]);
 
-
-  // Calcular días del calendario según el día de cursada
-  const diasCalendario = useMemo(() => {
-    if (!fecha_inicio || !fecha_fin || !dia) return [];
-
-    // Convertir a Date si es string o mantener si ya es Date
-    const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
-    const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
+  // Función helper para normalizar fechas (solo año, mes, día)
+  // Debe estar antes de diasCalendario porque se usa dentro del useMemo
+  const normalizarFecha = (fecha) => {
+    if (!fecha) return null;
     
-    // Validar que las fechas sean válidas
-    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) return [];
-    
-    const diaSemana = diaSemanaMap[dia.toLowerCase()];
-    const dias = [];
-
-    // Iterar desde fecha_inicio hasta fecha_fin
-    const fechaActual = new Date(inicio);
-    while (fechaActual <= fin) {
-      if (fechaActual.getDay() === diaSemana) {
-        dias.push(new Date(fechaActual));
+    let date;
+    if (fecha instanceof Date) {
+      date = fecha;
+    } else if (typeof fecha === 'string') {
+      // Si es un string en formato ISO (YYYY-MM-DD), parsearlo directamente sin zona horaria
+      if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+        const [year, month, day] = fecha.split('T')[0].split('-').map(Number);
+        date = new Date(year, month - 1, day);
+      } else {
+        date = new Date(fecha);
       }
-      fechaActual.setDate(fechaActual.getDate() + 1);
+    } else {
+      date = new Date(fecha);
     }
+    
+    if (isNaN(date.getTime())) return null;
+    // Usar solo año, mes y día, ignorando hora
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
 
-    // Si es turno Noche, agregar un sábado aleatorio del rango
-    if (turno && turno.toLowerCase() === "noche") {
-      const sabados = [];
-      const fechaSabado = new Date(inicio);
-      while (fechaSabado <= fin) {
-        if (fechaSabado.getDay() === 6) {
-          sabados.push(new Date(fechaSabado));
+  // Calcular días del calendario según el día de cursada Y las fechas de las clases existentes
+  const diasCalendario = useMemo(() => {
+    const dias = [];
+    
+    // 1. Calcular días basados en el curso (fecha_inicio, fecha_fin, dia, turno)
+    if (fecha_inicio && fecha_fin && dia) {
+      // Convertir a Date si es string o mantener si ya es Date
+      const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
+      const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
+      
+      // Validar que las fechas sean válidas
+      if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
+        const diaSemana = diaSemanaMap[dia.toLowerCase()];
+        
+        // Iterar desde fecha_inicio hasta fecha_fin
+        const fechaActual = new Date(inicio);
+        while (fechaActual <= fin) {
+          if (fechaActual.getDay() === diaSemana) {
+            dias.push(new Date(fechaActual));
+          }
+          fechaActual.setDate(fechaActual.getDate() + 1);
         }
-        fechaSabado.setDate(fechaSabado.getDate() + 1);
-      }
-      if (sabados.length > 0) {
-        const sabadoAleatorio = sabados[Math.floor(Math.random() * sabados.length)];
-        // Solo agregar si no está ya en la lista
-        const yaExiste = dias.some(
-          (d) => d.toDateString() === sabadoAleatorio.toDateString()
-        );
-        if (!yaExiste) {
-          dias.push(sabadoAleatorio);
+
+        // Si es turno Noche, agregar un sábado aleatorio del rango
+        if (turno && turno.toLowerCase() === "noche") {
+          const sabados = [];
+          const fechaSabado = new Date(inicio);
+          while (fechaSabado <= fin) {
+            if (fechaSabado.getDay() === 6) {
+              sabados.push(new Date(fechaSabado));
+            }
+            fechaSabado.setDate(fechaSabado.getDate() + 1);
+          }
+          if (sabados.length > 0) {
+            const sabadoAleatorio = sabados[Math.floor(Math.random() * sabados.length)];
+            // Solo agregar si no está ya en la lista
+            const yaExiste = dias.some(
+              (d) => d.toDateString() === sabadoAleatorio.toDateString()
+            );
+            if (!yaExiste) {
+              dias.push(sabadoAleatorio);
+            }
+          }
         }
       }
+    }
+    
+    // 2. Agregar fechas de las clases existentes (para incluir clases con fechas modificadas)
+    if (Array.isArray(clases) && clases.length > 0) {
+      clases.forEach((clase) => {
+        if (clase && clase.fecha_clase) {
+          const fechaClase = normalizarFecha(clase.fecha_clase);
+          if (fechaClase) {
+            // Verificar si la fecha ya está en la lista
+            const yaExiste = dias.some((d) => {
+              const fechaD = normalizarFecha(d);
+              return fechaD && 
+                     fechaD.getFullYear() === fechaClase.getFullYear() &&
+                     fechaD.getMonth() === fechaClase.getMonth() &&
+                     fechaD.getDate() === fechaClase.getDate();
+            });
+            
+            if (!yaExiste) {
+              dias.push(fechaClase);
+            }
+          }
+        }
+      });
     }
 
     // Ordenar por fecha
-    return dias.sort((a, b) => a - b);
-  }, [fecha_inicio, fecha_fin, dia, turno]);
+    return dias.sort((a, b) => {
+      const fechaA = normalizarFecha(a);
+      const fechaB = normalizarFecha(b);
+      if (!fechaA || !fechaB) return 0;
+      return fechaA.getTime() - fechaB.getTime();
+    });
+  }, [fecha_inicio, fecha_fin, dia, turno, clases]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -151,30 +207,137 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
       // Convertir fecha a formato ISO string (YYYY-MM-DD) usando fecha local
       const fechaClase = fechaToLocalISOString(form.fecha_clase);
       
-      if (editingClase) {
-        await modificarClase(editingClase.id_clase, {
-          titulo: tituloTrimmed,
-          descripcion: form.descripcion || null,
-          fecha_clase: fechaClase,
-          tipo: form.tipo,
-          estado: form.estado,
-          observaciones: form.observaciones || null,
-        });
-      } else {
-        await altaClase({
-          id_curso: id_curso,
-          titulo: tituloTrimmed,
-          descripcion: form.descripcion || null,
-          fecha_clase: fechaClase,
-          tipo: form.tipo,
-          estado: form.estado,
-          observaciones: form.observaciones || null,
-        });
+      // Validar que la fecha sea válida
+      const fechaNormalizada = normalizarFecha(form.fecha_clase);
+      if (!fechaNormalizada) {
+        setError("La fecha seleccionada no es válida.");
+        return;
       }
+      
+      // Solo validar que la fecha esté en diasCalendario si estamos CREANDO una nueva clase
+      // Si estamos EDITANDO una clase existente, permitir cambiar la fecha a cualquier fecha
+      if (!editingClase) {
+        // Validar que la fecha esté en los días del calendario permitidos para nuevas clases
+        const fechaEstaEnCalendario = diasCalendario.some((fechaCal) => {
+          const fechaCalNormalizada = normalizarFecha(fechaCal);
+          if (!fechaCalNormalizada || !fechaNormalizada) return false;
+          // Comparar año, mes y día directamente
+          return fechaCalNormalizada.getFullYear() === fechaNormalizada.getFullYear() &&
+                 fechaCalNormalizada.getMonth() === fechaNormalizada.getMonth() &&
+                 fechaCalNormalizada.getDate() === fechaNormalizada.getDate();
+        });
+        
+        if (!fechaEstaEnCalendario) {
+          setError("Solo se pueden crear clases para los días programados en el calendario del curso.");
+          return;
+        }
+      }
+      
+      // Verificar si ya existe una clase para esta fecha
+      const claseExistenteEnNuevaFecha = obtenerClasePorFecha(form.fecha_clase);
+      
+      if (editingClase) {
+        // Si estamos editando una clase
+        const fechaOriginalNormalizada = normalizarFecha(editingClase.fecha_clase);
+        const fechaNuevaNormalizada = normalizarFecha(form.fecha_clase);
+        const fechaCambio = fechaOriginalNormalizada && fechaNuevaNormalizada && 
+                           fechaOriginalNormalizada.getTime() !== fechaNuevaNormalizada.getTime();
+        
+        if (fechaCambio && claseExistenteEnNuevaFecha && claseExistenteEnNuevaFecha.id_clase !== editingClase.id_clase) {
+          // La nueva fecha ya tiene una clase diferente, actualizar esa clase y eliminar la original
+          await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
+            titulo: tituloTrimmed,
+            descripcion: form.descripcion || null,
+            fecha_clase: fechaClase,
+            tipo: form.tipo,
+            estado: form.estado,
+            observaciones: form.observaciones || null,
+          });
+          // Eliminar la clase original ya que cambió de fecha
+          await bajaClase(editingClase.id_clase);
+        } else {
+          // Actualizar la clase editada normalmente (misma fecha o fecha sin clase existente)
+          await modificarClase(editingClase.id_clase, {
+            titulo: tituloTrimmed,
+            descripcion: form.descripcion || null,
+            fecha_clase: fechaClase,
+            tipo: form.tipo,
+            estado: form.estado,
+            observaciones: form.observaciones || null,
+          });
+        }
+      } else {
+        // Si estamos creando una nueva clase
+        if (claseExistenteEnNuevaFecha) {
+          // Ya existe una clase para esta fecha, actualizarla en lugar de crear una nueva
+          await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
+            titulo: tituloTrimmed,
+            descripcion: form.descripcion || null,
+            fecha_clase: fechaClase,
+            tipo: form.tipo,
+            estado: form.estado,
+            observaciones: form.observaciones || null,
+          });
+        } else {
+          // No existe clase para esta fecha, crear una nueva
+          await altaClase({
+            id_curso: id_curso,
+            titulo: tituloTrimmed,
+            descripcion: form.descripcion || null,
+            fecha_clase: fechaClase,
+            tipo: form.tipo,
+            estado: form.estado,
+            observaciones: form.observaciones || null,
+          });
+        }
+      }
+      
+      // Guardar información antes de limpiar para actualizar selectedDateBox
+      const estabaEditando = editingClase !== null;
+      const fechaOriginal = estabaEditando ? editingClase.fecha_clase : null;
+      const fechaNueva = form.fecha_clase;
+      
+      // Determinar si cambió la fecha antes de limpiar
+      let fechaCambio = false;
+      let fechaNuevaParaSeleccionar = null;
+      
+      if (estabaEditando && fechaOriginal && fechaNueva) {
+        const fechaOriginalNormalizada = normalizarFecha(fechaOriginal);
+        const fechaNuevaNormalizada = normalizarFecha(fechaNueva);
+        fechaCambio = fechaOriginalNormalizada && fechaNuevaNormalizada && 
+                     fechaOriginalNormalizada.getTime() !== fechaNuevaNormalizada.getTime();
+        
+        if (fechaCambio) {
+          // Preparar la fecha para seleccionar después de cargar
+          const fechaParaSeleccionar = fechaNueva instanceof Date 
+            ? fechaNueva 
+            : new Date(fechaNueva);
+          fechaNuevaParaSeleccionar = normalizarFecha(fechaParaSeleccionar);
+        }
+      }
+      
       // Cargar las clases actualizadas antes de limpiar el formulario
       await cargarClases();
+      
+      // Limpiar el formulario
       cleanForm();
-      setSelectedDateBox(null);
+      
+      // Si se cambió la fecha, actualizar selectedDateBox a la nueva fecha
+      if (fechaCambio && fechaNuevaParaSeleccionar) {
+        // Usar setTimeout para asegurar que el estado se actualice después del render
+        setTimeout(() => {
+          setSelectedDateBox(fechaNuevaParaSeleccionar.toDateString());
+          // Forzar re-render después de actualizar selectedDateBox
+          setRefreshKey(prev => prev + 1);
+        }, 100);
+      } else {
+        // Si no cambió la fecha o no estaba editando, limpiar la selección
+        setSelectedDateBox(null);
+        // Forzar re-render de las cajas
+        setTimeout(() => {
+          setRefreshKey(prev => prev + 1);
+        }, 100);
+      }
     } catch (err) {
       console.error("Error al guardar clase:", err);
       let errorMessage = "Error al guardar la clase";
@@ -291,44 +454,22 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
     setSelectedDateBox(null);
   };
 
-  // Función helper para normalizar fechas (solo año, mes, día)
-  const normalizarFecha = (fecha) => {
-    if (!fecha) return null;
-    
-    let date;
-    if (fecha instanceof Date) {
-      date = fecha;
-    } else if (typeof fecha === 'string') {
-      // Si es un string en formato ISO (YYYY-MM-DD), parsearlo directamente sin zona horaria
-      if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
-        const [year, month, day] = fecha.split('T')[0].split('-').map(Number);
-        date = new Date(year, month - 1, day);
-      } else {
-        date = new Date(fecha);
-      }
-    } else {
-      date = new Date(fecha);
-    }
-    
-    if (isNaN(date.getTime())) return null;
-    // Usar solo año, mes y día, ignorando hora
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  };
-
   const obtenerClasePorFecha = (fecha) => {
     if (!fecha) return null;
     const fechaNormalizada = normalizarFecha(fecha);
     if (!fechaNormalizada) return null;
     
     // Asegurar que clases sea un array antes de usar .find()
-    if (!Array.isArray(clases)) return null;
+    if (!Array.isArray(clases) || clases.length === 0) return null;
     
     const claseEncontrada = clases.find((c) => {
       if (!c || !c.fecha_clase) return false;
       const claseFechaNormalizada = normalizarFecha(c.fecha_clase);
       if (!claseFechaNormalizada) return false;
-      const coincide = fechaNormalizada.getTime() === claseFechaNormalizada.getTime();
-      return coincide;
+      // Comparar año, mes y día directamente para evitar problemas de tiempo
+      return fechaNormalizada.getFullYear() === claseFechaNormalizada.getFullYear() &&
+             fechaNormalizada.getMonth() === claseFechaNormalizada.getMonth() &&
+             fechaNormalizada.getDate() === claseFechaNormalizada.getDate();
     });
     
     return claseEncontrada;
@@ -387,22 +528,29 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
             <h2 className="font-semibold text-lg mb-4 text-black">
               Días de Clase Programados
             </h2>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3" key={refreshKey}>
               {diasCalendario.map((fecha) => {
                 const claseExistente = obtenerClasePorFecha(fecha);
-                const isSelected = selectedDateBox === fecha.toDateString();
+                const estaCancelada = claseExistente && claseExistente.estado === "cancelada";
+                // Normalizar ambas fechas para comparar correctamente
+                const fechaNormalizada = normalizarFecha(fecha);
+                const selectedDateNormalizada = selectedDateBox ? normalizarFecha(new Date(selectedDateBox)) : null;
+                const isSelected = selectedDateNormalizada && fechaNormalizada && 
+                                  selectedDateNormalizada.getTime() === fechaNormalizada.getTime();
                 const diaNumero = format(fecha, "d");
                 const mesCorto = format(fecha, "MMM", { locale: es }).toUpperCase();
 
                 return (
                   <button
-                    key={fecha.toDateString()}
+                    key={`${fecha.toDateString()}-${refreshKey}`}
                     type="button"
                     onClick={() => handleDateBoxClick(fecha)}
                     className={`
                       flex flex-col items-center justify-center
                       w-16 h-16 rounded-lg border-2 transition-all shadow-md
-                      ${claseExistente
+                      ${estaCancelada
+                        ? "border-red-500 bg-red-50 shadow-red-200"
+                        : claseExistente
                         ? "border-green-500 bg-green-50 shadow-green-200"
                         : isSelected
                         ? "border-blue-600 bg-blue-50 shadow-blue-200"
@@ -464,6 +612,23 @@ export default function GestionClases({ id_curso, fecha_inicio, fecha_fin, dia, 
                         selected={form.fecha_clase}
                         onSelect={(date) => setForm({ ...form, fecha_clase: date })}
                         initialFocus
+                        disabled={(date) => {
+                          // Si estamos editando una clase, permitir cualquier fecha
+                          // Si estamos creando una nueva clase, solo permitir fechas en diasCalendario
+                          if (editingClase) {
+                            return false; // Permitir todas las fechas al editar
+                          }
+                          
+                          // Para nuevas clases, solo permitir fechas en diasCalendario
+                          if (!date) return true;
+                          const fechaNormalizada = normalizarFecha(date);
+                          if (!fechaNormalizada) return true;
+                          
+                          return !diasCalendario.some((fechaCal) => {
+                            const fechaCalNormalizada = normalizarFecha(fechaCal);
+                            return fechaCalNormalizada && fechaCalNormalizada.getTime() === fechaNormalizada.getTime();
+                          });
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
