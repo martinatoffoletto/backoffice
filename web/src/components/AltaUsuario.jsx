@@ -144,7 +144,7 @@ export default function AltaUsuario() {
             initialCarreraSeleccionada=""
             initialSueldoForm={INITIAL_SUELDO_STATE}
             rolesOptions={rolesOptions}
-            carrerasMock={carreras}
+            carrerasMock={CARRERAS_MOCK}
             loadingRoles={loadingRoles}
             loadingSubmit={loadingSubmit}
             onSubmit={handleSubmit}

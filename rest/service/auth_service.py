@@ -3,6 +3,7 @@ from ..dao.auth_dao import AuthDAO
 from ..dao.usuario_dao import UsuarioDAO
 from ..schemas.auth_schema import LoginRequest, AuthResponse, RolInfo, VerifyResponse
 from typing import Optional
+import bcrypt
 
 class AuthService:
     
@@ -22,8 +23,8 @@ class AuthService:
         if not usuario.status:
             return None
         
-        # Verificar contraseña (la contraseña ya viene hasheada)
-        if login_request.contraseña != usuario.contraseña:
+        # Verificar contraseña usando bcrypt (compara texto plano con hash almacenado)
+        if not bcrypt.checkpw(login_request.contraseña.encode('utf-8'), usuario.contraseña.encode('utf-8')):
             return None
         
         # Crear objeto RolInfo
