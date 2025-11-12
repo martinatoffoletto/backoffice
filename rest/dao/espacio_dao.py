@@ -191,15 +191,6 @@ class EspacioDAO:
         return result.scalar_one_or_none() is not None
     
     @staticmethod
-    async def get_all_tipos(db: AsyncSession) -> List[str]:
-        """Obtener todos los tipos únicos de espacios"""
-        query = select(Espacio.tipo).where(
-            and_(Espacio.status == True, Espacio.tipo.isnot(None))
-        ).distinct()
-        result = await db.execute(query)
-        return [tipo.value for tipo in result.scalars().all() if tipo]
-    
-    @staticmethod
     async def count_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> int:
         """Contar espacios activos por sede"""
         query = select(Espacio).where(

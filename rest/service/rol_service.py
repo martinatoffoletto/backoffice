@@ -46,7 +46,7 @@ class RolService:
     
     @staticmethod
     async def update_rol(db: AsyncSession, rol_id: uuid.UUID, rol_update: RolUpdate) -> Tuple[Optional[Rol], Optional[str]]:
-        existing_rol = await RolDAO.get_by_id(db, rol_id, True)
+        existing_rol = await RolDAO.get_by_id(db, rol_id, None)
         if not existing_rol:
             return None, "Rol no encontrado"
         

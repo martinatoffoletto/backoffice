@@ -34,7 +34,6 @@ export default function Sedes() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
   const initialFormState = {
@@ -48,7 +47,6 @@ export default function Sedes() {
     setForm(initialFormState);
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleEdit = (sede) => {
@@ -60,7 +58,6 @@ export default function Sedes() {
     });
     setShowForm(true);
     setError(null);
-    setSuccessMessage(null);
   };
 
   const handleCancel = () => {
@@ -68,7 +65,80 @@ export default function Sedes() {
     setEditingSede(null);
     setForm(initialFormState);
     setError(null);
-    setSuccessMessage(null);
+  };
+
+  const handleDelete = (sede) => {
+    setConfirmDialog({
+      title: "Confirmar eliminación",
+      message: `¿Está seguro de eliminar la sede "${sede.nombre}"?`,
+      confirmText: "Eliminar",
+      onConfirm: async () => {
+        try {
+          await actualizarSede(sede.id_sede, { ...sede, status: false });
+          await fetchSedes();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Sede eliminada correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Error al eliminar la sede.";
+          setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
+  };
+
+  const handleActivate = (sede) => {
+    setConfirmDialog({
+      title: "Confirmar activación",
+      message: `¿Confirmás activar la sede "${sede.nombre}"?`,
+      confirmText: "Activar",
+      onConfirm: async () => {
+        try {
+          await actualizarSede(sede.id_sede, { ...sede, status: true });
+          await fetchSedes();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Sede activada correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Error al activar la sede.";
+          setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -99,12 +169,29 @@ export default function Sedes() {
         try {
           if (isEdit) {
             await actualizarSede(editingSede.id_sede, payload);
-            setSuccessMessage("Sede actualizada correctamente.");
           } else {
             await altaSede(payload);
-            setSuccessMessage("Sede creada correctamente.");
           }
           await fetchSedes();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: isEdit
+              ? "Sede actualizada correctamente."
+              : "Sede creada correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+
           setShowForm(false);
           setEditingSede(null);
           setForm(initialFormState);
@@ -114,6 +201,7 @@ export default function Sedes() {
             err.message ||
             "Ocurrió un error al guardar la sede.";
           setError(message);
+          setConfirmDialog(null);
         } finally {
           setIsSubmitting(false);
         }
@@ -125,7 +213,16 @@ export default function Sedes() {
     setLoading(true);
     setError(null);
     try {
-      const data = await obtenerSedes();
+      // Convertir el filtro del dropdown al formato del backend
+      let filter = null;
+      if (statusFilter === "active") {
+        filter = true;
+      } else if (statusFilter === "inactive") {
+        filter = false;
+      }
+      // Si es "all", filter queda como null
+
+      const data = await obtenerSedes(0, 100, filter);
       const normalizedSedes = Array.isArray(data)
         ? data
         : Array.isArray(data?.sedes)
@@ -141,19 +238,13 @@ export default function Sedes() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchSedes();
   }, [fetchSedes]);
 
-  const filteredSedes = useMemo(() => {
-    return sedes.filter((sede) => {
-      if (statusFilter === "all") return true;
-      const isActive = sede.status !== false;
-      return statusFilter === "active" ? isActive : !isActive;
-    });
-  }, [sedes, statusFilter]);
+  const filteredSedes = sedes;
 
   const emptyMessage =
     sedes.length === 0
@@ -166,10 +257,10 @@ export default function Sedes() {
         <h1 className="font-bold text-center text-2xl mb-4">Sedes</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Filtrar por status
+              Estado
             </Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger id="statusFilter" className="min-w-[150px]">
@@ -217,8 +308,8 @@ export default function Sedes() {
                     key={sede.id_sede || sede.id}
                     className="hover:bg-gray-50"
                   >
-                  <TableCell>{sede.nombre}</TableCell>
-                  <TableCell>{sede.ubicacion}</TableCell>
+                    <TableCell>{sede.nombre}</TableCell>
+                    <TableCell>{sede.ubicacion}</TableCell>
                     <TableCell>
                       {sede.status !== false ? (
                         <span className="text-green-600">Activo</span>
@@ -226,16 +317,38 @@ export default function Sedes() {
                         <span className="text-red-600">Inactivo</span>
                       )}
                     </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded"
-                      onClick={() => handleEdit(sede)}
-                    >
-                      Ver / Editar
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
+                        {sede.status === false ? (
+                          <div className="w-44">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                              onClick={() => handleActivate(sede)}
+                            >
+                              Activar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="w-44 flex gap-2">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                              onClick={() => handleEdit(sede)}
+                            >
+                              Editar
+                            </Button>
+
+                            <Button
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                              onClick={() => handleDelete(sede)}
+                            >
+                              Eliminar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </div>
@@ -315,25 +428,25 @@ export default function Sedes() {
             onClose={() => setError(null)}
           />
         )}
-        {successMessage && (
-          <PopUp
-            title={"Operación exitosa"}
-            message={successMessage}
-            onClose={() => setSuccessMessage(null)}
-          />
-        )}
         {confirmDialog && (
           <ConfirmDialog
             title={confirmDialog.title}
             message={confirmDialog.message}
             confirmText={confirmDialog.confirmText}
+            hideCancel={confirmDialog.hideCancel}
             onConfirm={async () => {
               const currentDialog = confirmDialog;
-              setConfirmDialog((prev) => (prev ? { ...prev, loading: true } : prev));
+              if (currentDialog.hideCancel) {
+                // Si es el modal de éxito, solo ejecutar el callback
+                currentDialog.onConfirm?.();
+                return;
+              }
+              setConfirmDialog((prev) =>
+                prev ? { ...prev, loading: true } : prev
+              );
               try {
                 await currentDialog.onConfirm?.();
               } finally {
-                setConfirmDialog(null);
               }
             }}
             onCancel={() => setConfirmDialog(null)}

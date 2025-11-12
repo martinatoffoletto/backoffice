@@ -115,21 +115,6 @@ async def get_espacio_with_sede(
             detail=f"Error al obtener el espacio con sede: {str(e)}"
         )
 
-@router.get("/tipos/disponibles", response_model=List[str])
-async def get_available_tipos(
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Obtener todos los tipos únicos de espacios
-    """
-    try:
-        return await EspacioService.get_available_tipos(db)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener tipos disponibles: {str(e)}"
-        )
-
 @router.get("/sede/{id_sede}/count", response_model=int)
 async def count_espacios_by_sede(
     id_sede: uuid.UUID,

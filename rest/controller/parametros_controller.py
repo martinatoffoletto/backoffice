@@ -30,7 +30,7 @@ async def create_parametro(
 async def get_all_parametros(
     skip: int = Query(0, ge=0, description="Número de registros a omitir"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de registros a retornar"),
-    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True/False). Si es None, solo muestra activos"),
+    status_filter: Optional[bool] = Query(None, description="Filtrar por status (True=activos, False=inactivos, None=todos)"),
     param: Optional[str] = Query(None, description="Parámetro de búsqueda. Valores válidos: id, id_parametro, nombre, tipo, status"),
     value: Optional[str] = Query(None, description="Valor a buscar para el parámetro indicado"),
     db: AsyncSession = Depends(get_async_db)
