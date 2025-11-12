@@ -1,13 +1,4 @@
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-} from "@/components/ui/select.jsx";
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -19,111 +10,122 @@ import {
 } from "@/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import SelectForm from "@/components/SelectForm";
-import AltaSede from "@/components/AltaSede";
-import ModifSede from "@/components/ModifSede";
-import BajaSede from "@/components/BajaSede";
-import BusquedaSede from "@/components/BusquedaSede";
 import PopUp from "@/components/PopUp";
-import { obtenerSedes } from "@/api/sedesApi";
+import { altaSede, obtenerSedes, actualizarSede } from "@/api/sedesApi";
 
 export default function Sedes() {
-  const [value, setValue] = useState("");
-  const opciones = [
-    { value: "alta", label: "Alta de Sede" },
-    { value: "baja", label: "Baja de Sede" },
-    { value: "modif", label: "Modificación de Sede" },
-    { value: "busqueda", label: "Búsqueda de Sede" },
-  ];
-
   const [sedes, setSedes] = useState([]);
   const [editingSede, setEditingSede] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
-    id: null,
     nombre: "",
     ubicacion: "",
-    cantidadAulas: "",
-    tieneComedor: false,
-    capComedor: "",
-    tieneBiblioteca: false,
+    status: true,
   });
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  const handleEdit = (sede) => {
-    setEditingSede(sede);
-    setForm({
-      id: sede.id,
-      nombre: sede.nombre,
-      ubicacion: sede.ubicacion,
-      cantidadAulas: sede.cantidadAulas?.toString() ?? "",
-      tieneComedor: sede.tieneComedor ?? false,
-      capComedor: sede.capComedor?.toString() ?? "",
-      tieneBiblioteca: sede.tieneBiblioteca ?? false,
-    });
-    setShowForm(true);
+  const initialFormState = {
+    nombre: "",
+    ubicacion: "",
+    status: true,
   };
 
   const handleAdd = () => {
     setEditingSede(null);
+    setForm(initialFormState);
+    setShowForm(true);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const handleEdit = (sede) => {
+    setEditingSede(sede);
     setForm({
-      id: null,
-      nombre: "",
-      ubicacion: "",
-      cantidadAulas: "",
-      tieneComedor: "",
-      capComedor: "",
-      tieneBiblioteca: "",
+      nombre: sede.nombre ?? "",
+      ubicacion: sede.ubicacion ?? "",
+      status: sede.status !== undefined ? sede.status : true,
     });
     setShowForm(true);
+    setError(null);
+    setSuccessMessage(null);
   };
 
   const handleCancel = () => {
     setShowForm(false);
     setEditingSede(null);
-    setForm({
-      nombre: "",
-      ubicacion: "",
-      cantidadAulas: "",
-      tieneComedor: "",
-      capComedor: "",
-      tieneBiblioteca: "",
-    });
+    setForm(initialFormState);
+    setError(null);
+    setSuccessMessage(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newSede = {
-      ...form,
-      cantidadAulas: Number(form.cantidadAulas),
-    };
-    if (editingSede) {
-      setSedes(
-        sedes.map((s) => (s.id === editingSede.id ? { ...s, ...newSede } : s))
-      );
-    } else {
-      const nextId = sedes.length
-        ? Math.max(...sedes.map((s) => s.id || 0)) + 1
-        : 1;
-      setSedes([...sedes, { ...newSede, id: nextId }]);
+    if (!form.nombre.trim() || !form.ubicacion.trim()) {
+      setError("Los campos Nombre y Ubicación son obligatorios.");
+      return;
     }
-    handleCancel();
+
+    const payload = {
+      nombre: form.nombre.trim(),
+      ubicacion: form.ubicacion.trim(),
+    };
+    if (editingSede?.id_sede) {
+      payload.status = form.status;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      if (editingSede?.id_sede) {
+        await actualizarSede(editingSede.id_sede, payload);
+        setSuccessMessage("Sede actualizada correctamente.");
+      } else {
+        await altaSede(payload);
+        setSuccessMessage("Sede creada correctamente.");
+      }
+      await fetchSedes();
+      setShowForm(false);
+      setEditingSede(null);
+      setForm(initialFormState);
+    } catch (err) {
+      const message =
+        err.response?.data?.detail ||
+        err.message ||
+        "Ocurrió un error al guardar la sede.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const fetchSedes = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await obtenerSedes();
+      const normalizedSedes = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.sedes)
+        ? data.sedes
+        : [];
+      setSedes(normalizedSedes);
+    } catch (err) {
+      const message =
+        err.response?.data?.detail ||
+        err.message ||
+        "Ocurrió un error al cargar las sedes.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const getSedes = async () => {
-      try {
-        const data = await obtenerSedes();
-        console.log("Sedes obtenidas:", data);
-        setSedes(data);
-      } catch (err) {
-        console.error("Error al cargar las sedes:", err);
-        setError(err.message);
-      }
-    };
-
-    getSedes();
-  }, []);
+    fetchSedes();
+  }, [fetchSedes]);
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -137,14 +139,42 @@ export default function Sedes() {
               <TableRow>
                 <TableHead>Sede</TableHead>
                 <TableHead>Dirección</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sedes.map((sede) => (
-                <TableRow key={sede.id} className="hover:bg-gray-50">
+              {!loading && sedes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
+                    No hay sedes disponibles.
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">
+                    Cargando sedes...
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!loading &&
+                sedes.map((sede) => (
+                  <TableRow
+                    key={sede.id_sede || sede.id}
+                    className="hover:bg-gray-50"
+                  >
                   <TableCell>{sede.nombre}</TableCell>
                   <TableCell>{sede.ubicacion}</TableCell>
+                    <TableCell>
+                      {sede.status !== false ? (
+                        <span className="text-green-600">Activo</span>
+                      ) : (
+                        <span className="text-red-600">Inactivo</span>
+                      )}
+                    </TableCell>
                   <TableCell className="text-center">
                     <Button
                       className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded"
@@ -168,8 +198,6 @@ export default function Sedes() {
             Agregar Sede
           </Button>
         )}
-
-        {/* Formulario responsive */}
         {showForm && (
           <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
             <h2 className="font-bold text-xl mb-4">
@@ -178,63 +206,44 @@ export default function Sedes() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <InputField
-                  label="Denominación"
+                  label="Nombre"
                   value={form.nombre}
                   onChange={(v) => setForm({ ...form, nombre: v })}
+                  required
                 />
                 <InputField
-                  label="Dirección"
+                  label="Ubicación"
                   value={form.ubicacion}
                   onChange={(v) => setForm({ ...form, ubicacion: v })}
+                  required
                 />
               </div>
 
-              <div className="flex flex-col md:flex-row gap-4">
-                <InputField
-                  label="Cantidad de aulas"
-                  type="number"
-                  value={form.cantidadAulas}
-                  onChange={(v) => setForm({ ...form, cantidadAulas: v })}
-                />
-                <RadioGroupField
-                  label="¿Tiene comedor?"
-                  value={form.tieneComedor}
-                  options={[
-                    { label: "Sí", value: true },
-                    { label: "No", value: false },
-                  ]}
-                  onChange={(v) =>
-                    setForm({
-                      ...form,
-                      tieneComedor: v,
-                      capComedor: v ? form.capComedor : "",
-                    })
-                  }
-                />
-                <InputField
-                  label="Capacidad del Comedor"
-                  type="number"
-                  value={form.capComedor}
-                  onChange={(v) => setForm({ ...form, capComedor: v })}
-                  disabled={!form.tieneComedor}
-                />
-                <RadioGroupField
-                  label="¿Tiene biblioteca?"
-                  value={form.tieneBiblioteca}
-                  options={[
-                    { label: "Sí", value: true },
-                    { label: "No", value: false },
-                  ]}
-                  onChange={(v) => setForm({ ...form, tieneBiblioteca: v })}
-                />
-              </div>
+              {editingSede && (
+                <div className="flex flex-col md:flex-row gap-4">
+                  <RadioGroupField
+                    label="Estado"
+                    value={form.status}
+                    options={[
+                      { label: "Activo", value: true },
+                      { label: "Inactivo", value: false },
+                    ]}
+                    onChange={(v) => setForm({ ...form, status: v })}
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
                 <Button
                   type="submit"
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  disabled={isSubmitting}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
                 >
-                  {editingSede ? "Actualizar" : "Agregar"}
+                  {isSubmitting
+                    ? "Guardando..."
+                    : editingSede
+                    ? "Actualizar"
+                    : "Agregar"}
                 </Button>
                 <Button
                   type="button"
@@ -255,6 +264,13 @@ export default function Sedes() {
             onClose={() => setError(null)}
           />
         )}
+        {successMessage && (
+          <PopUp
+            title={"Operación exitosa"}
+            message={successMessage}
+            onClose={() => setSuccessMessage(null)}
+          />
+        )}
       </div>
     </div>
   );
@@ -267,6 +283,7 @@ function InputField({
   onChange,
   type = "text",
   disabled = false,
+  required = false,
 }) {
   return (
     <div className="flex-1 flex flex-col">
@@ -276,6 +293,7 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
+        required={required}
         className={`w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 
           ${disabled ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
       />

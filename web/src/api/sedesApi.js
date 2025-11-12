@@ -20,15 +20,17 @@ export const bajaSede = async (id) => {
   }
 };
 
-export const modifcarSede = async (id, sedeData) => {
+export const actualizarSede = async (id, sedeData) => {
   try {
-    const response = await axiosInstance.put(`/sedes/${id}`, sedeData);
+    const response = await axiosInstance.patch(`/sedes/${id}`, sedeData);
     return response.data; 
   } catch (err) {
-    console.error("Error al modificar el sede:", err);
+    console.error("Error al modificar la sede:", err);
     throw err; 
   }
 };
+
+export const modifcarSede = actualizarSede;
 
 export const sedePorId = async (id) => {
   try {
