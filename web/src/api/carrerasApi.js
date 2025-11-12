@@ -53,6 +53,17 @@ export const carreraPorId=async(id)=>{
     }
 }
 
+export const carreraPorNombre=async(name)=>{
+    try{
+        console.log(name)
+        const carrera= mockCarreras.find((m)=>m.nombre === name)
+        if (!carrera) throw new Error("Carrera no encontrada")       
+        return Promise.resolve(carrera)
+    }catch(err){
+        console.error("Error al buscar carrera", err)
+        throw err;
+    }
+}
 
 export const obtenerCarreras=async()=>{
   try{
