@@ -16,9 +16,8 @@ import AltaMateria from "@/components/AltaMateria";
 import BusquedaMateria from "@/components/BusquedaMateria";
 import BajaMateria from "@/components/BajaMateria";
 import ModifMateria from "@/components/ModifMateria";
-// import AltaUsuario from "@/components/AltaUsuario";
-// import ModifUsuario from "@/components/ModifUsuario";
-// import BajaUsuario from "@/components/BajaUsuario";
+import GestionCorrelativas from "@/components/GestionCorrelativas";
+
 
 export default function Materias() {
 
@@ -29,7 +28,8 @@ export default function Materias() {
     { value: "alta", label: "Alta de Materia" },
     { value: "baja", label: "Baja de Materia" },
     { value: "modif", label: "Modificación de Materia" },
-    { value: "busqueda", label: "Búsqueda de Materia" }
+    { value: "busqueda", label: "Búsqueda de Materia" },
+    { value: "correlativas", label: "Gestión de Correlativas" }
   ];
 
   
@@ -42,10 +42,10 @@ export default function Materias() {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-2xl  p-6 ">
-        <h1 className="font-bold text-xl mb-4 text-center">Gestión de Materias</h1>
-        <span className="block w-full h-[2px] bg-sky-950"></span>
-        <div className="flex flex-col items-start  lg:flex-row  gap-4 min-w-xl mt-8">
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Gestión de Materias</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
+        <div className="flex flex-col items-center lg:flex-row lg:items-center gap-4 mt-8">
           <h3 className="text-sm flex-shrink-0">Elija qué tipo de operación desea realizar</h3>
 
           <SelectForm
@@ -81,6 +81,10 @@ export default function Materias() {
 
       {value==="busqueda" && (
         <BusquedaMateria/>
+      )}
+
+      {value==="correlativas" && (
+        <GestionCorrelativas/>
       )}
 
     </div>

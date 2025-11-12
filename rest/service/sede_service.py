@@ -98,7 +98,7 @@ class SedeService:
     async def update_sede(db: AsyncSession, id_sede: uuid.UUID, sede_update: SedeUpdate) -> dict:
         """Actualizar una sede existente"""
         # Verificar que existe
-        existing_sede = await SedeDAO.get_by_id(db, id_sede)
+        existing_sede = await SedeDAO.get_by_id(db, id_sede, include_inactive=True)
         if not existing_sede:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

@@ -189,6 +189,45 @@ export const sedes = [
     status: "inactivo",
   },
 ];
+//ESPACIOS
+export const espacios = [
+  {
+    id:1,
+    nombre: "634",
+    sede: "Campus Buenos Aires",
+    tipoEspacio: "aula",
+    capacidad: 60,
+    ubicacion: "Lima 3",
+    estado: "disponible",
+  },
+  {
+    id:2,
+    nombre: "L304",
+    sede: "Campus Buenos Aires",
+    tipoEspacio: "laboratorio",
+    capacidad: 65,
+    ubicacion: "UADE Labs",
+    estado: "ocupado",
+  },
+  {
+    id:3,
+    nombre: "Oficina de Alumnos",
+    sede: "Campus Buenos Aires",
+    tipoEspacio: "oficina",
+    capacidad: 30,
+    ubicacion: "Lima 2",
+    estado: "ocupado",
+  },
+  {
+    id:4,
+    nombre: "Comedor La Sede",
+    sede: "Campus Buenos Aires",
+    tipoEspacio: "espacio_comun",
+    capacidad: 200,
+    ubicacion: "Lima 1",
+    estado: "disponible",
+  },
+];
 
 // mockData.js
 export const carreras = [

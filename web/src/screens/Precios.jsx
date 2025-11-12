@@ -8,169 +8,313 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PopUp from "@/components/PopUp";
-import {altaParametro, bajaParametro, modifcarParametro, obtenerParametros } from "@/api/preciosApi";
+import {
+  altaParametro,
+  bajaParametro,
+  actualizarParametro,
+  obtenerParametros,
+} from "@/api/preciosApi";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Precios() {
-
   const [prices, setPrices] = useState([]);
-  const [editing, setEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingParametro, setEditingParametro] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [form, setForm] = useState({
-    id: null,
     nombre: "",
     tipo: "",
-    valor_numerico: 0,
+    valor_numerico: "",
     valor_texto: "",
-    fecha_modificacion: null,
-    status: "activo",
+    status: true,
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
-  const handleEdit = (price) => {
-    setForm({ 
-      id: price.id,
-      nombre: price.nombre,
-      tipo: price.tipo,
-      valor_numerico: price.valor_numerico ?? 0,
-      valor_texto: price.valor_texto ?? "",
-      fecha_modificacion: price.fecha_modificacion ?? null,
-      status: price.status ?? "activo",
-    });
-    setEditing(true);
-    setShowForm(true);
+  const initialFormState = {
+    nombre: "",
+    tipo: "",
+    valor_numerico: "",
+    valor_texto: "",
+    status: true,
   };
 
+  const fetchPrecios = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Convertir el filtro del frontend al formato que espera el backend
+      let filter = null; // null muestra todos
+      if (statusFilter === "active") {
+        filter = true; // true muestra solo activos
+      } else if (statusFilter === "inactive") {
+        filter = false; // false muestra solo inactivos
+      }
+
+      const response = await obtenerParametros(0, 100, filter);
+      const normalized = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.parametros)
+        ? response.parametros
+        : [];
+      setPrices(normalized);
+    } catch (err) {
+      const message =
+        err.response?.data?.detail ||
+        err.message ||
+        "Error al obtener los precios.";
+      console.error("Error al obtener precios:", err);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchPrecios();
+  }, [fetchPrecios]);
+
+  // Ya no necesitamos filtrar en el frontend porque el backend lo hace
+  const filteredPrices = prices;
+
+  const emptyMessage =
+    prices.length === 0
+      ? "No hay precios disponibles."
+      : "No hay precios para el filtro seleccionado.";
+
   const handleAdd = () => {
-    setForm({ nombre: "", valor_numerico: 0 });
-    setEditing(false);
+    setEditingParametro(null);
+    setForm(initialFormState);
     setShowForm(true);
+    setError(null);
+  };
+
+  const handleEdit = (parametro) => {
+    setEditingParametro(parametro);
+    setForm({
+      nombre: parametro.nombre ?? "",
+      tipo: parametro.tipo ?? "",
+      valor_numerico:
+        parametro.valor_numerico !== null &&
+        parametro.valor_numerico !== undefined
+          ? String(parametro.valor_numerico)
+          : "",
+      valor_texto: parametro.valor_texto ?? "",
+      status: parametro.status !== undefined ? parametro.status : true,
+    });
+    setShowForm(true);
+    setError(null);
   };
 
   const handleCancel = () => {
-    setForm({
-      id: null,
-      nombre: "",
-      tipo: "",
-      valor_numerico: 0,
-      valor_texto: "",
-      fecha_modificacion: null,
-      status: "activo",
-    });
-    setEditing(false);
     setShowForm(false);
+    setEditingParametro(null);
+    setForm(initialFormState);
+    setError(null);
   };
 
-  // const savePrice = async () => {
-  //   if (!form.nombre || !form.valor) {
-  //     setError("Por favor, completá todos los campos obligatorios.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const method = editing ? "PUT" : "POST";
-  //     const url = editing
-  //       ? `/api/precios/${encodeURIComponent(form.nombre)}`
-  //       : "/api/precios";
-
-  //     console.log("Guardando precio con metodo:", method, "en URL:", url);
-
-  //     const response = await fetch(url, {
-  //       method,
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ title: form.nombre, price: form.valor }),
-  //     });
-
-  //     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  //     const data = await response.json();
-  //     console.log(editing ? "Precio actualizado:" : "Precio agregado:", data);
-
-  //     // Actualizar lista local
-  //     if (editing) {
-  //       setPrices(prices.map(p => p.title === form.nombre ? { ...p, price: form.valor } : p));
-  //     } else {
-  //       setPrices([...prices, { ...form }]);
-  //     }
-
-  //     handleCancel();
-  //   } catch (err) {
-  //     console.error("Error al guardar el precio:", err);
-  //     setError(err.message || "Error desconocido");
-  //   }
-  // };
-
   const savePrice = async () => {
-  if (!form.nombre || !form.valor_numerico) {
-    setError("Por favor, completá todos los campos obligatorios.");
-    return;
-  }
+    if (!form.nombre.trim() || !form.tipo.trim()) {
+      setError("Por favor, completá los campos Nombre y Tipo.");
+      return;
+    }
 
-  try {
+    if (!form.valor_numerico || isNaN(Number(form.valor_numerico))) {
+      setError("Ingresá un valor numérico válido.");
+      return;
+    }
+
     const payload = {
-      ...form,
-      fecha_modificacion: new Date().toISOString(), // ✅ fecha actual
+      nombre: form.nombre.trim(),
+      tipo: form.tipo.trim(),
+      valor_numerico: Number(form.valor_numerico),
+      valor_texto: form.valor_texto?.trim() || null,
     };
 
-    if (editing) {
-      await modifcarParametro(form.id, payload);
-    } else {
-      await altaParametro(payload);
+    if (editingParametro?.id_parametro) {
+      payload.status = form.status;
     }
 
-    // recargar lista o actualizar estado local
-    const updatedList = await obtenerParametros();
-    setPrices(updatedList);
+    const isEdit = Boolean(editingParametro?.id_parametro);
+    setConfirmDialog({
+      title: isEdit ? "Confirmar actualización" : "Confirmar creación",
+      message: `¿Confirmás ${
+        isEdit ? "actualizar" : "crear"
+      } el precio "${form.nombre.trim()}"?`,
+      confirmText: isEdit ? "Actualizar" : "Guardar",
+      onConfirm: async () => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+          if (isEdit) {
+            await actualizarParametro(editingParametro.id_parametro, payload);
+          } else {
+            await altaParametro(payload);
+          }
+          await fetchPrecios();
 
-    handleCancel();
-  } catch (err) {
-    console.error("Error al guardar el precio:", err);
-    setError(err.message || "Error desconocido");
-  }
-};
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: isEdit
+              ? "Precio actualizado correctamente."
+              : "Precio creado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
 
-const deletePrice = async (id) => {
-  try {
-    await bajaParametro(id);
-    setPrices(prices.filter((p) => p.id !== id));
-  } catch (err) {
-    console.error("Error al eliminar el precio:", err);
-    setError(err.message || "Error desconocido");
-  }
-};
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
 
+          setShowForm(false);
+          setEditingParametro(null);
+          setForm(initialFormState);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al guardar el precio.";
+          console.error("Error al guardar el precio:", err);
+          setError(message);
+          setConfirmDialog(null);
+        } finally {
+          setIsSubmitting(false);
+        }
+      },
+    });
+  };
 
+  const requestDeletePrice = (parametro) => {
+    if (!parametro) return;
+    const id = parametro.id_parametro || parametro.id;
+    if (!id) return;
+    setConfirmDialog({
+      title: "Confirmar eliminación",
+      message: `¿Confirmás eliminar el precio "${parametro.nombre}"?`,
+      confirmText: "Eliminar",
+      onConfirm: async () => {
+        try {
+          await bajaParametro(id);
+          await fetchPrecios();
 
-  // const deletePrice = async (title) => {
-  //   try {
-  //     await bajaPrecio(title);
-  //     setPrices(prices.filter(p => p.title !== title));
-  //   } catch (err) {
-  //     console.error("Error al eliminar el precio:", err);
-  //     setError(err.message || "Error desconocido");
-  //   }
-  // };
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Precio eliminado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
 
-  useEffect(()=>{
-    const getParams=async()=>{
-      try{
-        const response= await obtenerParametros()
-        setPrices(response)
-        console.log("precios obtenidos:", response)
-      }catch(err){
-        console,log("Error al obtener precios:", err)
-        setError(err.message)
-      }
-    }
-    getParams()
-  },[])
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al eliminar el precio.";
+          console.error("Error al eliminar el precio:", err);
+          setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
+  };
+
+  const handleActivate = (parametro) => {
+    if (!parametro) return;
+    const id = parametro.id_parametro || parametro.id;
+    if (!id) return;
+    setConfirmDialog({
+      title: "Confirmar activación",
+      message: `¿Confirmás activar el precio "${parametro.nombre}"?`,
+      confirmText: "Activar",
+      onConfirm: async () => {
+        try {
+          const payload = {
+            nombre: parametro.nombre,
+            tipo: parametro.tipo,
+            valor_numerico: parametro.valor_numerico,
+            valor_texto: parametro.valor_texto,
+            status: true,
+          };
+          await actualizarParametro(id, payload);
+          await fetchPrecios();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: "Precio activado correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          const message =
+            err.response?.data?.detail ||
+            err.message ||
+            "Ocurrió un error al activar el precio.";
+          console.error("Error al activar el precio:", err);
+          setError(message);
+          setConfirmDialog(null);
+        }
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-3xl">
-        <h1 className="font-bold text-center text-2xl mb-4">Listado de Precios</h1>
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Listado de Precios
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="statusFilter" className="text-sm font-semibold">
+              Estado
+            </Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <div className="overflow-x-auto mt-8">
           <Table className="min-w-full border border-gray-200 my-2">
@@ -180,36 +324,83 @@ const deletePrice = async (id) => {
             <TableHeader>
               <TableRow className="bg-gray-100">
                 <TableHead>Concepto</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>Precio</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {prices.map((p) => (
-                <TableRow key={p.nombre} className="hover:bg-gray-50">
-                  <TableCell>{p.nombre}</TableCell>
-                  <TableCell>${String(p.valor_numerico)}</TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 mx-2 rounded"
-                      onClick={() => handleEdit(p)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      className="bg-gray.50 hover:bg-gray-200  border-1 border-gray-300 text-gray-800 font-bold py-1 px-3 mx-2 rounded"
-                      onClick={() => deletePrice(p.id)}
-                    >
-                      Eliminar
-                    </Button>
+              {!loading && filteredPrices.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-500">
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Cargando precios...
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!loading &&
+                filteredPrices.map((parametro) => (
+                  <TableRow
+                    key={parametro.id_parametro || parametro.id}
+                    className="hover:bg-gray-50"
+                  >
+                    <TableCell>{parametro.nombre}</TableCell>
+                    <TableCell>{parametro.tipo || "-"}</TableCell>
+                    <TableCell>
+                      ${String(parametro.valor_numerico ?? 0)}
+                    </TableCell>
+                    <TableCell>
+                      {parametro.status !== false ? (
+                        <span className="text-green-600">Activo</span>
+                      ) : (
+                        <span className="text-red-600">Inactivo</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
+                        {parametro.status === false ? (
+                          <div className="w-44">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                              onClick={() => handleActivate(parametro)}
+                            >
+                              Activar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="w-44 flex gap-2">
+                            <Button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                              onClick={() => handleEdit(parametro)}
+                            >
+                              Editar
+                            </Button>
+
+                            <Button
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                              onClick={() => requestDeletePrice(parametro)}
+                            >
+                              Eliminar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </div>
 
-        {/* Botón Agregar Precio */}
         {!showForm && (
           <Button
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
@@ -219,41 +410,81 @@ const deletePrice = async (id) => {
           </Button>
         )}
 
-        {/* Formulario responsive */}
         {showForm && (
           <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
             <h2 className="text-lg font-semibold mb-4">
-              {editing ? "Editar Precio" : "Agregar Nuevo Precio"}
+              {editingParametro ? "Editar Precio" : "Agregar Nuevo Precio"}
             </h2>
             <div className="flex flex-col md:flex-row gap-4 mb-4">
               <InputField
                 label="Concepto"
                 value={form.nombre}
                 onChange={(v) => setForm({ ...form, nombre: v })}
+                required
               />
-              <InputField
-                label="Tipo"
-                value={form.tipo}
-                onChange={(v)=>setForm({...form, tipo:v})}
-              />
+              <div className="flex-1 flex flex-col">
+                <label className="text-sm font-medium mb-1">
+                  Tipo <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(val) => setForm({ ...form, tipo: val })}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="multa">Multa</SelectItem>
+                    <SelectItem value="sancion">Sanción</SelectItem>
+                    <SelectItem value="reserva">Reserva</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <InputField
                 label="Precio"
                 type="number"
                 value={form.valor_numerico}
-                onChange={(v) => setForm({ ...form, valor_numerico: parseFloat(v) || 0 })}
+                onChange={(v) => setForm({ ...form, valor_numerico: v })}
+                required
+                min="0"
+                step="0.01"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <InputField
+              label="Descripción"
+              value={form.valor_texto}
+              onChange={(v) => setForm({ ...form, valor_texto: v })}
+              placeholder="Descripción opcional"
+            />
+
+            {editingParametro && (
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <StatusToggle
+                  value={form.status}
+                  onChange={(status) => setForm({ ...form, status })}
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
               <Button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
                 onClick={savePrice}
+                disabled={isSubmitting}
               >
-                {editing ? "Actualizar" : "Guardar"}
+                {isSubmitting
+                  ? "Guardando..."
+                  : editingParametro
+                  ? "Actualizar"
+                  : "Guardar"}
               </Button>
               <Button
                 variant="outline"
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
                 onClick={handleCancel}
+                disabled={isSubmitting}
               >
                 Cancelar
               </Button>
@@ -262,12 +493,49 @@ const deletePrice = async (id) => {
         )}
       </div>
 
-      {error && <PopUp title="Error" message={error} onClose={() => setError(null)} />}
+      {error && (
+        <PopUp title="Error" message={error} onClose={() => setError(null)} />
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText}
+          hideCancel={confirmDialog.hideCancel}
+          onConfirm={async () => {
+            const currentDialog = confirmDialog;
+            if (currentDialog.hideCancel) {
+              // Si es el modal de éxito, solo ejecutar el callback
+              currentDialog.onConfirm?.();
+              return;
+            }
+            setConfirmDialog((prev) =>
+              prev ? { ...prev, loading: true } : prev
+            );
+            try {
+              await currentDialog.onConfirm?.();
+            } finally {
+              // No cerrar aquí, el onConfirm interno lo maneja
+            }
+          }}
+          onCancel={() => setConfirmDialog(null)}
+          loading={Boolean(confirmDialog.loading)}
+        />
+      )}
     </div>
   );
 }
 
-function InputField({ label, value, onChange, type = "text" }) {
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  placeholder = "",
+  min,
+  step,
+}) {
   return (
     <div className="flex-1 flex flex-col">
       <label className="text-sm font-medium mb-1">{label}</label>
@@ -275,8 +543,40 @@ function InputField({ label, value, onChange, type = "text" }) {
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        required={required}
+        placeholder={placeholder}
+        min={min}
+        step={step}
         className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+    </div>
+  );
+}
+
+function StatusToggle({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm font-medium">Estado:</span>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant={value ? "default" : "outline"}
+          className={`px-4 py-1 ${
+            value ? "bg-green-600 hover:bg-green-700" : ""
+          }`}
+          onClick={() => onChange(true)}
+        >
+          Activo
+        </Button>
+        <Button
+          type="button"
+          variant={!value ? "default" : "outline"}
+          className={`px-4 py-1 ${!value ? "bg-red-600 hover:bg-red-700" : ""}`}
+          onClick={() => onChange(false)}
+        >
+          Inactivo
+        </Button>
+      </div>
     </div>
   );
 }

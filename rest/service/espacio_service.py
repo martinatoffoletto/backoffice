@@ -77,7 +77,7 @@ class EspacioService:
     async def update_espacio(db: AsyncSession, id_espacio: uuid.UUID, espacio_update: EspacioUpdate) -> Optional[Espacio]:
         """Actualizar un espacio existente"""
         # Verificar que el espacio existe
-        existing_espacio = await EspacioDAO.get_by_id(db, id_espacio)
+        existing_espacio = await EspacioDAO.get_by_id(db, id_espacio, include_inactive=True)
         if not existing_espacio:
             return None
         
@@ -100,11 +100,6 @@ class EspacioService:
     async def delete_espacio(db: AsyncSession, id_espacio: uuid.UUID) -> bool:
         """Eliminación lógica de un espacio"""
         return await EspacioDAO.soft_delete(db, id_espacio)
-    
-    @staticmethod
-    async def get_available_tipos(db: AsyncSession) -> List[str]:
-        """Obtener todos los tipos únicos de espacios"""
-        return await EspacioDAO.get_all_tipos(db)
     
     @staticmethod
     async def count_espacios_by_sede(db: AsyncSession, id_sede: uuid.UUID) -> int:

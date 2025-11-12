@@ -23,14 +23,11 @@ class ParametroDAO:
         return db_parametro
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_parametro: uuid.UUID) -> Optional[Parametro]:
+    async def get_by_id(db: AsyncSession, id_parametro: uuid.UUID, include_inactive: bool = False) -> Optional[Parametro]:
         """Obtener parámetro por ID"""
-        query = select(Parametro).where(
-            and_(
-                Parametro.id_parametro == id_parametro,
-                Parametro.status == True
-            )
-        )
+        query = select(Parametro).where(Parametro.id_parametro == id_parametro)
+        if not include_inactive:
+            query = query.where(Parametro.status == True)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
@@ -51,10 +48,10 @@ class ParametroDAO:
         """Obtener todos los parámetros con filtro opcional por status"""
         query = select(Parametro)
         
+        # Solo aplicar filtro si status_filter no es None
         if status_filter is not None:
             query = query.where(Parametro.status == status_filter)
-        else:
-            query = query.where(Parametro.status == True)
+        # Si es None, no filtrar y devolver todos los registros
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
@@ -94,7 +91,7 @@ class ParametroDAO:
             await db.execute(query)
             await db.commit()
         
-        return await ParametroDAO.get_by_id(db, id_parametro)
+        return await ParametroDAO.get_by_id(db, id_parametro, include_inactive=True)
     
     @staticmethod
     async def soft_delete(db: AsyncSession, id_parametro: uuid.UUID) -> bool:

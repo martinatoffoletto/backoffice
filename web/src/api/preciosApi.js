@@ -23,15 +23,17 @@ export const bajaParametro = async (id) => {
   }
 };
 
-export const modifcarParametro = async (id, parametroData) => {
+export const actualizarParametro = async (id, parametroData) => {
   try {
-    const response = await axiosInstance.put(`/parametros/${id}`, parametroData);
+    const response = await axiosInstance.patch(`/parametros/${id}`, parametroData);
     return response.data; 
   } catch (err) {
     console.error("Error al modificar el parametro:", err);
     throw err; 
   }
 };
+
+export const modifcarParametro = actualizarParametro;
 
 export const ParametroPorId = async (id) => {
   try {
@@ -60,7 +62,7 @@ export const obtenerParametros = async (skip = 0, limit = 100, status_filter = n
 export const buscarParametros = async (param, value, skip = 0, limit = 100) => {
   try {
     const params = { param, value, skip, limit };
-    const response = await axiosInstance.get("/parametros/search", { params });
+    const response = await axiosInstance.get("/parametros/", { params });
     return response.data;
   } catch (error) {
     console.error("Error al buscar parametros:", error);
@@ -81,5 +83,5 @@ export const obtenerTiposParametros = async () => {
 // Alias para mantener compatibilidad con código existente
 export const altaPrecio = altaParametro;
 export const bajaPrecio = bajaParametro;
-export const modificarPrecio = modifcarParametro;
+export const modificarPrecio = actualizarParametro;
 export const precioPorId = ParametroPorId;

@@ -21,14 +21,11 @@ class SedeDAO:
         return db_sede
     
     @staticmethod
-    async def get_by_id(db: AsyncSession, id_sede: uuid.UUID) -> Optional[Sede]:
+    async def get_by_id(db: AsyncSession, id_sede: uuid.UUID, include_inactive: bool = False) -> Optional[Sede]:
         """Obtener sede por ID"""
-        query = select(Sede).where(
-            and_(
-                Sede.id_sede == id_sede,
-                Sede.status == True
-            )
-        )
+        query = select(Sede).where(Sede.id_sede == id_sede)
+        if not include_inactive:
+            query = query.where(Sede.status == True)
         result = await db.execute(query)
         return result.scalar_one_or_none()
     
@@ -49,10 +46,10 @@ class SedeDAO:
         """Obtener todas las sedes con filtro opcional por status"""
         query = select(Sede)
         
+        # Solo aplicar filtro si status_filter no es None
         if status_filter is not None:
             query = query.where(Sede.status == status_filter)
-        else:
-            query = query.where(Sede.status == True)
+        # Si es None, no filtrar y devolver todos los registros
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
@@ -92,7 +89,7 @@ class SedeDAO:
             await db.execute(query)
             await db.commit()
         
-        return await SedeDAO.get_by_id(db, id_sede)
+        return await SedeDAO.get_by_id(db, id_sede, include_inactive=True)
     
     @staticmethod
     async def soft_delete(db: AsyncSession, id_sede: uuid.UUID) -> bool:

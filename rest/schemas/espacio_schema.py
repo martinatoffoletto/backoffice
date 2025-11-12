@@ -4,16 +4,16 @@ from enum import Enum
 import uuid
 
 class TipoEspacio(str, Enum):
-    AULA = "aula"
-    LABORATORIO = "laboratorio"
-    ESPACIO_COMUN = "espacio_comun"
-    OFICINA = "oficina"
-    OTROS = "otros"
+    AULA = "AULA"
+    LABORATORIO = "LABORATORIO"
+    ESPACIO_COMUN = "ESPACIO_COMUN"
+    OFICINA = "OFICINA"
+    OTROS = "OTROS"
 
 class EstadoEspacio(str, Enum):
-    DISPONIBLE = "disponible"
-    OCUPADO = "ocupado"
-    EN_MANTENIMIENTO = "en_mantenimiento"
+    DISPONIBLE = "DISPONIBLE"
+    OCUPADO = "OCUPADO"
+    EN_MANTENIMIENTO = "EN_MANTENIMIENTO"
 
 
 class Espacio(BaseModel):

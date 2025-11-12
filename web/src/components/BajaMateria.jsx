@@ -42,17 +42,17 @@ export default function BajaMateria() {
 
 
   return (
-    <div className="flex min-h-screen flex-col items-start justify-start mt-4">
+    <div className="w-full flex flex-col items-center">
       {/* Sección de búsqueda */}
-      <div className="w-full max-w-md  p-6">
-        <h1 className="font-bold text-xl mb-4">Baja de Materia</h1>
-        <span className="block w-full h-[2px] bg-sky-950"></span>
+      <div className="w-full max-w-2xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Baja de Materia</h1>
+        <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <h3 className="text-sm mb-2 mt-8">
+        <h3 className="text-sm mb-2 mt-8 text-center">
           Ingrese el número de materia para proceder a la baja
         </h3>
 
-        <div className="flex flex-col items-start lg:flex-row gap-4 min-w-xl">
+        <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
         {/* Input controlado */}
         <Input
           className="mb-4"
@@ -74,20 +74,23 @@ export default function BajaMateria() {
 
       {/* Resultado simulado */}
       {found !== null && (
-        <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-          <CardMateria title={"Materia encontrada"} materia={found}/>
-          <Button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
-            onClick={handleBaja}
-          >
-            Confirmar Baja
-          </Button>
+        <div className="w-full max-w-2xl p-6">
+          <div className="flex flex-col justify-center items-center border border-red-500 p-4 rounded-md shadow-sm gap-4 bg-white">
+            <CardMateria title={"Materia encontrada"} materia={found}/>
+            <Button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+              onClick={handleBaja}
+            >
+              Confirmar Baja
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Popup de confirmación */}
       {showPopup && (
-        <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
+        <div className="w-full max-w-2xl p-6">
+          <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
             <CardMateria title={"Información eliminada exitosamente"} materia={materiaData} />
             <Button
             onClick={() => {setShowPopup(false); setValue("");setMateriaData(null)}}
@@ -95,6 +98,7 @@ export default function BajaMateria() {
             >
             OK
             </Button>
+          </div>
         </div>
       )}
 

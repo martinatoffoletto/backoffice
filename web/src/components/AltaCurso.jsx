@@ -37,6 +37,7 @@ import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 
 export default function AltaCurso() {
+export default function AltaCurso() {
     const [form, setForm] = useState({
         id_curso: "",
         uuid_materia: "",
@@ -68,8 +69,8 @@ export default function AltaCurso() {
             console.log("Curso dado de alta exitosamente")
             setCursoData(nuevo_curso)
             setCompleted(true)
-            setShowPopUp(true)
-            setShowGestionClases(true)
+            setClases(mockClases)
+            setShowClassEditor(true);
         }catch(err){
             console.error(`Error al dar de alta el curso: ${err.message}`)
             setError(err.message)
@@ -90,11 +91,25 @@ export default function AltaCurso() {
         fetchData();
     }, []);
 
+    if (showSuccessScreen) {
+                return (
+                    <div className="flex flex-col justify-center items-center min-h-screen">
+                        <CardCurso title={"Curso dado de alta exitosamente"} curso={cursoData} />
+                        <Button
+                        onClick={() => setShowSuccessScreen(false)}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md mt-4"
+                        >
+                        OK
+                        </Button>
+                    </div>
+                );
+            }
+            
     return(
-        <div className="flex min-h-screen min-w-3xl  items-center justify-start ">
+        <div className="w-full flex flex-col items-center">
            { !completed && ( 
-            <div className="w-full max-w-md md:max-w-2xl p-6 ">
-                <h1 className="font-bold text-xl mb-4">Alta Curso</h1>
+            <div className="w-full max-w-2xl p-6">
+                <h1 className="font-bold text-center text-2xl mb-4">Alta Curso</h1>
                 <span className="block w-full h-[3px] bg-sky-950"></span>
 
 
@@ -324,7 +339,7 @@ export default function AltaCurso() {
                     </FieldGroup>
                 </FieldSet>
 
-          <div className="flex justify-end mt-4 gap-4">
+          <div className="flex justify-center mt-4 gap-4">
             <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
@@ -381,8 +396,7 @@ export default function AltaCurso() {
                     />
                 </div>
             )}
-
- 
+            
             {error && (
                 <PopUp title={"Error al dar de alta el curso"} message={error} onClose={() => setError(null)}/>
             )}

@@ -61,14 +61,14 @@ class UsuarioDAO:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def get_by_dni(db: AsyncSession, dni: str) -> Optional[Usuario]:
+    async def get_by_dni(db: AsyncSession, dni: str) -> List[Usuario]:
         query = select(Usuario).options(
             selectinload(Usuario.rol),
             selectinload(Usuario.sueldos),
             selectinload(Usuario.carreras)
         ).where(Usuario.dni == dni)
         result = await db.execute(query)
-        return result.scalar_one_or_none()
+        return result.scalars().all()
     
     @staticmethod
     async def get_by_email_institucional(db: AsyncSession, email: str) -> Optional[Usuario]:
@@ -123,3 +123,11 @@ class UsuarioDAO:
         result = await db.execute(query)
         await db.commit()
         return result.rowcount > 0
+    
+    @staticmethod
+    async def count_active_by_rol(db: AsyncSession, rol_id: uuid.UUID) -> int:
+        query = select(func.count(Usuario.id_usuario)).where(
+            and_(Usuario.id_rol == rol_id, Usuario.status == True)
+        )
+        result = await db.execute(query)
+        return result.scalar() or 0
