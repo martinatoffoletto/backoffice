@@ -97,6 +97,25 @@ async def update_sede(
             detail=f"Error al actualizar la sede: {str(e)}"
         )
 
+@router.patch("/{id_sede}", response_model=Sede)
+async def partial_update_sede(
+    id_sede: uuid.UUID,
+    sede_update: SedeUpdate,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Actualizar parcialmente una sede existente"""
+    try:
+        resultado = await SedeService.update_sede(db, id_sede, sede_update)
+        return resultado["sede"]
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar la sede: {str(e)}"
+        )
+
 @router.delete("/{id_sede}", status_code=status.HTTP_200_OK)
 async def delete_sede(
     id_sede: uuid.UUID,
