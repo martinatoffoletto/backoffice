@@ -54,9 +54,15 @@ let mockMateriaPorCarrera=[...materias_carrera];
 export const altaCurso = async (materiaData, carreras_materia) => {
   try {
     // carreras_materia no se usa en modo mock, pero se mantiene para compatibilidad
+    const curso_id = materiaData.id_curso && materiaData.id_curso.trim()
+      ? materiaData.id_curso
+      : (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `cur-${Date.now()}`);
     const nuevoCurso = {
-      id: mockCursos.length + 1, // simulamos autoincremental
       ...materiaData,
+      id: curso_id,
+      id_curso: curso_id,
     };
 
     mockCursos.push(nuevoCurso);
@@ -69,7 +75,9 @@ export const altaCurso = async (materiaData, carreras_materia) => {
 
 export const bajaCurso = async (id) => {
   try {
-    mockCursos = mockCursos.filter((s) => s.id_curso !== id);
+    mockCursos = mockCursos.filter(
+      (s) => (s.id_curso || s.id) !== id
+    );
     return Promise.resolve({message:"Curso eliminada exitosamente"});
   } catch (error) {
     console.error("Error al eliminar curso:", error);
@@ -79,7 +87,9 @@ export const bajaCurso = async (id) => {
 
 export const modificarCurso = async (id, cursoData) => {
   try {
-    const index = mockCursos.findIndex((s)=>s.id_curso === id)
+    const index = mockCursos.findIndex(
+      (s)=> (s.id_curso || s.id) === id
+    )
     if (index === -1) throw new Error("Curso no encontrado");
     mockCursos[index] = { ...mockCursos[index], ...cursoData };
     return Promise.resolve(mockCursos[index]); 
@@ -92,7 +102,9 @@ export const modificarCurso = async (id, cursoData) => {
 export const cursoPorId=async(id)=>{
     try{
         console.log(id)
-        const curso= mockCursos.find((m)=>m.id_curso === id)
+        const curso= mockCursos.find(
+          (m)=> (m.id_curso || m.id) === id
+        )
         console.log(curso)
         if (!curso) throw new Error("Curso no encontrada")       
         return Promise.resolve(curso)
@@ -104,7 +116,7 @@ export const cursoPorId=async(id)=>{
 
 export const obtenerCursos = async () => {
   try {
-    return Promise.resolve(mockCursos);
+    return Promise.resolve([...mockCursos]);
   } catch (error) {
     console.error("Error al obtener cursos:", error);
     throw error;

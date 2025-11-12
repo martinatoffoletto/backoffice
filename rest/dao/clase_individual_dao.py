@@ -14,6 +14,12 @@ class ClaseIndividualDAO:
     async def create(db: AsyncSession, clase: ClaseIndividualCreate) -> ClaseIndividual:
         """Crear una nueva clase individual"""
         clase_data = clase.model_dump()
+        # Convertir strings de enum a instancias de enum si es necesario
+        if 'tipo' in clase_data and isinstance(clase_data['tipo'], str):
+            clase_data['tipo'] = TipoClase(clase_data['tipo'])
+        if 'estado' in clase_data and isinstance(clase_data['estado'], str):
+            clase_data['estado'] = EstadoClase(clase_data['estado'])
+        
         db_clase = ClaseIndividual(**clase_data)
         db.add(db_clase)
         await db.commit()
@@ -128,6 +134,12 @@ class ClaseIndividualDAO:
     async def update(db: AsyncSession, id_clase: uuid.UUID, clase_update: ClaseIndividualUpdate) -> Optional[ClaseIndividual]:
         """Actualizar una clase individual"""
         update_data = clase_update.model_dump(exclude_unset=True)
+        
+        # Convertir strings de enum a instancias de enum si es necesario
+        if 'tipo' in update_data and isinstance(update_data['tipo'], str):
+            update_data['tipo'] = TipoClase(update_data['tipo'])
+        if 'estado' in update_data and isinstance(update_data['estado'], str):
+            update_data['estado'] = EstadoClase(update_data['estado'])
         
         if update_data:
             query = update(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase).values(**update_data)

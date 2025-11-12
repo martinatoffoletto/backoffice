@@ -26,8 +26,8 @@ class ClaseIndividual(Base):
     titulo = Column(String(200), nullable=False, comment="Título de la clase")
     descripcion = Column(Text, nullable=True, comment="Descripción detallada de la clase")
     fecha_clase = Column(Date, nullable=False, comment="Fecha programada de la clase")
-    tipo = Column(Enum(TipoClase), default=TipoClase.REGULAR, nullable=False, comment="Tipo de clase (regular, evaluación, entrega TPO)")
-    estado = Column(Enum(EstadoClase), default=EstadoClase.PROGRAMADA, nullable=False, comment="Estado actual de la clase")
+    tipo = Column(Enum(TipoClase, native_enum=False), default=TipoClase.REGULAR, nullable=False, comment="Tipo de clase (regular, evaluación, entrega TPO)")
+    estado = Column(Enum(EstadoClase, native_enum=False), default=EstadoClase.PROGRAMADA, nullable=False, comment="Estado actual de la clase")
     observaciones = Column(Text, nullable=True, comment="Observaciones adicionales sobre la clase")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del registro (activo/inactivo)")
     
