@@ -376,3 +376,17 @@ export const sueldos = [
     activo: true,
   },
 ];
+
+  export const asignaciones = [
+    { id: 1, profesor: "Juan Pérez", materia: "Calculo II", estado: "pendiente" },
+    { id: 2, profesor: "Laura Gómez", materia: "Programación I", estado: "aprobada" },
+    { id: 3, profesor: "Martín Díaz", materia: "Calculo I", estado: "rechazada" },
+    { id: 4, profesor: "Ana Torres", materia: "Ciencia de Datos", estado: "pendiente" },
+  ];
+
+  export const asignacionesCurso = [
+    { id: 1, profesor: "Juan Pérez", curso: "1000", estado: "pendiente" },
+    { id: 2, profesor: "Laura Gómez", curso: "2000", estado: "aprobada" },
+    { id: 3, profesor: "Martín Díaz", curso: "3000", estado: "rechazada" },
+    { id: 4, profesor: "Ana Torres", curso: "4000", estado: "pendiente" },
+  ];
