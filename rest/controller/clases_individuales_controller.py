@@ -44,46 +44,34 @@ async def get_all_clases(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    param: Optional[str] = Query(None, description="Parámetro de búsqueda: id, id_clase, id_curso, tipo, status"),
+    value: Optional[str] = Query(None, description="Valor a buscar (para status: true/false)"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
-    Obtener todas las clases individuales con filtros opcionales
+    Obtener todas las clases individuales con filtros opcionales.
+    Si se proporcionan 'param' y 'value', realiza una búsqueda específica.
+    Si no se proporcionan, devuelve todas las clases con los filtros de paginación y status.
     """
     try:
-        return await ClaseIndividualService.get_all_clases(db, skip, limit, status)
+        # Si se proporcionan param y value, realizar búsqueda
+        if param is not None and value is not None:
+            valid_params = ["id", "id_clase", "id_curso", "tipo", "status"]
+            if param.lower() not in valid_params:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
+                )
+            return await ClaseIndividualService.search_clases(db, param, value, skip, limit, status)
+        else:
+            # Si no hay parámetros de búsqueda, devolver todas las clases
+            return await ClaseIndividualService.get_all_clases(db, skip, limit, status)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener las clases: {str(e)}"
-        )
-
-
-@router.get("/search", response_model=List[ClaseIndividualResponse], response_model_exclude_none=True)
-async def search_clases(
-    param: str = Query(..., description="Parámetro de búsqueda: id, id_clase, id_curso, tipo, status"),
-    value: str = Query(..., description="Valor a buscar (para status: true/false)"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    status_filter: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
-    db: AsyncSession = Depends(get_async_db)
-):
-    """
-    Buscar clases individuales por diferentes parámetros
-    """
-    valid_params = ["id", "id_clase", "id_curso", "tipo", "status"]
-    if param.lower() not in valid_params:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
-        )
-    
-    try:
-        clases = await ClaseIndividualService.search_clases(db, param, value, skip, limit, status_filter)
-        return clases
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al buscar las clases: {str(e)}"
         )
 
 

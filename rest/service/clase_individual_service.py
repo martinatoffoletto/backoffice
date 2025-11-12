@@ -19,8 +19,10 @@ class ClaseIndividualService:
     async def create_clase(db: AsyncSession, clase: ClaseIndividualCreate) -> ClaseIndividualResponse:
         """Crear una nueva clase individual"""
         # Validaciones de negocio
-        if clase.fecha_clase < date.today():
-            raise ValueError("No se puede crear una clase en una fecha pasada")
+        # Nota: No validamos fechas pasadas aquí porque:
+        # 1. El curso es una entidad externa (mockeada), no tenemos acceso a fecha_inicio/fecha_fin
+        # 2. El frontend ya valida que las fechas estén dentro del rango del curso
+        # 3. Permite crear clases retroactivas para cursos que ya comenzaron
         
         # Verificar si ya existe una clase para el mismo curso en la misma fecha
         exists = await ClaseIndividualDAO.exists_by_curso_and_fecha(db, clase.id_curso, clase.fecha_clase)
@@ -77,8 +79,7 @@ class ClaseIndividualService:
     async def update_clase(db: AsyncSession, id_clase: uuid.UUID, clase_update: ClaseIndividualUpdate) -> Optional[ClaseIndividualResponse]:
         """Actualizar una clase individual"""
         # Validaciones de negocio
-        if clase_update.fecha_clase and clase_update.fecha_clase < date.today():
-            raise ValueError("No se puede programar una clase en una fecha pasada")
+        # Nota: No validamos fechas pasadas aquí (misma razón que en create_clase)
         
         # Si se está cambiando la fecha, verificar que no haya conflictos
         if clase_update.fecha_clase:
@@ -133,8 +134,7 @@ class ClaseIndividualService:
     @staticmethod
     async def reprogramar_clase(db: AsyncSession, id_clase: uuid.UUID, nueva_fecha: date, observaciones: Optional[str] = None) -> Optional[ClaseIndividualResponse]:
         """Reprogramar una clase a una nueva fecha"""
-        if nueva_fecha < date.today():
-            raise ValueError("No se puede reprogramar una clase a una fecha pasada")
+        # Nota: No validamos fechas pasadas aquí (misma razón que en create_clase)
         
         # Obtener la clase actual
         clase_actual = await ClaseIndividualDAO.get_by_id(db, id_clase)
