@@ -146,7 +146,7 @@ export default function AltaCurso() {
                     <Field>
                         <FieldLabel>Modalidad</FieldLabel>
                         <Select
-                        value={form.modalidad}
+                        value={form.modalidad || ""}
                         onValueChange={(value) => setForm((prev) => ({ ...prev, modalidad: value }))}
                         >
                         <SelectTrigger className="w-full">
@@ -166,7 +166,7 @@ export default function AltaCurso() {
                     <Field>
                         <FieldLabel>Sede</FieldLabel>
                         <Select
-                        value={form.sede}
+                        value={form.sede ? String(form.sede) : ""}
                         onValueChange={(value) => setForm((prev) => ({ ...prev, sede: value }))}
                         >
                         <SelectTrigger className="w-full">
@@ -176,7 +176,7 @@ export default function AltaCurso() {
                             <SelectGroup>
                             <SelectLabel>Sedes</SelectLabel>
                             {filteredSedes.map((sede) => (
-                                <SelectItem key={sede.id} value={sede.id}>
+                                <SelectItem key={sede.id} value={String(sede.id)}>
                                 {sede.nombre}
                                 </SelectItem>
                             ))}
@@ -189,7 +189,7 @@ export default function AltaCurso() {
                     <Field>
                         <FieldLabel>Materia</FieldLabel>
                         <Select
-                        value={form.uuid_materia}
+                        value={form.uuid_materia || ""}
                         onValueChange={(value) => setForm((prev) => ({ ...prev, uuid_materia: value }))}
                         >
                         <SelectTrigger className="w-full">
@@ -242,7 +242,7 @@ export default function AltaCurso() {
                     <Field>
                         <FieldLabel>Turno</FieldLabel>
                         <Select
-                        value={form.turno}
+                        value={form.turno || ""}
                         onValueChange={(value) => setForm((prev) => ({ ...prev, turno: value }))}
                         >
                         <SelectTrigger className="w-full">
@@ -250,18 +250,16 @@ export default function AltaCurso() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                            <SelectLabel>Materias</SelectLabel>
-                          
-                                <SelectItem  value="Mañana">
+                            <SelectLabel>Turnos</SelectLabel>
+                                <SelectItem value="Mañana">
                                 Mañana
                                 </SelectItem>
                                 <SelectItem value="Tarde">
                                 Tarde
                                 </SelectItem>
-                                <SelectItem  value="Noche">
+                                <SelectItem value="Noche">
                                 Noche
                                 </SelectItem>
-                         
                             </SelectGroup>
                         </SelectContent>
                         </Select>
