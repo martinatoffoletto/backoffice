@@ -1,25 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {   asignaciones } from "@/data/mockData";
 
 export default function TablaAsignaciones() {
   const [estado, setEstado] = useState("pendientes");
-
-  const asignaciones = [
-    { id: 1, profesor: "Juan Pérez", materia: "Calculo II", estado: "pendiente" },
-    { id: 2, profesor: "Laura Gómez", materia: "Programación I", estado: "aprobada" },
-    { id: 3, profesor: "Martín Díaz", materia: "Calculo I", estado: "rechazada" },
-    { id: 4, profesor: "Ana Torres", materia: "Ciencia de Datos", estado: "pendiente" },
-  ];
+  const [asignacionesMock, setAsignacionesMock]=useState(asignaciones);
 
   const filtrarPorEstado = (estado) =>
-    asignaciones.filter((a) => a.estado === estado);
+    asignacionesMock.filter((a)=>a.estado===estado);
 
   const handleAccion = (id, accion) => {
+    try{
+      setAsignacionesMock(prev => {
+      if (accion === "aprobar") {
+        return prev.map(a => a.id === id ? { ...a, estado: "aprobada" } : a);
+      } else if (accion === "rechazar") {
+        return prev.map(a => a.id === id ? { ...a, estado: "rechazada" } : a);
+      }
+      return prev;
+    });
+    }catch(error){
+      console.error("Error al actualizar la asignacion:", error)
+    }
     console.log(`Asignación ${id} ${accion === "aprobar" ? "aprobada" : "rechazada"}`);
   };
+
+  useEffect(()=>{
+    setAsignacionesMock(asignaciones)
+  },[]
+  )
 
   return (
     <Card className="w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-2xl">
