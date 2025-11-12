@@ -14,6 +14,7 @@ import {
   validatePorcentaje,
   validateMaxLength,
 } from "@/utils/validations";
+import { carreras } from "@/data/mockData";
 
 const RolSelector = ({
   rolesOptions,
@@ -327,6 +328,7 @@ export default function FormUsuarios({
       setCarreraSeleccionada("");
     }
   }, [rolSeleccionado, rolesOptions, isModificacion, categoriaRol]);
+
 
   const validateSueldoForm = () => {
     const newErrors = {};

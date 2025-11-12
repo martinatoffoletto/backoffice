@@ -94,7 +94,7 @@ export const cursoPorId=async(id)=>{
         console.log(id)
         const curso= mockCursos.find((m)=>m.id_curso === id)
         console.log(curso)
-        if (!curso) throw new Error("Curso no encontrada")       
+        if (!curso) throw new Error("Curso no encontrado")       
         return Promise.resolve(curso)
     }catch(err){
         console.error("Error al buscar curso:", err)

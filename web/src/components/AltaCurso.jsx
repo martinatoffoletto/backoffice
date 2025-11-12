@@ -139,7 +139,7 @@ export default function AltaCurso() {
                 <span className="block w-full h-[3px] bg-sky-950"></span>
 
 
-                <FieldSet className="my-4">
+                <FieldSet className="my-4 mt-8">
                     <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                     {/* Modalidad */}
@@ -175,11 +175,16 @@ export default function AltaCurso() {
                         <SelectContent>
                             <SelectGroup>
                             <SelectLabel>Sedes</SelectLabel>
-                            {filteredSedes.map((sede) => (
-                                <SelectItem key={sede.id} value={sede.id}>
-                                {sede.nombre}
-                                </SelectItem>
-                            ))}
+                            {filteredSedes && filteredSedes.length > 0 ? (
+                                
+                                filteredSedes.map((sede) => (
+                                    <SelectItem key={sede.id} value={sede.id}>
+                                    {sede.nombre}
+                                    </SelectItem>
+                                ))
+                                ) : (
+                                <p className="text-sm text-gray-400 px-2">No hay sedes disponibles</p>
+                            )}
                             </SelectGroup>
                         </SelectContent>
                         </Select>

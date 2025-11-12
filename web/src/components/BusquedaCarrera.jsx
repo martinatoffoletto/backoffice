@@ -1,27 +1,5 @@
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSeparator,
-  FieldSet,
-  FieldTitle,
-} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator
-} from "@/components/ui/select.jsx";
 import { useState } from "react"
 import CardCarrera from "./CardCarrera";
 import PopUp from "./PopUp";
@@ -106,8 +84,14 @@ export default function BusquedaCarrera(second) {
             </div>
             </div>
             {found && carreraData ? (
-                <div className="w-full max-w-2xl p-6">
-                <CardCarrera title={"Carrera encontrada"} carrera={carreraData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardCarrera>
+                <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
+                    <CardCarrera title={"Carrera encontrada"} carrera={carreraData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardCarrera>
+                    <Button
+                        onClick={() => {setFound(false); setValue("")}}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                        >
+                        OK
+                    </Button>
                 </div>
             ):
             (!found && value && (

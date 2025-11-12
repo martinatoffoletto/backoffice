@@ -1,3 +1,4 @@
+import { CARRERAS_MOCK } from "@/constants/formConstants";
 import { carreras} from "@/data/mockData";
 import axios from "axios";
 
@@ -20,7 +21,7 @@ export const altaCarrera = async (carreraData) => {
 
 export const bajaCarrera = async (id) => {
   try {
-    mockCarreras = mockCarreras.filter((s) => s.id !== id);
+    mockCarreras = mockCarreras.filter((s) => s.id_carrera !== id);
     return Promise.resolve({message:"Carrera eliminada exitosamente"});
   } catch (error) {
     console.error("Error al eliminar carrera", error);

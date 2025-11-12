@@ -45,7 +45,9 @@
 // }
 
 
+import { CARRERAS_MOCK } from "@/constants/formConstants";
 import { carreras,  materias, materias_carrera } from "@/data/mockData";
+
 
 let mockMaterias=[...materias];
 let mockCarreras=[...carreras];

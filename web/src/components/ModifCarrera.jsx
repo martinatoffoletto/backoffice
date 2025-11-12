@@ -44,21 +44,21 @@ export default function ModifCarrera(second) {
     };
 
     const handleSearch = async() => {
-    try{
-      if (!value.trim()) return;
-      const response = await carreraPorId(value);
-      console.log("Carrera encontrada exitosamente") 
-      setCarreraData(response)
-      setForm({
-        id: response.id,
-        nombre: response.nombre || "",
-        status: response.status || "activo"
-        });
-        setShowForm(true);
-    }catch(error){
-      console.log("Error al buscar carrera", error.message)
-      setSearchError("No se encontró la carrera o ocurrió un error al buscar.");
-    }
+        try{
+        if (!value.trim()) return;
+        const response = await carreraPorId(value);
+        console.log("Carrera encontrada exitosamente") 
+        setCarreraData(response)
+        setForm({
+            id: response.id,
+            nombre: response.nombre || "",
+            status: response.status || "activo"
+            });
+            setShowForm(true);
+        }catch(error){
+        console.log("Error al buscar carrera", error.message)
+        setSearchError("No se encontró la carrera o ocurrió un error al buscar.");
+        }
   };
 
     const handleSubmit = async(e) => {
@@ -85,8 +85,7 @@ export default function ModifCarrera(second) {
                 </h3>
                 <div className="flex flex-col items-center lg:flex-row gap-4 justify-center">
                 {/* Input controlado */}
-                <Input
-                className="mb-4"
+                <Input   
                 placeholder="ID carrera"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
