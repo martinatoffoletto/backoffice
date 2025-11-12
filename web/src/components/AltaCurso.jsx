@@ -224,7 +224,7 @@ export default function AltaCurso() {
                             {filteredSedes && filteredSedes.length > 0 ? (
                                 
                                 filteredSedes.map((sede) => (
-                                    <SelectItem key={sede.id} value={sede.id}>
+                                    <SelectItem key={sede.id_sede || sede.id} value={sede.id_sede || sede.id}>
                                     {sede.nombre}
                                     </SelectItem>
                                 ))
