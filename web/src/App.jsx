@@ -1,21 +1,22 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import { useState } from "react"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
 
-import NavBar from "./components/NavBar"
-import Inicio from "./screens/Inicio"
-import Precios from "./screens/Precios"
-import Usuarios from "./screens/Usuarios"
-import Cursos from "./screens/Cursos"
-import Sedes from "./screens/Sedes"
-import Sede from "./screens/Sede"
-import Materias from "./screens/Materias"
-import Asignacion from "./screens/Asignacion"
-import Carreras from "./screens/Carreras"
-import Cronograma from "./screens/Cronograma"
-import Espacios from "./screens/Espacios"
+import NavBar from "./components/NavBar";
+import Inicio from "./screens/Inicio";
+import Precios from "./screens/Precios";
+import Usuarios from "./screens/Usuarios";
+import Roles from "./screens/Roles";
+import Cursos from "./screens/Cursos";
+import Sedes from "./screens/Sedes";
+import Sede from "./screens/Sede";
+import Materias from "./screens/Materias";
+import Asignacion from "./screens/Asignacion";
+import Carreras from "./screens/Carreras";
+import Cronograma from "./screens/Cronograma";
+import Espacios from "./screens/Espacios";
 
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <BrowserRouter>
@@ -28,14 +29,15 @@ function App() {
           <Routes>
             <Route path="/" element={<Inicio />} />
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/roles" element={<Roles />} />
             <Route path="/precios" element={<Precios />} />
             <Route path="/cursos" element={<Cursos />} />
             <Route path="/sede" element={<Sede />} />
             <Route path="/materias" element={<Materias />} />
-            <Route path="/asignacion" element={<Asignacion/>}/>
-            <Route path="/carreras" element={<Carreras/>}/>
-            <Route path="/cronograma" element={<Cronograma/>}/>
-            <Route path="/espacios" element={<Espacios/>}/>
+            <Route path="/asignacion" element={<Asignacion />} />
+            <Route path="/carreras" element={<Carreras />} />
+            <Route path="/cronograma" element={<Cronograma />} />
+            <Route path="/espacios" element={<Espacios />} />
             <Route path="/sedes" element={<Sedes />} />
           </Routes>
         </main>
@@ -49,7 +51,7 @@ function App() {
         </button>
       </div>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

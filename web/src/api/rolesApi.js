@@ -20,7 +20,8 @@ export const buscarRoles = async (param, value, status_filter = null) => {
     if (status_filter !== null) {
       params.status_filter = status_filter;
     }
-    const response = await axiosInstance.get("/roles/search", { params });
+    // The backend exposes search via GET /roles with query params
+    const response = await axiosInstance.get("/roles/", { params });
     return response.data;
   } catch (error) {
     console.error("Error al buscar roles:", error);
