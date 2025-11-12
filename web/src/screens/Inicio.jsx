@@ -91,7 +91,12 @@ export default function Inicio() {
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
-              to="/asignacion"
+              to="/espacios"
+              title="Espacios"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
+              to="/Asignacion"
               title="Asignación de Docentes"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
