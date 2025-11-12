@@ -29,7 +29,6 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover"
-import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
 import { altaCurso } from "@/api/cursosApi";
 import CardCurso from "@/components/CardCurso";
@@ -37,8 +36,7 @@ import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 
-export default function AltaCurso(second) {
-    const [date, setDate] = useState();
+export default function AltaCurso() {
     const [form, setForm] = useState({
         id_curso: "",
         uuid_materia: "",
@@ -60,17 +58,15 @@ export default function AltaCurso(second) {
     const [filteredSedes, setFilteredSedes] = useState([]);
     const [filteredMaterias, setFilteredMaterias] = useState([]);
     const [error, setError] = useState(null);
-    const [fechaInicio, setFechaInicio] = useState(null);
-    const [fechaFin, setFechaFin] = useState(null);
     const [cursoData, setCursoData]=useState(null)
     const [showGestionClases, setShowGestionClases] = useState(false)
     
     const handleSubmit = async(e) => {
         e.preventDefault();
         try{
-            const response= await altaCurso(form)
+            const nuevo_curso = await altaCurso(form)
             console.log("Curso dado de alta exitosamente")
-            setCursoData(form)
+            setCursoData(nuevo_curso)
             setCompleted(true)
             setShowPopUp(true)
             setShowGestionClases(true)
@@ -139,7 +135,7 @@ export default function AltaCurso(second) {
                             <SelectGroup>
                             <SelectLabel>Sedes</SelectLabel>
                             {filteredSedes.map((sede) => (
-                                <SelectItem key={sede.id} value={sede.id}>
+                                <SelectItem key={sede.id_sede || sede.id} value={sede.nombre}>
                                 {sede.nombre}
                                 </SelectItem>
                             ))}
@@ -232,15 +228,22 @@ export default function AltaCurso(second) {
 
 
                     <Field>
-                        <FieldLabel htmlFor="periodo">Período</FieldLabel>
-                        <Input
-                        id="periodo"
-                        placeholder="Ej: 1er Cuatrimestre"
+                        <FieldLabel>Período</FieldLabel>
+                        <Select
                         value={form.periodo}
-                        onChange={(e) =>
-                            setForm((prev) => ({ ...prev, periodo: e.target.value }))
-                        }
-                        />
+                        onValueChange={(value) => setForm((prev) => ({ ...prev, periodo: value }))}
+                        >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccione período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                            <SelectLabel>Períodos</SelectLabel>
+                            <SelectItem value="1er Cuatrimestre">1er Cuatrimestre</SelectItem>
+                            <SelectItem value="2do Cuatrimestre">2do Cuatrimestre</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                        </Select>
                     </Field>
 
                     <Field>
@@ -261,7 +264,6 @@ export default function AltaCurso(second) {
                                 mode="single"
                                 selected={form.fecha_inicio ? new Date(form.fecha_inicio) : undefined}
                                onSelect={(date) => {
-                                setFechaInicio(date);
                                 setForm((prev) => ({ ...prev, fecha_inicio: date }));
                                 }}
                             />
@@ -287,7 +289,6 @@ export default function AltaCurso(second) {
                                 mode="single"
                                 selected={form.fecha_fin ? new Date(form.fecha_fin) : undefined}
                                 onSelect={(date) => {
-                                    setFechaFin(date);
                                     setForm((prev) => ({ ...prev, fecha_fin: date }));
                                 }}
                             />
@@ -334,21 +335,50 @@ export default function AltaCurso(second) {
           </div>
             </div>)}
 
-            {showPopUp && (
-               <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-                                   <CardCurso title={"Curso dado de alta exitosamente"} curso={cursoData} />
-                                   <Button
-                                   onClick={() => {setShowPopUp(false);  }}
-                                   className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
-                                   >
-                                   OK
-                                   </Button>
-                               </div>
+            {showPopUp && cursoData && (
+               <div className="fixed inset-0 flex items-center justify-center z-50">
+                   <div className="flex flex-col justify-center items-center border-2 border-green-500 p-6 rounded-lg shadow-xl gap-4 w-full max-w-md bg-white mx-4">
+                       <h2 className="text-xl font-bold text-green-600">Curso dado de alta exitosamente</h2>
+                       <div className="w-full space-y-2 text-left">
+                           <p className="text-gray-700">
+                               <span className="font-semibold">Materia:</span> {
+                                   filteredMaterias.find(m => m.uuid_materia === cursoData.uuid_materia)?.nombre || cursoData.uuid_materia
+                               }
+                           </p>
+                           <p className="text-gray-700">
+                               <span className="font-semibold">Día:</span> {
+                                   (cursoData.dia || form.dia) ? 
+                                   (cursoData.dia || form.dia).charAt(0).toUpperCase() + (cursoData.dia || form.dia).slice(1).toLowerCase() 
+                                   : ''
+                               }
+                           </p>
+                           <p className="text-gray-700">
+                               <span className="font-semibold">Turno:</span> {
+                                   (cursoData.turno || form.turno) ? 
+                                   (cursoData.turno || form.turno).charAt(0).toUpperCase() + (cursoData.turno || form.turno).slice(1).toLowerCase() 
+                                   : ''
+                               }
+                           </p>
+                       </div>
+                       <Button
+                           onClick={() => {setShowPopUp(false);  }}
+                           className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                       >
+                           OK
+                       </Button>
+                   </div>
+               </div>
             )}
 
             {showGestionClases && cursoData && (
                 <div className="w-full max-w-4xl mt-6">
-                    <GestionClases id_curso={cursoData.id_curso || cursoData.id} />
+                    <GestionClases 
+                        id_curso={cursoData.id_curso || cursoData.id}
+                        fecha_inicio={cursoData.fecha_inicio}
+                        fecha_fin={cursoData.fecha_fin}
+                        dia={cursoData.dia}
+                        turno={cursoData.turno}
+                    />
                 </div>
             )}
 

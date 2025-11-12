@@ -24,7 +24,7 @@ import { cursoPorId, modificarCurso } from "@/api/cursosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 
-export default function ModifCurso() {
+export default function ModifCurso({ cursoInicial = null }) {
   const [value, setValue] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -59,6 +59,30 @@ export default function ModifCurso() {
     };
     fetchData();
   }, []);
+
+  // Si se proporciona un curso inicial, cargarlo automáticamente
+  useEffect(() => {
+    if (cursoInicial) {
+      const curso_id = cursoInicial.id_curso || cursoInicial.id;
+      setValue(curso_id);
+      setForm({
+        uuid_materia: cursoInicial.uuid_materia || "",
+        comision: cursoInicial.comision || "",
+        modalidad: cursoInicial.modalidad || "",
+        sede: cursoInicial.sede || "",
+        aula: cursoInicial.aula || "",
+        horario: cursoInicial.horario || "",
+        dia: cursoInicial.dia || "",
+        turno: cursoInicial.turno || "",
+        periodo: cursoInicial.periodo || "",
+        fecha_inicio: cursoInicial.fecha_inicio || "",
+        fecha_fin: cursoInicial.fecha_fin || "",
+        capacidad_max: cursoInicial.capacidad_max || 0,
+        capacidad_min: cursoInicial.capacidad_min || 0,
+      });
+      setShowForm(true);
+    }
+  }, [cursoInicial]);
 
   const handleSearch = async () => {
     try {
@@ -168,7 +192,7 @@ export default function ModifCurso() {
                     <SelectGroup>
                       <SelectLabel>Sedes</SelectLabel>
                       {filteredSedes.map((sede) => (
-                        <SelectItem key={sede.id} value={sede.id}>
+                        <SelectItem key={sede.id_sede || sede.id} value={sede.nombre}>
                           {sede.nombre}
                         </SelectItem>
                       ))}
@@ -259,11 +283,21 @@ export default function ModifCurso() {
               {/* Periodo */}
               <Field>
                 <FieldLabel>Período</FieldLabel>
-                <Input
-                  placeholder="Ej: 1er Cuatrimestre"
+                <Select
                   value={form.periodo}
-                  onChange={(e) => setForm((prev) => ({ ...prev, periodo: e.target.value }))}
-                />
+                  onValueChange={(val) => setForm((prev) => ({ ...prev, periodo: val }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Períodos</SelectLabel>
+                      <SelectItem value="1er Cuatrimestre">1er Cuatrimestre</SelectItem>
+                      <SelectItem value="2do Cuatrimestre">2do Cuatrimestre</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </Field>
 
               {/* Fecha Inicio */}

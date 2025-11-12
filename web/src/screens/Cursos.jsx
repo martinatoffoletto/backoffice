@@ -1,23 +1,41 @@
 import AltaCurso from "@/components/AltaCurso";
 import BajaCurso from "@/components/BajaCurso";
+import BusquedaCurso from "@/components/BusquedaCurso";
 import ModifCurso from "@/components/ModifCurso";
+import GestionClases from "@/components/GestionClases";
 import {
   Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel
 } from "@/components/ui/select.jsx";
 import { useState } from "react";
 
-export default function Cursos() {
-  const [value, setValue] = useState("");
+const Cursos = () => {
+  const [operacion_seleccionada, setOperacionSeleccionada] = useState("");
+  const [curso_seleccionado, setCursoSeleccionado] = useState(null);
+  const [accion_curso, setAccionCurso] = useState(null);
+
+  const handleCursoSeleccionado = (curso, accion) => {
+    setCursoSeleccionado(curso);
+    setAccionCurso(accion);
+    if (accion === "modificar") {
+      setOperacionSeleccionada("modificacion");
+    } else if (accion === "gestionar") {
+      setOperacionSeleccionada("gestionar");
+    }
+  };
+
+  const handleResetOperacion = () => {
+    setCursoSeleccionado(null);
+    setAccionCurso(null);
+  };
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      {/* Selector */}
       <div className="w-full max-w-2xl  p-6 ">
         <h1 className="font-bold text-xl mb-4 text-center">Gestión de Cursos</h1>
         <span className="block w-full h-[2px] bg-sky-950"></span>
@@ -27,7 +45,14 @@ export default function Cursos() {
             Elija qué tipo de operación desea realizar
           </h3>
 
-          <Select onValueChange={setValue} value={value} className="flex-1">
+          <Select
+            onValueChange={(value) => {
+              setOperacionSeleccionada(value);
+              handleResetOperacion();
+            }}
+            value={operacion_seleccionada}
+            className="flex-1"
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Seleccione una opción" />
             </SelectTrigger>
@@ -38,19 +63,32 @@ export default function Cursos() {
                 <SelectItem value="alta">Alta de Curso</SelectItem>
                 <SelectItem value="baja">Baja de Curso</SelectItem>
                 <SelectItem value="modificacion">Modificación de Curso</SelectItem>
+                <SelectItem value="busqueda">Búsqueda de Curso</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
         </div>
-
-        
       </div>
 
-
-      {/* Formularios debajo */}
-      {value === "alta" && <AltaCurso />}
-      {value === "baja" && <BajaCurso />}
-      {value === "modificacion" && <ModifCurso />}
+      {operacion_seleccionada === "alta" && <AltaCurso />}
+      {operacion_seleccionada === "baja" && <BajaCurso />}
+      {operacion_seleccionada === "modificacion" && (
+        <ModifCurso cursoInicial={curso_seleccionado} />
+      )}
+      {operacion_seleccionada === "busqueda" && (
+        <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado} />
+      )}
+      {operacion_seleccionada === "gestionar" && curso_seleccionado && (
+        <GestionClases
+          id_curso={curso_seleccionado.id_curso || curso_seleccionado.id}
+          fecha_inicio={curso_seleccionado.fecha_inicio}
+          fecha_fin={curso_seleccionado.fecha_fin}
+          dia={curso_seleccionado.dia}
+          turno={curso_seleccionado.turno}
+        />
+      )}
     </div>
   );
-}
+};
+
+export default Cursos;
