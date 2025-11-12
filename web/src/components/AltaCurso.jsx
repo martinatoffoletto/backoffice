@@ -29,7 +29,6 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover"
-import  {format} from "date-fns"
 import PopUp from "@/components/PopUp";
 import { altaCurso } from "@/api/cursosApi";
 import CardCurso from "@/components/CardCurso";
@@ -37,8 +36,7 @@ import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 
-export default function AltaCurso(second) {
-    const [date, setDate] = useState();
+export default function AltaCurso() {
     const [form, setForm] = useState({
         id_curso: "",
         uuid_materia: "",
@@ -62,18 +60,43 @@ export default function AltaCurso(second) {
     const [error, setError] = useState(null);
     const [fechaInicio, setFechaInicio] = useState(null);
     const [fechaFin, setFechaFin] = useState(null);
-    const [cursoData, setCursoData]=useState(null)
-    const [showGestionClases, setShowGestionClases] = useState(false)
-    
+    const [cursoData, setCursoData]=useState(null);
+    const [clases, setClases] = useState([]);
+    const [showClassEditor, setShowClassEditor] = useState(false);
+    const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
     const handleSubmit = async(e) => {
         e.preventDefault();
         try{
             const response= await altaCurso(form)
             console.log("Curso dado de alta exitosamente")
+            const mockClases = [
+            {
+                numero: 1,
+                fecha: new Date(fechaInicio),
+                tipo: "Clase",
+                descripcion: "",
+                estado: ""
+            },
+            {
+                numero: 2,
+                fecha: new Date(fechaInicio.setDate(fechaInicio.getDate() + 1)),
+                tipo: "Clase",
+                descripcion: "",
+                estado: ""
+            },
+            {
+                numero: 3,
+                fecha: new Date(fechaInicio.setDate(fechaInicio.getDate() + 2)),
+                tipo: "Clase",
+                descripcion: "",
+                estado: ""
+            },
+        ];
             setCursoData(form)
             setCompleted(true)
-            setShowPopUp(true)
-            setShowGestionClases(true)
+            setClases(mockClases)
+            setShowClassEditor(true);
         }catch(err){
             console.error(`Error al dar de alta el curso: ${err.message}`)
             setError(err.message)
@@ -94,6 +117,20 @@ export default function AltaCurso(second) {
         fetchData();
     }, []);
 
+    if (showSuccessScreen) {
+                return (
+                    <div className="flex flex-col justify-center items-center min-h-screen">
+                        <CardCurso title={"Curso dado de alta exitosamente"} curso={cursoData} />
+                        <Button
+                        onClick={() => setShowSuccessScreen(false)}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md mt-4"
+                        >
+                        OK
+                        </Button>
+                    </div>
+                );
+            }
+            
     return(
         <div className="flex min-h-screen min-w-3xl  items-center justify-start ">
            { !completed && ( 
@@ -334,25 +371,81 @@ export default function AltaCurso(second) {
           </div>
             </div>)}
 
-            {showPopUp && (
-               <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 w-full max-w-md mx-auto my-4 bg-white">
-                                   <CardCurso title={"Curso dado de alta exitosamente"} curso={cursoData} />
-                                   <Button
-                                   onClick={() => {setShowPopUp(false);  }}
-                                   className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
-                                   >
-                                   OK
-                                   </Button>
-                               </div>
-            )}
+        
+            {showClassEditor && (
+                <div className="w-full max-w-4xl mx-auto p-6">
+                    <h1 className="text-xl font-bold mb-4">Editar Clases del Curso</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {clases.map((clase, index) => (
+                            <div key={index} className="border p-4 rounded shadow-sm flex flex-col gap-2 bg-white">
+                                <div className="flex justify-between">
+                                    <span className="font-bold">Clase #{clase.numero}</span>
+                                    <span>{new Date(clase.fecha).toLocaleDateString()}</span>
+                                </div>
 
-            {showGestionClases && cursoData && (
-                <div className="w-full max-w-4xl mt-6">
-                    <GestionClases id_curso={cursoData.id_curso || cursoData.id} />
+                                <div>
+                                    <label className="block text-sm font-medium">Tipo de clase</label>
+                                    <select
+                                        className="w-full border rounded px-2 py-1"
+                                        value={clase.tipo}
+                                        onChange={(e) => {
+                                            const newClases = [...clases];
+                                            newClases[index].tipo = e.target.value;
+                                            setClases(newClases);
+                                        }}
+                                    >
+                                        <option value="Clase">Clase</option>
+                                        <option value="Parcial">Parcial</option>
+                                        <option value="Feriado">Feriado</option>
+                                        <option value="Entrega">Entrega</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium">Descripción</label>
+                                    <input
+                                        type="text"
+                                        value={clase.descripcion}
+                                        onChange={(e) => {
+                                            const newClases = [...clases];
+                                            newClases[index].descripcion = e.target.value;
+                                            setClases(newClases);
+                                        }}
+                                        className="w-full border rounded px-2 py-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium">Estado</label>
+                                    <select
+                                        className="w-full border rounded px-2 py-1"
+                                        type="text"
+                                        value={clase.estado}
+                                        onChange={(e) => {
+                                            const newClases = [...clases];
+                                            newClases[index].estado = e.target.value;
+                                            setClases(newClases);
+                                        }}
+                                    >
+                                        <option value="Dictada">Dictada</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="Feriado">Feriado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-end mt-4">
+                        <Button
+                            onClick={ () => { setShowSuccessScreen(true);  }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+                        >
+                            Guardar Clases
+                        </Button>
+                    </div>
                 </div>
             )}
-
- 
+            
             {error && (
                 <PopUp title={"Error al dar de alta el curso"} message={error} onClose={() => setError(null)}/>
             )}

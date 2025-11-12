@@ -4,8 +4,6 @@ export default function CardCurso({title, curso}) {
             <h2 className="font-bold text-center text-xl mb-6">{title}</h2>
             <p className="mb-4"><span className="font-semibold">Número de Curso:</span> {curso.id_curso}</p>
             <p className="mb-4"><span className="font-semibold">Materia:</span> {curso.uuid_materia}</p>
-            {/* <p className="mb-4"><span className="font-semibold">Día de Cursada:</span> Curso básico para aprender los fundamentos de la programación.</p>    */}
-            {/* <p className="mb-4"><span className="font-semibold">Turno:</span> Lunes y Miércoles de 10:00 a 12:00</p> */}
         </div>
     )   
 }
