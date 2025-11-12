@@ -1,5 +1,9 @@
-import LinkNavBar from "./LinkNavBar"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar.jsx"
+import LinkNavBar from "./LinkNavBar";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar.jsx";
 
 export default function NavBar({ menuOpen, setMenuOpen }) {
   return (
@@ -11,35 +15,73 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         transform transition-transform duration-300
         ${menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
       `}
-      style={{ backgroundColor: '#1E3A5F' }}
+      style={{ backgroundColor: "#1E3A5F" }}
     >
       <div className="flex flex-col items-center py-6 border-b border-gray-300">
         <img src="/uade.png" alt="Logo" className="w-[148px] mb-2" />
-        <div className="text-white px-4 py-1 rounded-md text-sm font-medium"
-             style={{ backgroundColor: '#2C7DA0' }}>
+        <div
+          className="text-white px-4 py-1 rounded-md text-sm font-medium"
+          style={{ backgroundColor: "#2C7DA0" }}
+        >
           Campus Connect
         </div>
       </div>
 
       <div className="flex flex-col flex-grow px-4 mt-6 space-y-2">
         <LinkNavBar to="/" title="Inicio" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/usuarios" title="Gestión de Usuarios" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/carreras" title="Gestión de Carreras" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/materias" title="Gestión de Materias" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/cursos" title="Gestión de Cursos" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/precios" title="Listado de Precios" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/sedes" title="Sedes" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/espacios" title="Espacios" onClick={() => setMenuOpen(false)} />
-        <LinkNavBar to="/Asignacion" title="Asignación de Docentes" onClick={() => setMenuOpen(false)} />
+        <LinkNavBar
+          to="/usuarios"
+          title="Gestión de Usuarios"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/roles"
+          title="Gestión de Roles"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/carreras"
+          title="Gestión de Carreras"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/materias"
+          title="Gestión de Materias"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/cursos"
+          title="Gestión de Cursos"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/precios"
+          title="Listado de Precios"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/sedes"
+          title="Sedes"
+          onClick={() => setMenuOpen(false)}
+        />
+        <LinkNavBar
+          to="/Asignacion"
+          title="Asignación de Docentes"
+          onClick={() => setMenuOpen(false)}
+        />
       </div>
 
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
-        <Avatar style={{ width: '70px', height: '70px'}}>
-          <AvatarImage src="/usuario.jpg" alt="Foto de usuario" style={{ width: '70px', height: '70px'}}/>
+        <Avatar style={{ width: "70px", height: "70px" }}>
+          <AvatarImage
+            src="/usuario.jpg"
+            alt="Foto de usuario"
+            style={{ width: "70px", height: "70px" }}
+          />
           <AvatarFallback>NU</AvatarFallback>
         </Avatar>
         <p className="text-sm mt-2 font-medium">Roberto López</p>
       </div>
     </div>
-  )
+  );
 }

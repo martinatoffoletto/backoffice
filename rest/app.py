@@ -54,6 +54,9 @@ app.add_middleware(
         "http://localhost:3000",  # React dev server alternativo
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "https://backoffice-production-ui.up.railway.app", 
+        "https://backoffice-production-df78.up.railway.app"
+        
     ],
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos (GET, POST, PUT, DELETE, etc.)
