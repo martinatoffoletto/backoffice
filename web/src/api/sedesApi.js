@@ -1,68 +1,9 @@
-// import axiosInstance from "./axiosInstance";
-
-// export const getAllSedes= async()=>{
-//   try{
-//     const response=await axios.get("/sedes")
-//     return response.data
-//   }catch(err){
-//     console.log("Error al obtener sedes")
-//     throw err
-//   }
-// }
-
-// export const altaSede = async (sedeData) => {
-//   try {
-//     const response = await axiosInstance.post("/sedes/", sedeData);
-//     return response.data; 
-//   } catch (error) {
-//     console.error("Error al crear sede:", error);
-//     throw error; 
-//   }
-// };
-
-// export const bajaSede = async (id) => {
-//   try {
-//     const response = await axiosInstance.delete(`/sedes/${id}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error al eliminar sede:", error);
-//     throw error;
-//   }
-// };
-
-// export const modifcarSede = async (id, sedeData) => {
-//   try {
-//     const response = await axiosInstance.put(`/sedes/${id}`, sedeData);
-//     return response.data; 
-//   } catch (err) {
-//     console.error("Error al modificar el sede:", err);
-//     throw err; 
-// }
-// };
-
-// export const sedePorId=async(id)=>{
-//     try{
-//         const response= await axiosInstance.get(`/sedes/${id}`)       
-//         return response.data
-//     }catch(err){
-//         console.error("Error al buscar sede:", err)
-//         throw err;
-//     }
-// }
-
-import { sedes } from "@/data/mockData";
-import axios from "axios";
-
-let mockSedes=[...sedes];
+import axiosInstance from "./axiosInstance";
 
 export const altaSede = async (sedeData) => {
   try {
-    const nuevaSede = {
-      id: mockSedes.length + 1, // simulamos autoincremental
-      ...sedeData,
-    };
-    mockSedes.push(nuevaSede);
-    return Promise.resolve(nuevaSede); 
+    const response = await axiosInstance.post("/sedes/", sedeData);
+    return response.data; 
   } catch (error) {
     console.error("Error al crear sede:", error);
     throw error; 
@@ -71,8 +12,8 @@ export const altaSede = async (sedeData) => {
 
 export const bajaSede = async (id) => {
   try {
-    mockSedes = mockSedes.filter((s) => s.id !== id);
-    return Promise.resolve({message:"Sede eliminada exitosamente"});
+    const response = await axiosInstance.delete(`/sedes/${id}`);
+    return response.data;
   } catch (error) {
     console.error("Error al eliminar sede:", error);
     throw error;
@@ -81,32 +22,45 @@ export const bajaSede = async (id) => {
 
 export const modifcarSede = async (id, sedeData) => {
   try {
-    const index = mockSedes.findIndex((s)=>s.id === id)
-    if (index === -1) throw new Error("Sede no encontrado");
-    mockSedes[index] = { ...mockSedes[index], ...sedeData };
-    return Promise.resolve(mockSedes[index]); 
+    const response = await axiosInstance.put(`/sedes/${id}`, sedeData);
+    return response.data; 
   } catch (err) {
     console.error("Error al modificar el sede:", err);
     throw err; 
-}
+  }
 };
 
-export const sedePorId=async(id)=>{
-    try{
-        const sede= mockSedes.find((s)=>s.id === id)
-        if (!sede) throw new Error("Sede no encontrada")       
-        return Promise.resolve(sede)
-    }catch(err){
-        console.error("Error al buscar sede:", err)
-        throw err;
-    }
-}
-
-export const obtenerSedes = async () => {
+export const sedePorId = async (id) => {
   try {
-    return Promise.resolve(mockSedes);
+    const response = await axiosInstance.get(`/sedes/${id}`);       
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar sede:", err);
+    throw err;
+  }
+};
+
+export const obtenerSedes = async (skip = 0, limit = 100, status_filter = null) => {
+  try {
+    const params = { skip, limit };
+    if (status_filter !== null) {
+      params.status_filter = status_filter;
+    }
+    const response = await axiosInstance.get("/sedes/", { params });
+    return response.data;
   } catch (error) {
     console.error("Error al obtener sedes:", error);
+    throw error;
+  }
+};
+
+export const buscarSedes = async (param, value, skip = 0, limit = 100) => {
+  try {
+    const params = { param, value, skip, limit };
+    const response = await axiosInstance.get("/sedes/search", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error al buscar sedes:", error);
     throw error;
   }
 };

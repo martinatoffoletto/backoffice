@@ -34,6 +34,7 @@ import { altaCurso } from "@/api/cursosApi";
 import CardCurso from "@/components/CardCurso";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
+import GestionClases from "@/components/GestionClases";
 
 export default function AltaCurso() {
     const [form, setForm] = useState({

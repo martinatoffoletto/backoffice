@@ -1,3 +1,7 @@
+// NOTA: El endpoint /cursos no existe en el backend actual
+// Este módulo está usando datos mock temporalmente
+// Para conectarlo al backend, primero se debe crear el endpoint /api/v1/cursos en el backend
+
 // import axiosInstance from "./axiosInstance";
 
 // export const altaCurso = async (cursoData) => {
@@ -41,14 +45,15 @@
 // }
 
 import { carreras,  cursos, materias_carrera } from "@/data/mockData";
-import axios from "axios";
 
 let mockCursos=[...cursos];
 let mockCarreras=[...carreras];
 let mockMateriaPorCarrera=[...materias_carrera];
 
+// eslint-disable-next-line no-unused-vars
 export const altaCurso = async (materiaData, carreras_materia) => {
   try {
+    // carreras_materia no se usa en modo mock, pero se mantiene para compatibilidad
     const nuevoCurso = {
       id: mockCursos.length + 1, // simulamos autoincremental
       ...materiaData,
