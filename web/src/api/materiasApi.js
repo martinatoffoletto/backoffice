@@ -136,7 +136,7 @@ export const obtenerCarrerasPorMateria = async (id) => {
 
     // Filtrar posibles null si alguna carrera no se encontró
     const carrerasValidas = carreras.filter((c) => c);
-
+    console.log(carrerasValidas)
     return carrerasValidas;
   } catch (error) {
     console.error("Error al obtener carreras por materia:", error);

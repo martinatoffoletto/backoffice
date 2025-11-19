@@ -23,18 +23,30 @@ import {
   SelectSeparator
 } from "@/components/ui/select.jsx";
 import { ca } from "date-fns/locale";
-import { useState } from "react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useEffect, useState } from "react"
 import CardMateria from "./CardMateria";
 import PopUp from "./PopUp";
-import { materiaPorId, materiaPorNombre } from "@/api/materiasApi";
+import { materiaPorId, materiaPorNombre, obtenerMaterias, obtenerCarrerasPorMateria } from "@/api/materiasApi";
 
-export default function BusquedaMateria(second) {
+export default function BusquedaMateria() {
 
     const [name, setName] = useState("");
     const [found, setFound] = useState(false);
     const [value, setValue] = useState("");
     const [error, setError]=useState(null)
     const [materiaData, setMateriaData] = useState(null);
+    const [loading_state, setLoadingState] = useState(false);
+    const [resultados_state, setResultadosState]=useState([])
+    const [materiaSeleccionada, setMateriaSeleccionada]=useState(null);
+    const [showOpciones, setShowOpciones]=useState(false);
 
     const handleBaja=()=>{ 
         setFound(false);
@@ -44,6 +56,7 @@ export default function BusquedaMateria(second) {
     }
  
     const handleSearch= async()=>{
+        setLoadingState(true);
         const id = value.trim();
         const nombre = name.trim();
         if (!id && !nombre) return;;
@@ -59,15 +72,29 @@ export default function BusquedaMateria(second) {
             if (response) {
             setMateriaData(response);
             setFound(true);
-            } else {
-            setFound(false);
-            setMateriaData(null);
+            setLoadingState(false);
+            } else{
+                setFound(false);
+                setMateriaData(null);
+                setLoadingState(false);
+                
             }
         } catch (err) {
+            setLoadingState(false);
             setError(err.message || "Error al buscar la materia");
             setFound(false);
             setMateriaData(null);
         }
+}
+
+const handleMateriaClick=(materia)=>{
+    setMateriaSeleccionada(materia);
+    setShowOpciones(true);
+}
+
+const handleCerrarOpciones=()=>{
+    setShowOpciones(false);
+    setMateriaSeleccionada(null);
 }
         // NO BORRAR
         // try{
@@ -79,6 +106,29 @@ export default function BusquedaMateria(second) {
         //     setError(err.message)
         //     setFound(false)
         // }
+
+        useEffect(()=>{
+            const allMaterias=async()=>{
+                try{
+                    const materias= await obtenerMaterias();
+                    
+
+                    const materiasConCarreras = await Promise.all(
+                        materias.map(async (m) => {
+                            const carreras = await obtenerCarrerasPorMateria(m.id_materia);
+                            return { ...m, carreras };
+                        })
+                    );
+
+                    console.log("Materias obtenidas:", materiasConCarreras)
+                    setResultadosState(materiasConCarreras)
+                }catch(err){
+                    console.error("Error al obtener materias", err)
+                    setError(err.message || "Error al obtener materias")
+                }
+            }
+            allMaterias()
+        },[])
 
     return(
 
@@ -135,14 +185,88 @@ export default function BusquedaMateria(second) {
             
             <div className="flex justify-center">
             <Button
-                disabled={!value.trim() && !name.trim()}
+                disabled={loading_state}
                 onClick={handleSearch}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             >
-                Buscar
+               {loading_state ? "Buscando..." : "Buscar"}
             </Button>
             </div>
             </div>
+            {!loading_state && resultados_state.length > 0 && (
+                <div className="overflow-x-auto mt-8">
+                    <Table className="min-w-full border border-gray-200">
+                        <TableHeader className="bg-gray-50">
+                        <TableRow>
+                            <TableHead>ID</TableHead>
+                            <TableHead>Materia</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead>Carreras</TableHead>
+
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {Array.isArray(resultados_state) && resultados_state.map((materia) => (
+                            <TableRow 
+                            key={materia.id_materia || Math.random()}
+                            className="cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => handleMateriaClick(materia)}
+                            >
+                            <TableCell>{materia.id_materia || "-"}</TableCell>
+                            <TableCell>
+                                {materia.nombre || "-"}
+                            </TableCell>
+                            <TableCell className={materia.status==="activo" ? "text-green-600" : "text-red-600"}>{materia.status || "-"}</TableCell>
+                            <TableCell>
+                                {materia.carreras && materia.carreras.length > 0
+                                ? materia.carreras.map(c => c.nombre).join(", ")
+                                : "-"}
+                            </TableCell>
+
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
+            {/* Popup de opciones para curso seleccionado */}
+            {showOpciones && materiaSeleccionada && (
+                <div className="fixed inset-0 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-blue-500 w-96 max-w-md">
+                    <h2 className="text-xl font-bold mb-4 text-blue-600">
+                    Opciones para la materia
+                    </h2>
+                    <p className="mb-4 text-gray-700">
+                    <span className="font-semibold">Materia:</span>{" "}
+                    {materiaSeleccionada.nombre }
+                    </p>
+                    <p className="mb-4 text-gray-700">
+                    <span className="font-semibold">ID:</span>{" "}
+                    {materiaSeleccionada.id_materia }
+                    </p>
+                    <div className="flex flex-col gap-3 mb-4">
+                    <Button
+                        onClick={()=>{/*logica para editar materia*/}}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Editar Materia
+                    </Button>
+                    <Button
+                        onClick={()=>{/*logica para editar materia*/}}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                        Añadir a Carrera
+                    </Button>
+                    </div>
+                    <Button
+                    onClick={handleCerrarOpciones}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded w-full"
+                    >
+                    Cancelar
+                    </Button>
+                </div>
+                </div>
+            )}
             {found ? (
                 <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
                 <CardMateria title={"Materia encontrada"} materia={materiaData} onClose={()=>{setFound(false); setName(""); setValue("")}}></CardMateria>
