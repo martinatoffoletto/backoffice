@@ -21,7 +21,6 @@ import GestionCorrelativas from "@/components/GestionCorrelativas";
 
 export default function Materias() {
 
-  const navigate=useNavigate();
 
   const [value, setValue] = useState("");
   const opciones = [
@@ -31,14 +30,22 @@ export default function Materias() {
     { value: "busqueda", label: "Búsqueda de Materia" },
     { value: "correlativas", label: "Gestión de Correlativas" }
   ];
+  const [materia_seleccionada, setMateriaSeleccionada] = useState(null);
 
-  
+  const handleMateriaSelccionada = (materia, accion) => {
+    setMateriaSeleccionada(materia);
+    if (accion === "modif") {
+      setValue("modif");
+    } else if (accion === "gestionar") {
+      setValue("gestionar");
+    }
+  };
 
-  // const handleChoice=()=>{
-  //   // if(!value) return;
-  //   // console.log("Opción seleccionada:", value);
-  //   // navigate("/" + value + "materia");
-  // }
+  const handleResetOperacion = () => {
+    setMateriaSeleccionada(null);
+  };
+
+ 
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -52,7 +59,10 @@ export default function Materias() {
             title="Operaciones"
             options={opciones}
             value={value}
-            onValueChange={setValue}
+            onValueChange={(value) => {
+              setValue(value);
+              handleResetOperacion();
+            }}
           />
           {/* <Button 
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
@@ -76,11 +86,11 @@ export default function Materias() {
       )}
 
       {value==="modif" && (
-        <ModifMateria/>
+        <ModifMateria materia_inicial={materia_seleccionada}/>
       )}
 
       {value==="busqueda" && (
-        <BusquedaMateria/>
+        <BusquedaMateria onMateriaSeleccionada={handleMateriaSelccionada}/>
       )}
 
       {value==="correlativas" && (

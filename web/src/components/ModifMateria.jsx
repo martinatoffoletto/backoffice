@@ -17,9 +17,10 @@ import { materiaPorId, modificarMateria, obtenerCarreras, obtenerCarrerasPorMate
 import { useEffect } from "react";
 import { Checkbox } from "./ui/checkbox";
 import CardMateria from "./CardMateria";
+import { cursoPorId } from "@/api/cursosApi";
 
 
-export default function ModifMateria(second) {
+export default function ModifMateria({materia_inicial=null}) {
     const [date, setDate] = useState();
     const [form, setForm] = useState({
         id:null,
@@ -78,17 +79,18 @@ export default function ModifMateria(second) {
 
     }
     useEffect(()=>{
-        const getCarreras=async()=>{
-        try{
-            const carreras= await obtenerCarreras()
-            console.log("carreras:", carreras)
-            setFilteredOptions(carreras)
-        }catch(err){
+        if(materia_inicial){
+            const id=materia_inicial.id_materia;
+            setValue(id)
+            setForm({
+                id:materia_inicial.id_materia || null,
+                nombre:materia_inicial.nombre || "", 
+                status:materia_inicial.status ||"",
+            })
+            setShowForm(true);
 
         }
-        }
-        getCarreras()
-    }) 
+    },[materia_inicial]) 
 
     return(
         <div className="w-full flex flex-col items-center">

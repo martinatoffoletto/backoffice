@@ -17,6 +17,16 @@ import { useState } from "react";
 export default function Carreras(second) {
 
     const [value, setValue] = useState("");
+    const [carrera_seleccionada, setCarreraSeleccionada] = useState(null);
+
+    const handleCarreraSeleccionada = (carrera, accion) => {
+        setCarreraSeleccionada(carrera);
+        if (accion === "modificacion") {
+        setValue("modificacion");
+        } else if (accion === "gestionar") {
+        setValue("gestionar");
+        }
+    };
 
     return(
          <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -49,7 +59,8 @@ export default function Carreras(second) {
         {value==="alta" && (<AltaCarrera/>)}
         {value==="baja" && (<BajaCarrera/>)}
         {value==="modificacion" && (<ModifCarrera/>)}
-        {value==="busqueda" && (<BusquedaCarrera/>)}
+        {value==="busqueda" && (<BusquedaCarrera onCarreraSeleeccionada={handleCarreraSeleccionada}/>)}
+        {value ==="gestionar"&& (<div>Gestión de materias de la carrera seleccionada</div>)}
         </div>
     )
 }
