@@ -1,8 +1,10 @@
 import { CARRERAS_MOCK } from "@/constants/formConstants";
-import { carreras} from "@/data/mockData";
+import { carreras, materias, materias_carrera} from "@/data/mockData";
 import axios from "axios";
 
 let mockCarreras=[...carreras];
+let mockMateriasPorCarrera=[...materias_carrera];
+let materiasData=[...materias]
 
 export const altaCarrera = async (carreraData) => {
   try {
@@ -73,3 +75,28 @@ export const obtenerCarreras=async()=>{
     throw err
   }
 }
+
+export const obtenerMateriasPorCarrera = async (id_carrera) => {
+  try {
+    
+    const relaciones = mockMateriasPorCarrera.filter(
+      (rel) => rel.id_carrera === id_carrera
+    );
+
+   
+    if (relaciones.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    
+    const materias = relaciones.map((rel) => {
+      return materiasData.find((m) => m.id_materia === rel.id_materia);
+    });
+
+    return Promise.resolve(materias);
+
+  } catch (err) {
+    console.error("Error al obtener materias por carrera:", err);
+    throw err;
+  }
+};
