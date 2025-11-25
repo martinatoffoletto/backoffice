@@ -54,6 +54,9 @@ export default function AltaMateria(second) {
     const [form, setForm] = useState({
         id:null,
         nombre:"",
+        descripcion:"",
+        metodo_aprobacion:"",
+        curricular:true,
         status:"activo"
     });
     
@@ -106,36 +109,50 @@ export default function AltaMateria(second) {
                   } 
                 />
               </Field>
-
               <Field>
-                  <FieldLabel>
-                    Carrera/s<span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full sm:w-[80%] md:w-[70%] justify-start">
-                        {selectedValues.length > 0
-                          ? filteredOptions
-                              .filter((c) => selectedValues.includes(c.id_carrera))
-                              .map((c) => c.nombre)
-                              .join(", ")
-                          : "Seleccioná carrera(s) a la(s) que pertenece"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-2">
-                      {filteredOptions.map((opt) => (
-                        <div
-                          key={opt.id_carrera}
-                          className="flex items-center space-x-2 py-1 cursor-pointer"
-                          onClick={() => toggleValue(opt.id_carrera)}
-                        >
-                          <Checkbox checked={selectedValues.includes(opt.id_carrera)} />
-                          <label>{opt.nombre}</label>
-                        </div>
-                      ))}
-                    </PopoverContent>
-                  </Popover>
-                </Field>
+                <FieldLabel htmlFor="descripcion">Descripción<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="descripcion"
+                  placeholder="Descripción"
+                  value={form.descripcion}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, descripcion: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="metodo_aprobacion">Tipo de Aprobación<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="metodo_aprobacion"
+                  placeholder="Tipo de Aprobación"
+                  value={form.metodo_aprobacion}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, metodo_aprobacion: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                  <div>
+                      <FieldLabel>¿Es curricular?</FieldLabel>
+                      <RadioGroup
+                        value={form.curricular ? "si" : "no"}
+                        onValueChange={(value) =>
+                          setForm((prev) => ({ ...prev, curricular: value === "si" }))
+                        }
+                        className="flex gap-4 mt-2"
+                      >
+                        <label className="flex items-center gap-2">
+                          <RadioGroupItem value="si" id="curricular-si" />
+                          <span>Si</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <RadioGroupItem value="no" id="curricular-no" />
+                          <span>No</span>
+                        </label>
+                      </RadioGroup>
+                  </div>
+              </Field>
+              
 
               <div className="flex justify-center">
                 <Button

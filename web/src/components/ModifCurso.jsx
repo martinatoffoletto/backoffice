@@ -29,6 +29,7 @@ export default function ModifCurso({ cursoInicial = null }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     uuid_materia: "",
+    examen: "",
     comision: "",
     modalidad: "",
     sede: "",
@@ -67,6 +68,7 @@ export default function ModifCurso({ cursoInicial = null }) {
       setValue(curso_id);
       setForm({
         uuid_materia: cursoInicial.uuid_materia || "",
+        examen: cursoInicial.examen || "",
         comision: cursoInicial.comision || "",
         modalidad: cursoInicial.modalidad || "",
         sede: cursoInicial.sede || "",
@@ -90,6 +92,7 @@ export default function ModifCurso({ cursoInicial = null }) {
       const response = await cursoPorId(value);
       setForm({
         uuid_materia: response.uuid_materia,
+        examen: response.examen,
         comision: response.comision,
         modalidad: response.modalidad,
         sede: response.sede,
@@ -157,7 +160,18 @@ export default function ModifCurso({ cursoInicial = null }) {
            <span className="block w-full h-[3px] bg-sky-950 mb-4"></span>
           <FieldSet className="my-6">
             <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+              {/* Examen */}
+              <Field>
+                  <FieldLabel htmlFor="examen">Examen</FieldLabel>
+                  <Input
+                  id="examen"
+                  placeholder="Examen"
+                  value={form.examen}
+                  onChange={(e) =>
+                      setForm((prev) => ({ ...prev, examen: e.target.value }))
+                  }
+                  />
+              </Field>
               {/* Modalidad */}
               <Field>
                 <FieldLabel>Modalidad</FieldLabel>
