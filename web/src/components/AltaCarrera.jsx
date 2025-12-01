@@ -52,6 +52,13 @@ export default function AltaCarrera(second) {
     const [form, setForm] = useState({
         id:null,
         nombre:"",
+        descripcion:"",
+        titulo:"",
+        codigo:"",
+        facultad:"",
+        modalidad:"",
+        duracion_horas:0,
+        duracion_anios:0,
         status:"activo"
     });
     
@@ -91,7 +98,83 @@ export default function AltaCarrera(second) {
                   } 
                 />
               </Field>
-
+              <Field>
+                <FieldLabel htmlFor="descripcion">Descripción<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="descripcion"
+                  placeholder="Descripción"
+                  value={form.descripcion}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, descripcion: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="titulo">Título<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="titulo"
+                  placeholder="Título"
+                  value={form.titulo}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, titulo: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="codigo">Código<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="codigo"
+                  placeholder="Código"
+                  value={form.codigo}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, codigo: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="facultad">Facultad<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="facultad"
+                  placeholder="Facultad"
+                  value={form.facultad}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, facultad: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="modalidad">Modalidad<span className="text-red-500">*</span></FieldLabel>
+                <Input
+                  id="modalidad"
+                  placeholder="Modalidad"
+                  value={form.modalidad}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, modalidad: e.target.value }))
+                  } 
+                />
+              </Field>
+              <Field>
+                  <FieldLabel htmlFor="duracion_horas">Duración en Horas</FieldLabel>
+                  <Input
+                  type="number"
+                  id="duracion_horas"
+                  value={form.duracion_horas}
+                  onChange={(e) =>
+                      setForm((prev) => ({ ...prev, duracion_horas: parseInt(e.target.value) }))
+                  }
+                  />
+              </Field>
+              <Field>
+                  <FieldLabel htmlFor="duracion_anios">Duración en Años</FieldLabel>
+                  <Input
+                  type="number"
+                  id="duracion_anios"
+                  value={form.duracion_anios}
+                  onChange={(e) =>
+                      setForm((prev) => ({ ...prev, duracion_anios: parseInt(e.target.value) }))
+                  }
+                  />
+              </Field>
 
               <div className="flex justify-center">
                 <Button

@@ -1,4 +1,5 @@
 import AltaCarrera from "@/components/AltaCarrera";
+import AsignarMaterias from "@/components/AsignarMaterias";
 import BajaCarrera from "@/components/BajaCarrera";
 import BusquedaCarrera from "@/components/BusquedaCarrera";
 import ModifCarrera from "@/components/ModifCarrera";
@@ -17,16 +18,7 @@ import { useState } from "react";
 export default function Carreras(second) {
 
     const [value, setValue] = useState("");
-    const [carrera_seleccionada, setCarreraSeleccionada] = useState(null);
-
-    const handleCarreraSeleccionada = (carrera, accion) => {
-        setCarreraSeleccionada(carrera);
-        if (accion === "modificacion") {
-        setValue("modificacion");
-        } else if (accion === "gestionar") {
-        setValue("gestionar");
-        }
-    };
+    const [carreraSeleccionada, setCarreraSeleccionada] = useState("");
 
     return(
          <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -51,6 +43,7 @@ export default function Carreras(second) {
                             <SelectItem value="baja">Baja de Carrera</SelectItem>
                             <SelectItem value="modificacion">Modificación de Carrera</SelectItem>
                             <SelectItem value="busqueda">Busqueda de Carrera</SelectItem>
+                            <SelectItem value="asignar">Asignar Materias</SelectItem>
                         </SelectGroup>
                         </SelectContent>
                     </Select>
@@ -59,8 +52,13 @@ export default function Carreras(second) {
         {value==="alta" && (<AltaCarrera/>)}
         {value==="baja" && (<BajaCarrera/>)}
         {value==="modificacion" && (<ModifCarrera/>)}
-        {value==="busqueda" && (<BusquedaCarrera onCarreraSeleeccionada={handleCarreraSeleccionada}/>)}
-        {value ==="gestionar"&& (<div>Gestión de materias de la carrera seleccionada</div>)}
+        {value==="busqueda" && (<BusquedaCarrera/>)}
+        {value==="asignar" && (
+                <AsignarMaterias 
+                    value={carreraSeleccionada}
+                    onChange={setCarreraSeleccionada}
+                />
+        )}
         </div>
     )
 }

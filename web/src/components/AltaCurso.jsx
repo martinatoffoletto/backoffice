@@ -41,6 +41,7 @@ export default function AltaCurso() {
     const [form, setForm] = useState({
         id_curso: "",
         uuid_materia: "",
+        examen: "",
         comision: "",
         modalidad: "",
         sede: "",
@@ -53,6 +54,7 @@ export default function AltaCurso() {
         capacidad_max: 0,
         capacidad_min: 0,
         fecha_creacion: "",
+        status:"activo",
     });
     const [showPopUp, setShowPopUp] = useState(false);
     const [completed, setCompleted]=useState(false)
@@ -76,6 +78,7 @@ export default function AltaCurso() {
             periodo: form.periodo,
             fecha_inicio: form.fecha_inicio,
             fecha_fin: form.fecha_fin,
+            examen: form.examen,
         };
         
         const camposFaltantes = Object.entries(camposObligatorios)
@@ -104,6 +107,7 @@ export default function AltaCurso() {
             
             const nombres = {
                 modalidad: 'Modalidad',
+                examen: 'Examen',
                 sede: 'Sede',
                 uuid_materia: 'Materia',
                 comision: 'Comisión',
@@ -168,6 +172,19 @@ export default function AltaCurso() {
 
                 <FieldSet className="my-4 mt-8">
                     <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        
+                    {/* Examen */}
+                    <Field>
+                        <FieldLabel htmlFor="examen">Examen</FieldLabel>
+                        <Input
+                        id="examen"
+                        placeholder="Examen"
+                        value={form.examen}
+                        onChange={(e) =>
+                            setForm((prev) => ({ ...prev, examen: e.target.value }))
+                        }
+                        />
+                    </Field>
 
                     {/* Modalidad */}
                     <Field>

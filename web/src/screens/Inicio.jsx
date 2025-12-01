@@ -66,6 +66,11 @@ export default function Inicio() {
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
+              to="/roles"
+              title="Gestión de Roles"
+              className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
+            />
+            <Link
               to="/carreras"
               title="Gestión de Carreras"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
@@ -87,12 +92,12 @@ export default function Inicio() {
             />
             <Link
               to="/sedes"
-              title="Sedes"
+              title="Gestión de Sedes"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
               to="/espacios"
-              title="Espacios"
+              title="Gestión de Espacios"
               className="p-3 text-center rounded-lg border border-gray-200 hover:bg-sky-100 transition font-semibold"
             />
             <Link
