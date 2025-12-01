@@ -73,7 +73,7 @@ const Cursos = () => {
         <ModifCurso cursoInicial={curso_seleccionado} />
       )}
       {operacion_seleccionada === "busqueda" && (
-        <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado} />
+        <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado}/>
       )}
       {operacion_seleccionada === "gestionar" && curso_seleccionado && (
         <GestionClases

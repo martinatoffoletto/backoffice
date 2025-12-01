@@ -29,7 +29,6 @@ export default function Sedes() {
   const [form, setForm] = useState({
     nombre: "",
     ubicacion: "",
-    status: true,
   });
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +38,6 @@ export default function Sedes() {
   const initialFormState = {
     nombre: "",
     ubicacion: "",
-    status: true,
   };
 
   const handleAdd = () => {
@@ -54,7 +52,6 @@ export default function Sedes() {
     setForm({
       nombre: sede.nombre ?? "",
       ubicacion: sede.ubicacion ?? "",
-      status: sede.status !== undefined ? sede.status : true,
     });
     setShowForm(true);
     setError(null);
@@ -152,9 +149,6 @@ export default function Sedes() {
       nombre: form.nombre.trim(),
       ubicacion: form.ubicacion.trim(),
     };
-    if (editingSede?.id_sede) {
-      payload.status = form.status;
-    }
 
     const isEdit = Boolean(editingSede?.id_sede);
     setConfirmDialog({
@@ -341,7 +335,7 @@ export default function Sedes() {
                               className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
                               onClick={() => handleDelete(sede)}
                             >
-                              Eliminar
+                              Desactivar
                             </Button>
                           </div>
                         )}
@@ -382,20 +376,6 @@ export default function Sedes() {
                   required
                 />
               </div>
-
-              {editingSede && (
-                <div className="flex flex-col md:flex-row gap-4">
-                  <RadioGroupField
-                    label="Estado"
-                    value={form.status}
-                    options={[
-                      { label: "Activo", value: true },
-                      { label: "Inactivo", value: false },
-                    ]}
-                    onChange={(v) => setForm({ ...form, status: v })}
-                  />
-                </div>
-              )}
 
               <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
                 <Button

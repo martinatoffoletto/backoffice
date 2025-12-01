@@ -243,7 +243,7 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
 
         <FieldSet>
           <FieldGroup className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3  gap-5">
               <Field>
                 <FieldLabel>ID de curso</FieldLabel>
                 <Input
@@ -293,7 +293,7 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1  md:grid-cols-3 gap-5">
               <Field>
                 <FieldLabel>Día de cursada</FieldLabel>
                 <Select
@@ -361,7 +361,7 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <Field>
                 <FieldLabel>Sede</FieldLabel>
                 <Select
@@ -446,9 +446,9 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
           )}
 
           {!loading_state && resultados_state.length > 0 && (
-            <div className="overflow-x-auto mt-4">
-              <Table>
-                <TableHeader>
+            <div className="overflow-x-auto mt-8">
+              <Table className="min-w-full border border-gray-200">
+                <TableHeader className="bg-gray-50">
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Materia</TableHead>

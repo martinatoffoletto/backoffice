@@ -8,7 +8,7 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PopUp from "@/components/PopUp";
 import {
   altaParametro,
@@ -36,7 +36,6 @@ export default function Precios() {
     tipo: "",
     valor_numerico: "",
     valor_texto: "",
-    status: true,
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +47,6 @@ export default function Precios() {
     tipo: "",
     valor_numerico: "",
     valor_texto: "",
-    status: true,
   };
 
   const fetchPrecios = useCallback(async () => {
@@ -112,7 +110,6 @@ export default function Precios() {
           ? String(parametro.valor_numerico)
           : "",
       valor_texto: parametro.valor_texto ?? "",
-      status: parametro.status !== undefined ? parametro.status : true,
     });
     setShowForm(true);
     setError(null);
@@ -142,10 +139,6 @@ export default function Precios() {
       valor_numerico: Number(form.valor_numerico),
       valor_texto: form.valor_texto?.trim() || null,
     };
-
-    if (editingParametro?.id_parametro) {
-      payload.status = form.status;
-    }
 
     const isEdit = Boolean(editingParametro?.id_parametro);
     setConfirmDialog({
@@ -389,7 +382,7 @@ export default function Precios() {
                               className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
                               onClick={() => requestDeletePrice(parametro)}
                             >
-                              Eliminar
+                              Desactivar
                             </Button>
                           </div>
                         )}
@@ -458,15 +451,6 @@ export default function Precios() {
               onChange={(v) => setForm({ ...form, valor_texto: v })}
               placeholder="Descripción opcional"
             />
-
-            {editingParametro && (
-              <div className="flex flex-col md:flex-row gap-4 mt-4">
-                <StatusToggle
-                  value={form.status}
-                  onChange={(status) => setForm({ ...form, status })}
-                />
-              </div>
-            )}
 
             <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
               <Button
@@ -553,30 +537,3 @@ function InputField({
   );
 }
 
-function StatusToggle({ value, onChange }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium">Estado:</span>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={value ? "default" : "outline"}
-          className={`px-4 py-1 ${
-            value ? "bg-green-600 hover:bg-green-700" : ""
-          }`}
-          onClick={() => onChange(true)}
-        >
-          Activo
-        </Button>
-        <Button
-          type="button"
-          variant={!value ? "default" : "outline"}
-          className={`px-4 py-1 ${!value ? "bg-red-600 hover:bg-red-700" : ""}`}
-          onClick={() => onChange(false)}
-        >
-          Inactivo
-        </Button>
-      </div>
-    </div>
-  );
-}

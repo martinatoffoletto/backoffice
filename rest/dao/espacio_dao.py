@@ -39,10 +39,11 @@ class EspacioDAO:
         """Obtener todos los espacios con filtro opcional por status"""
         query = select(Espacio)
         
+        # Si status_filter es None, devolver todos (activos e inactivos)
+        # Si tiene valor, filtrar por ese status específico
         if status_filter is not None:
             query = query.where(Espacio.status == status_filter)
-        else:
-            query = query.where(Espacio.status == True)
+        # Si es None, no agregamos filtro para obtener todos
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
