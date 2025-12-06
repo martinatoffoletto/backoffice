@@ -15,6 +15,9 @@ import bcrypt
 import uuid
 import re
 import unicodedata
+from datetime import datetime, timezone
+from ..messaging.producer import EventProducer
+from ..messaging.event_builder import build_event
 
 class UsuarioService:
     
@@ -106,8 +109,11 @@ class UsuarioService:
         password = UsuarioService._generate_password()
         hashed_password = UsuarioService._hash_password(password)
         
-        # Crear usuario
+        # Crear usuario (esto hace commit en la BD)
         created_user = await UsuarioDAO.create(db, usuario, hashed_password, legajo, email_institucional)
+        
+        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
+        occurred_at = datetime.now(timezone.utc)
         
         # Preparar respuesta
         user_dict = {
@@ -123,6 +129,28 @@ class UsuarioService:
             "id_rol": str(created_user.id_rol),
             "status": created_user.status
         }
+        
+        # Publicar evento user.created (emittedAt se genera en build_event)
+        event = build_event(
+            event_type="user.created",
+            payload={
+                "user_id": str(created_user.id_usuario),
+                "nombre": created_user.nombre,
+                "apellido": created_user.apellido,
+                "legajo": created_user.legajo,
+                "dni": created_user.dni,
+                "email_institucional": created_user.email_institucional,
+                "id_rol": str(created_user.id_rol),
+                "status": created_user.status
+            },
+            occurred_at=occurred_at
+        )
+        
+        await EventProducer.publish(
+            message=event,
+            exchange_name="user.event",
+            routing_key="user.created"
+        )
         
         return user_dict, password
     
@@ -229,7 +257,34 @@ class UsuarioService:
             if carrera_inactiva:
                 await UsuarioCarreraDAO.reactivate(db, user_id)
         
+        # Actualizar usuario (esto hace commit en la BD)
         updated_user = await UsuarioDAO.update(db, user_id, usuario_update)
+        
+        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
+        occurred_at = datetime.now(timezone.utc)
+        
+        # Publicar evento user.updated (emittedAt se genera en build_event)
+        event = build_event(
+            event_type="user.updated",
+            payload={
+                "user_id": str(user_id),
+                "nombre": updated_user.nombre if hasattr(updated_user, 'nombre') else existing_user.nombre,
+                "apellido": updated_user.apellido if hasattr(updated_user, 'apellido') else existing_user.apellido,
+                "legajo": updated_user.legajo if hasattr(updated_user, 'legajo') else existing_user.legajo,
+                "dni": updated_user.dni if hasattr(updated_user, 'dni') else existing_user.dni,
+                "email_institucional": updated_user.email_institucional if hasattr(updated_user, 'email_institucional') else existing_user.email_institucional,
+                "id_rol": str(updated_user.id_rol) if hasattr(updated_user, 'id_rol') else str(existing_user.id_rol),
+                "status": updated_user.status if hasattr(updated_user, 'status') else existing_user.status
+            },
+            occurred_at=occurred_at
+        )
+        
+        await EventProducer.publish(
+            message=event,
+            exchange_name="user.event",
+            routing_key="user.updated"
+        )
+        
         return updated_user, "User updated successfully"
     
     @staticmethod
@@ -246,7 +301,32 @@ class UsuarioService:
         if carrera:
             await UsuarioCarreraDAO.soft_delete(db, carrera.id_usuario, carrera.id_carrera)
 
-        return await UsuarioDAO.delete(db, user_id)
+        # Eliminar usuario (esto hace commit en la BD)
+        deleted = await UsuarioDAO.delete(db, user_id)
+        
+        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
+        occurred_at = datetime.now(timezone.utc)
+        
+        # Publicar evento user.deleted solo si se eliminó correctamente (emittedAt se genera en build_event)
+        if deleted:
+            event = build_event(
+                event_type="user.deleted",
+                payload={
+                    "user_id": str(user_id),
+                    "legajo": usuario.legajo,
+                    "nombre": usuario.nombre,
+                    "apellido": usuario.apellido
+                },
+                occurred_at=occurred_at
+            )
+            
+            await EventProducer.publish(
+                message=event,
+                exchange_name="user.event",
+                routing_key="user.deleted"
+            )
+        
+        return deleted
     
     @staticmethod
     async def _usuario_to_usuario_con_rol(db: AsyncSession, usuario: Usuario) -> Optional[UsuarioConRol]:
