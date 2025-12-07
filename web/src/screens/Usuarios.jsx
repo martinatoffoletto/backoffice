@@ -16,7 +16,7 @@ export default function Usuarios() {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-6xl p-6">
         <h1 className="font-bold text-center text-2xl mb-4">
           Gestión de Usuarios
         </h1>

@@ -59,7 +59,7 @@ export default function ModifUsuario() {
         setInitialForm({
           nombre: usuario.nombre || "",
           apellido: usuario.apellido || "",
-          dni: usuario.dni || "",
+          dni: usuario.dni ? usuario.dni.toString().slice(0, 8) : "",
           email_personal: usuario.email_personal || "",
           telefono_personal: usuario.telefono_personal || "",
         });
@@ -137,6 +137,14 @@ export default function ModifUsuario() {
     try {
       // Actualizar datos personales del usuario
       const updateData = { ...formData.datosPersonales };
+
+      // Si no se proporcionó contraseña, eliminar el campo
+      if (!updateData.contraseña || !updateData.contraseña.trim()) {
+        delete updateData.contraseña;
+      }
+
+      // Eliminar campos auxiliares que no van al backend
+      delete updateData.showPassword;
 
       const response = await modificarUsuario(userData.id_usuario, updateData);
 
@@ -229,7 +237,7 @@ export default function ModifUsuario() {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-6xl p-6">
         {!completed && !showForm && (
           <div>
             <h1 className="font-bold text-center text-2xl mb-4">
@@ -239,8 +247,8 @@ export default function ModifUsuario() {
 
             <FieldSet>
               <FieldGroup className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <Field>
+                <div className="flex gap-3 items-end">
+                  <Field className="w-1/4">
                     <FieldLabel>Buscar por</FieldLabel>
                     <Select value={param} onValueChange={setParam}>
                       <SelectTrigger>
@@ -255,7 +263,7 @@ export default function ModifUsuario() {
                     </Select>
                   </Field>
 
-                  <Field>
+                  <Field className="flex-1">
                     <FieldLabel>Valor</FieldLabel>
                     <Input
                       placeholder={`Ingresá el ${
@@ -265,9 +273,7 @@ export default function ModifUsuario() {
                       onChange={(e) => setValue(e.target.value)}
                     />
                   </Field>
-                </div>
 
-                <div className="flex gap-4">
                   <Button
                     disabled={loading || !value.trim()}
                     onClick={handleSearch}

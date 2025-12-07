@@ -98,7 +98,7 @@ export default function ModifMateria({materia_inicial=null}) {
 
     return(
         <div className="w-full flex flex-col items-center">
-            <div className="w-full max-w-2xl p-6">
+            <div className="w-full max-w-6xl p-6">
                 <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
                 <span className="block w-full h-[3px] bg-sky-950"></span>
 
@@ -126,7 +126,7 @@ export default function ModifMateria({materia_inicial=null}) {
                 {searchError && <p className="text-red-500 mt-2 text-center">{searchError}</p>}
             </div>
             { showForm &&( 
-                <div className="w-full max-w-2xl p-6">
+                <div className="w-full max-w-6xl p-6">
                     <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
                     <span className="block w-full h-[3px] bg-sky-950"></span>
 
@@ -195,7 +195,7 @@ export default function ModifMateria({materia_inicial=null}) {
             )}
 
             {completed && (
-                <div className="w-full max-w-2xl p-6">
+                <div className="w-full max-w-6xl p-6">
                     <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
                         <CardMateria title={"Información modificada exitosamente"} materia={form}/>
                         <Button

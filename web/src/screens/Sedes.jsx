@@ -247,7 +247,7 @@ export default function Sedes() {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-6xl">
         <h1 className="font-bold text-center text-2xl mb-4">Sedes</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 

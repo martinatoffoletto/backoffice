@@ -14,7 +14,7 @@ import {
   validatePorcentaje,
   validateMaxLength,
 } from "@/utils/validations";
-import { carreras } from "@/data/mockData";
+import { obtenerCarreras } from "@/api/carrerasApi";
 
 const RolSelector = ({
   rolesOptions,
@@ -65,53 +65,109 @@ const RolSelector = ({
   </Field>
 );
 
-const CarreraSelector = ({ carreras, carreraSeleccionada, onSelect }) => (
-  <Field>
-    <FieldLabel>
-      Carrera <span className="text-red-500">*</span>
-    </FieldLabel>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full sm:w-[80%] md:w-[70%] justify-start"
-        >
-          {carreras.find((c) => c.id === carreraSeleccionada)?.nombre ||
-            "Seleccioná una carrera"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-2 max-h-[300px] overflow-y-auto">
-        {carreras.map((carrera) => (
-          <div
-            key={carrera.id}
-            className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-gray-100"
-            onClick={() => onSelect(carrera.id)}
-          >
-            <Checkbox checked={carreraSeleccionada === carrera.id} readOnly />
-            <label className="cursor-pointer">{carrera.nombre}</label>
-          </div>
-        ))}
-      </PopoverContent>
-    </Popover>
-  </Field>
-);
+const CarreraSelector = ({ carreraSeleccionada, onSelect }) => {
+  const [carreras, setCarreras] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-const DatosPersonales = ({ form, setForm }) => (
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      setLoading(true);
+      try {
+        const data = await obtenerCarreras();
+        setCarreras(data);
+      } catch (error) {
+        console.error("Error al cargar carreras:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCarreras();
+  }, []);
+
+  const carrerasFiltradas = carreras.filter((carrera) =>
+    carrera.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const carreraSeleccionadaObj = carreras.find(
+    (c) => c.uuid === carreraSeleccionada
+  );
+
+  return (
+    <Field>
+      <FieldLabel>
+        Carrera <span className="text-red-500">*</span>
+      </FieldLabel>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full sm:w-[80%] md:w-[70%] justify-start"
+          >
+            {carreraSeleccionadaObj?.name || "Seleccioná una carrera"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-2 max-h-[300px] overflow-y-auto">
+          <div className="mb-2">
+            <Input
+              placeholder="Buscar carrera..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-sm text-gray-600">
+                Cargando carreras...
+              </span>
+            </div>
+          ) : carrerasFiltradas.length === 0 ? (
+            <div className="text-center py-4 text-sm text-gray-500">
+              {searchTerm
+                ? "No se encontraron carreras"
+                : "No hay carreras disponibles"}
+            </div>
+          ) : (
+            carrerasFiltradas.map((carrera) => (
+              <div
+                key={carrera.uuid}
+                className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-gray-100 rounded px-2"
+                onClick={() => onSelect(carrera.uuid)}
+              >
+                <Checkbox
+                  checked={carreraSeleccionada === carrera.uuid}
+                  readOnly
+                />
+                <label className="cursor-pointer">{carrera.name}</label>
+              </div>
+            ))
+          )}
+        </PopoverContent>
+      </Popover>
+    </Field>
+  );
+};
+
+const DatosPersonales = ({ form, setForm, isModificacion = false }) => (
   <>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <Field>
         <FieldLabel>
           Nombre/s <span className="text-red-500">*</span>
         </FieldLabel>
         <Input
           id="nombre"
-          placeholder="Nombre/s"
           value={form.nombre}
           onChange={(e) => {
             const value = e.target.value
-              .split(' ')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ');
+              .split(" ")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ");
             setForm({ ...form, nombre: value });
           }}
         />
@@ -123,13 +179,15 @@ const DatosPersonales = ({ form, setForm }) => (
         </FieldLabel>
         <Input
           id="apellido"
-          placeholder="Apellido/s"
           value={form.apellido}
           onChange={(e) => {
             const value = e.target.value
-              .split(' ')
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ');
+              .split(" ")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ");
             setForm({ ...form, apellido: value });
           }}
         />
@@ -142,16 +200,16 @@ const DatosPersonales = ({ form, setForm }) => (
       </FieldLabel>
       <Input
         id="dni"
-        placeholder="DNI sin puntos"
         value={form.dni}
         onChange={(e) => {
           const value = e.target.value.replace(/\D/g, "");
           setForm({ ...form, dni: value });
         }}
-        maxLength={10}
+        maxLength={8}
+        minLength={8}
       />
       <p className="text-gray-500 text-xs mt-1">
-        {form.dni.length}/10 caracteres
+        {form.dni.length}/8 caracteres
       </p>
     </Field>
 
@@ -162,7 +220,6 @@ const DatosPersonales = ({ form, setForm }) => (
       <Input
         id="email_personal"
         type="email"
-        placeholder="correo@ejemplo.com"
         value={form.email_personal}
         onChange={(e) => setForm({ ...form, email_personal: e.target.value })}
       />
@@ -174,7 +231,6 @@ const DatosPersonales = ({ form, setForm }) => (
       </FieldLabel>
       <Input
         id="telefono_personal"
-        placeholder="Ej: 1234567890"
         value={form.telefono_personal}
         onChange={(e) => {
           const value = e.target.value.replace(/\D/g, "");
@@ -183,6 +239,75 @@ const DatosPersonales = ({ form, setForm }) => (
         maxLength={15}
       />
     </Field>
+
+    {isModificacion && (
+      <>
+        <div className="pt-4 pb-2">
+          <h3 className="font-bold text-lg text-sky-950">Cambiar Contraseña</h3>
+          <span className="block w-full h-[1px] bg-sky-950 mt-2"></span>
+          <p className="text-xs text-gray-500 mt-2">
+            Dejá este campo vacío si no deseas cambiar la contraseña
+          </p>
+        </div>
+
+        <Field>
+          <FieldLabel>Nueva Contraseña</FieldLabel>
+          <div className="relative">
+            <Input
+              id="contraseña"
+              type={form.showPassword ? "text" : "password"}
+              value={form.contraseña || ""}
+              onChange={(e) => setForm({ ...form, contraseña: e.target.value })}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                setForm({ ...form, showPassword: !form.showPassword })
+              }
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {form.showPassword ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
+        </Field>
+      </>
+    )}
   </>
 );
 
@@ -199,7 +324,6 @@ const DatosSueldo = ({ sueldoForm, onChange, errors = {} }) => (
       </FieldLabel>
       <Input
         id="cbu"
-        placeholder="Número de CBU (22 dígitos)"
         value={sueldoForm.cbu}
         onChange={(e) => {
           const value = e.target.value.replace(/\D/g, "");
@@ -236,7 +360,6 @@ const DatosSueldo = ({ sueldoForm, onChange, errors = {} }) => (
       <Input
         id="sueldo_adicional"
         type="number"
-        placeholder="Porcentaje adicional (0-100%)"
         value={sueldoForm.sueldo_adicional}
         onChange={(e) => onChange("sueldo_adicional", e.target.value)}
         min={0}
@@ -253,7 +376,6 @@ const DatosSueldo = ({ sueldoForm, onChange, errors = {} }) => (
       <FieldLabel htmlFor="observaciones">Observaciones</FieldLabel>
       <Textarea
         id="observaciones"
-        placeholder="Notas adicionales..."
         value={sueldoForm.observaciones}
         onChange={(e) => onChange("observaciones", e.target.value)}
         maxLength={500}
@@ -329,7 +451,6 @@ export default function FormUsuarios({
     }
   }, [rolSeleccionado, rolesOptions, isModificacion, categoriaRol]);
 
-
   const validateSueldoForm = () => {
     const newErrors = {};
 
@@ -349,7 +470,14 @@ export default function FormUsuarios({
   };
 
   const validateForm = () => {
-    const { nombre, apellido, dni, email_personal, telefono_personal } = form;
+    const {
+      nombre,
+      apellido,
+      dni,
+      email_personal,
+      telefono_personal,
+      contraseña,
+    } = form;
 
     if (
       !nombre ||
@@ -360,6 +488,18 @@ export default function FormUsuarios({
       (!isModificacion && !rolSeleccionado)
     ) {
       return "Por favor, completá todos los campos obligatorios.";
+    }
+
+    // Validar DNI (8 dígitos) - limpiar espacios y validar
+    const dniLimpio = dni.toString().trim();
+    if (dniLimpio.length !== 8) {
+      return "El DNI debe tener exactamente 8 dígitos.";
+    }
+
+    if (isModificacion && contraseña && contraseña.trim()) {
+      if (contraseña.length < 8) {
+        return "La contraseña debe tener al menos 8 caracteres.";
+      }
     }
 
     if (categoriaSeleccionada === "ALUMNO" && !carreraSeleccionada) {
@@ -380,8 +520,13 @@ export default function FormUsuarios({
   const handleFormSubmit = (e) => {
     e.preventDefault();
 
+    console.log("Form data:", form);
+    console.log("DNI value:", form.dni, "Length:", form.dni?.length);
+    console.log("Categoria:", categoriaSeleccionada);
+
     const validationError = validateForm();
     if (validationError) {
+      console.log("Validation error:", validationError);
       onSubmit(null, validationError);
       return;
     }
@@ -428,13 +573,16 @@ export default function FormUsuarios({
 
           {esAlumno && (
             <CarreraSelector
-              carreras={carrerasMock}
               carreraSeleccionada={carreraSeleccionada}
               onSelect={setCarreraSeleccionada}
             />
           )}
 
-          <DatosPersonales form={form} setForm={setForm} />
+          <DatosPersonales
+            form={form}
+            setForm={setForm}
+            isModificacion={isModificacion}
+          />
 
           {mostrarSueldo && (
             <DatosSueldo

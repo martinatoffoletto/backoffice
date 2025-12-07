@@ -81,7 +81,7 @@ export default function BajaUsuario() {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-6xl p-6">
         {!deleted && (
           <div>
             <h1 className="font-bold text-center text-2xl mb-4">
@@ -91,8 +91,8 @@ export default function BajaUsuario() {
 
             <FieldSet>
               <FieldGroup className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <Field>
+                <div className="flex gap-3 items-end">
+                  <Field className="w-1/4">
                     <FieldLabel>Buscar por</FieldLabel>
                     <Select value={param} onValueChange={setParam}>
                       <SelectTrigger>
@@ -107,7 +107,7 @@ export default function BajaUsuario() {
                     </Select>
                   </Field>
 
-                  <Field>
+                  <Field className="flex-1">
                     <FieldLabel>Valor</FieldLabel>
                     <Input
                       placeholder={`Ingresá el ${
@@ -117,9 +117,7 @@ export default function BajaUsuario() {
                       onChange={(e) => setValue(e.target.value)}
                     />
                   </Field>
-                </div>
 
-                <div className="flex gap-4">
                   <Button
                     disabled={loading || !value.trim()}
                     onClick={handleSearch}
@@ -135,7 +133,7 @@ export default function BajaUsuario() {
 
         {/* Usuario encontrado - Confirmación */}
         {found && user && (
-          <div className="w-full max-w-2xl p-6">
+          <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-red-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-red-600 mb-4">
                 ⚠️ Confirmar Baja de Usuario
@@ -170,8 +168,12 @@ export default function BajaUsuario() {
                     </p>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Categoría:</span>
-                    <p className="text-gray-900">{user.rol?.categoria || "-"}</p>
+                    <span className="font-medium text-gray-700">
+                      Categoría:
+                    </span>
+                    <p className="text-gray-900">
+                      {user.rol?.categoria || "-"}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Estado:</span>
@@ -218,7 +220,7 @@ export default function BajaUsuario() {
 
         {/* Usuario dado de baja exitosamente */}
         {deleted && (
-          <div className="w-full max-w-2xl p-6">
+          <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-green-600 mb-4">
                 ✓ Usuario Dado de Baja Exitosamente

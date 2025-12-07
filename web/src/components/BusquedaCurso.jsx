@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,14 +25,9 @@ import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 
 const estadoInicialFiltros = {
-  id_curso: "",
   uuid_materia: "",
-  dia_cursada: "",
   turno: "",
-  periodo: "",
-  comision: "",
   sede: "",
-  modalidad: "",
 };
 
 const BusquedaCurso = ({ onCursoSeleccionado }) => {
@@ -62,9 +52,11 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
             obtenerSedes(),
           ]);
         setCursosState(Array.isArray(cursos_respuesta) ? cursos_respuesta : []);
-        setMateriasState(Array.isArray(materias_respuesta) ? materias_respuesta : []);
+        setMateriasState(
+          Array.isArray(materias_respuesta) ? materias_respuesta : []
+        );
         setSedesState(Array.isArray(sedes_respuesta) ? sedes_respuesta : []);
-        setResultadosState(Array.isArray(cursos_respuesta) ? cursos_respuesta : []);
+        setResultadosState([]);
       } catch (error) {
         console.error("Error al cargar datos de cursos:", error);
         setErrorState(
@@ -110,14 +102,6 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
     if (!cursos_state.length) return [];
 
     return cursos_state.filter((curso) => {
-      const curso_id = normalizarTexto(curso.id_curso || curso.id);
-      if (
-        filtros_state.id_curso &&
-        !curso_id.includes(normalizarTexto(filtros_state.id_curso))
-      ) {
-        return false;
-      }
-
       if (
         filtros_state.uuid_materia &&
         normalizarTexto(curso.uuid_materia) !==
@@ -127,33 +111,8 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
       }
 
       if (
-        filtros_state.dia_cursada &&
-        normalizarTexto(curso.dia) !==
-          normalizarTexto(filtros_state.dia_cursada)
-      ) {
-        return false;
-      }
-
-      if (
         filtros_state.turno &&
         normalizarTexto(curso.turno) !== normalizarTexto(filtros_state.turno)
-      ) {
-        return false;
-      }
-
-      if (
-        filtros_state.periodo &&
-        !normalizarTexto(curso.periodo).includes(
-          normalizarTexto(filtros_state.periodo)
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        filtros_state.comision &&
-        normalizarTexto(curso.comision) !==
-          normalizarTexto(filtros_state.comision)
       ) {
         return false;
       }
@@ -171,14 +130,6 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
         ) {
           return false;
         }
-      }
-
-      if (
-        filtros_state.modalidad &&
-        normalizarTexto(curso.modalidad) !==
-          normalizarTexto(filtros_state.modalidad)
-      ) {
-        return false;
       }
 
       return true;
@@ -242,17 +193,8 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
         <span className="block w-full h-[2px] bg-sky-950 mb-6" />
 
         <FieldSet>
-          <FieldGroup className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3  gap-5">
-              <Field>
-                <FieldLabel>ID de curso</FieldLabel>
-                <Input
-                  placeholder="Ej: cur-001"
-                  value={filtros_state.id_curso}
-                  onChange={handleInputChange("id_curso")}
-                />
-              </Field>
-
+          <FieldGroup>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-5 items-end">
               <Field>
                 <FieldLabel>Materia</FieldLabel>
                 <Select
@@ -265,53 +207,20 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Materias</SelectLabel>
-                      {Array.isArray(materias_state) && materias_state.map((materia) => {
-                        if (!materia || !materia.nombre) return null;
-                        const materiaId = materia.id_materia || materia.id || materia.uuid_materia;
-                        if (!materiaId) return null;
-                        return (
-                          <SelectItem
-                            key={materiaId}
-                            value={materiaId}
-                          >
-                            {materia.nombre}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <Field>
-                <FieldLabel>Comisión</FieldLabel>
-                <Input
-                  placeholder="Ej: A"
-                  value={filtros_state.comision}
-                  onChange={handleInputChange("comision")}
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1  md:grid-cols-3 gap-5">
-              <Field>
-                <FieldLabel>Día de cursada</FieldLabel>
-                <Select
-                  value={filtros_state.dia_cursada}
-                  onValueChange={handleSelectChange("dia_cursada")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccioná un día" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Días</SelectLabel>
-                      <SelectItem value="lunes">Lunes</SelectItem>
-                      <SelectItem value="martes">Martes</SelectItem>
-                      <SelectItem value="miercoles">Miércoles</SelectItem>
-                      <SelectItem value="jueves">Jueves</SelectItem>
-                      <SelectItem value="viernes">Viernes</SelectItem>
-                      <SelectItem value="sabado">Sábado</SelectItem>
+                      {Array.isArray(materias_state) &&
+                        materias_state.map((materia) => {
+                          if (!materia || !materia.nombre) return null;
+                          const materiaId =
+                            materia.id_materia ||
+                            materia.id ||
+                            materia.uuid_materia;
+                          if (!materiaId) return null;
+                          return (
+                            <SelectItem key={materiaId} value={materiaId}>
+                              {materia.nombre}
+                            </SelectItem>
+                          );
+                        })}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -329,39 +238,14 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Turnos</SelectLabel>
-                      <SelectItem value="mañana">Mañana</SelectItem>
-                      <SelectItem value="tarde">Tarde</SelectItem>
-                      <SelectItem value="noche">Noche</SelectItem>
+                      <SelectItem value="Mañana">Mañana</SelectItem>
+                      <SelectItem value="Tarde">Tarde</SelectItem>
+                      <SelectItem value="Noche">Noche</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>
 
-              <Field>
-                <FieldLabel>Período</FieldLabel>
-                <Select
-                  value={filtros_state.periodo}
-                  onValueChange={handleSelectChange("periodo")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccioná un período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Períodos</SelectLabel>
-                      <SelectItem value="1er Cuatrimestre">
-                        1er Cuatrimestre
-                      </SelectItem>
-                      <SelectItem value="2do Cuatrimestre">
-                        2do Cuatrimestre
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <Field>
                 <FieldLabel>Sede</FieldLabel>
                 <Select
@@ -374,62 +258,45 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Sedes</SelectLabel>
-                      {Array.isArray(sedes_state) && sedes_state.map((sede) => {
-                        if (!sede || !sede.nombre) return null;
-                        return (
-                          <SelectItem
-                            key={sede.id_sede || sede.id || `sede-${sede.nombre}`}
-                            value={sede.nombre}
-                          >
-                            {sede.nombre}
-                          </SelectItem>
-                        );
-                      })}
+                      {Array.isArray(sedes_state) &&
+                        sedes_state.map((sede) => {
+                          if (!sede || !sede.nombre) return null;
+                          return (
+                            <SelectItem
+                              key={
+                                sede.id_sede || sede.id || `sede-${sede.nombre}`
+                              }
+                              value={sede.nombre}
+                            >
+                              {sede.nombre}
+                            </SelectItem>
+                          );
+                        })}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>
 
-              <Field>
-                <FieldLabel>Modalidad</FieldLabel>
-                <Select
-                  value={filtros_state.modalidad}
-                  onValueChange={handleSelectChange("modalidad")}
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
+                onClick={handleBuscarCursos}
+                disabled={loading_state}
+              >
+                {loading_state ? "Buscando..." : "Buscar"}
+              </Button>
+
+              {(filtros_state.uuid_materia ||
+                filtros_state.turno ||
+                filtros_state.sede) && (
+                <Button
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold px-6 py-2 rounded-md"
+                  variant="secondary"
+                  onClick={handleResetFiltros}
+                  disabled={loading_state}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccioná una modalidad" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Modalidades</SelectLabel>
-                      <SelectItem value="presencial">Presencial</SelectItem>
-                      <SelectItem value="virtual">Virtual</SelectItem>
-                      <SelectItem value="hibrida">Híbrida</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <Field>
-                <FieldLabel>&nbsp;</FieldLabel>
-                <div className="flex gap-4">
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-md"
-                    onClick={handleBuscarCursos}
-                    disabled={loading_state}
-                  >
-                    {loading_state ? "Buscando..." : "Buscar"}
-                  </Button>
-                  <Button
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold px-6 py-2 rounded-md"
-                    variant="secondary"
-                    onClick={handleResetFiltros}
-                    disabled={loading_state}
-                  >
-                    Limpiar
-                  </Button>
-                </div>
-              </Field>
+                  Limpiar
+                </Button>
+              )}
             </div>
           </FieldGroup>
         </FieldSet>
@@ -461,24 +328,27 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(resultados_state) && resultados_state.map((curso) => (
-                    <TableRow 
-                      key={curso.id_curso || curso.id || Math.random()}
-                      className="cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleCursoClick(curso)}
-                    >
-                      <TableCell>{curso.id_curso || curso.id || "-"}</TableCell>
-                      <TableCell>
-                        {obtenerMateriaNombre(curso.uuid_materia)}
-                      </TableCell>
-                      <TableCell>{curso.comision || "-"}</TableCell>
-                      <TableCell>{curso.modalidad || "-"}</TableCell>
-                      <TableCell>{obtenerSedeNombre(curso.sede)}</TableCell>
-                      <TableCell>{curso.dia || "-"}</TableCell>
-                      <TableCell>{curso.turno || "-"}</TableCell>
-                      <TableCell>{curso.periodo || "-"}</TableCell>
-                    </TableRow>
-                  ))}
+                  {Array.isArray(resultados_state) &&
+                    resultados_state.map((curso) => (
+                      <TableRow
+                        key={curso.id_curso || curso.id || Math.random()}
+                        className="cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleCursoClick(curso)}
+                      >
+                        <TableCell>
+                          {curso.id_curso || curso.id || "-"}
+                        </TableCell>
+                        <TableCell>
+                          {obtenerMateriaNombre(curso.uuid_materia)}
+                        </TableCell>
+                        <TableCell>{curso.comision || "-"}</TableCell>
+                        <TableCell>{curso.modalidad || "-"}</TableCell>
+                        <TableCell>{obtenerSedeNombre(curso.sede)}</TableCell>
+                        <TableCell>{curso.dia || "-"}</TableCell>
+                        <TableCell>{curso.turno || "-"}</TableCell>
+                        <TableCell>{curso.periodo || "-"}</TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
@@ -537,4 +407,3 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
 };
 
 export default BusquedaCurso;
-

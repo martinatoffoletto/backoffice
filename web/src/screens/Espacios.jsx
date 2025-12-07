@@ -266,7 +266,7 @@ export default function Espacios() {
 
           // Cambiar el filtro a "all" para mostrar el espacio desactivado
           setStatusFilter("all");
-          
+
           // Mostrar éxito en el mismo modal
           setConfirmDialog({
             title: "Operación exitosa",
@@ -339,7 +339,7 @@ export default function Espacios() {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-5xl">
+      <div className="w-full max-w-6xl">
         <h1 className="font-bold text-center text-2xl mb-4">Espacios</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
@@ -658,4 +658,3 @@ function SelectField({
     </div>
   );
 }
-
