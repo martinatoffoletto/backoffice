@@ -33,8 +33,10 @@ const Cursos = () => {
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-2xl p-6">
-        <h1 className="font-bold text-center text-2xl mb-4">Gestión de Cursos</h1>
+      <div className="w-full max-w-6xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Gestión de Cursos
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
         <div className="flex flex-col items-center lg:flex-row lg:items-center gap-4 mt-8">
@@ -59,7 +61,9 @@ const Cursos = () => {
                 <SelectLabel>Operaciones</SelectLabel>
                 <SelectItem value="alta">Alta de Curso</SelectItem>
                 <SelectItem value="baja">Baja de Curso</SelectItem>
-                <SelectItem value="modificacion">Modificación de Curso</SelectItem>
+                <SelectItem value="modificacion">
+                  Modificación de Curso
+                </SelectItem>
                 <SelectItem value="busqueda">Búsqueda de Curso</SelectItem>
               </SelectGroup>
             </SelectContent>
@@ -73,7 +77,7 @@ const Cursos = () => {
         <ModifCurso cursoInicial={curso_seleccionado} />
       )}
       {operacion_seleccionada === "busqueda" && (
-        <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado}/>
+        <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado} />
       )}
       {operacion_seleccionada === "gestionar" && curso_seleccionado && (
         <GestionClases

@@ -131,10 +131,8 @@ export default function AltaUsuario() {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-2xl p-6">
-        <h1 className="font-bold text-center text-2xl mb-4">
-          Alta de Usuario
-        </h1>
+      <div className="w-full max-w-6xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">Alta de Usuario</h1>
         <span className="block w-full h-[3px] bg-sky-950 mb-8"></span>
 
         {!completed && (
@@ -149,7 +147,6 @@ export default function AltaUsuario() {
             loadingSubmit={loadingSubmit}
             onSubmit={handleSubmit}
             onCancel={cleanForm}
-            
           />
         )}
       </div>

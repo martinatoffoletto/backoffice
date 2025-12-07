@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectGroup,
   SelectLabel,
-  SelectSeparator
+  SelectSeparator,
 } from "@/components/ui/select.jsx";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -18,17 +18,14 @@ import BajaMateria from "@/components/BajaMateria";
 import ModifMateria from "@/components/ModifMateria";
 import GestionCorrelativas from "@/components/GestionCorrelativas";
 
-
 export default function Materias() {
-
-
   const [value, setValue] = useState("");
   const opciones = [
     { value: "alta", label: "Alta de Materia" },
     { value: "baja", label: "Baja de Materia" },
     { value: "modif", label: "Modificación de Materia" },
     { value: "busqueda", label: "Búsqueda de Materia" },
-    { value: "correlativas", label: "Gestión de Correlativas" }
+    { value: "correlativas", label: "Gestión de Correlativas" },
   ];
   const [materia_seleccionada, setMateriaSeleccionada] = useState(null);
 
@@ -45,15 +42,17 @@ export default function Materias() {
     setMateriaSeleccionada(null);
   };
 
- 
-
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
-      <div className="w-full max-w-2xl p-6">
-        <h1 className="font-bold text-center text-2xl mb-4">Gestión de Materias</h1>
+      <div className="w-full max-w-6xl p-6">
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Gestión de Materias
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
         <div className="flex flex-col items-center lg:flex-row lg:items-center gap-4 mt-8">
-          <h3 className="text-sm flex-shrink-0">Elija qué tipo de operación desea realizar</h3>
+          <h3 className="text-sm flex-shrink-0">
+            Elija qué tipo de operación desea realizar
+          </h3>
 
           <SelectForm
             title="Operaciones"
@@ -71,32 +70,23 @@ export default function Materias() {
               Ir
           </Button> */}
         </div>
-        
       </div>
 
       {/* <span className="block w-full h-[1px] bg-neutral-400"></span> */}
 
+      {value === "alta" && <AltaMateria />}
 
-      {value==="alta" && (
-        <AltaMateria/>
+      {value === "baja" && <BajaMateria />}
+
+      {value === "modif" && (
+        <ModifMateria materia_inicial={materia_seleccionada} />
       )}
 
-      {value==="baja" && (
-        <BajaMateria/>
+      {value === "busqueda" && (
+        <BusquedaMateria onMateriaSeleccionada={handleMateriaSelccionada} />
       )}
 
-      {value==="modif" && (
-        <ModifMateria materia_inicial={materia_seleccionada}/>
-      )}
-
-      {value==="busqueda" && (
-        <BusquedaMateria onMateriaSeleccionada={handleMateriaSelccionada}/>
-      )}
-
-      {value==="correlativas" && (
-        <GestionCorrelativas/>
-      )}
-
+      {value === "correlativas" && <GestionCorrelativas />}
     </div>
   );
 }

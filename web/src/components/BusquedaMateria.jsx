@@ -149,7 +149,7 @@ export default function BusquedaMateria({onMateriaSeleccionada}) {
     return(
 
         <div className="w-full flex flex-col items-center">
-            <div className="w-full max-w-2xl p-6">
+            <div className="w-full max-w-6xl p-6">
             <h1 className="font-bold text-center text-2xl mb-4">Buscar Materia</h1>
             <span className="block w-full h-[3px] bg-sky-950"></span>
 
@@ -177,7 +177,7 @@ export default function BusquedaMateria({onMateriaSeleccionada}) {
                 <h3 className="text-sm mb-2 shrink-0">
                     Buscar por nombre
                 </h3>
-                <div className="relative w-full max-w-2xl">
+                <div className="relative w-full max-w-6xl">
                     <Input
                         className="mb-4 flex-1 w-full"
                         type="text"
@@ -387,7 +387,7 @@ export default function BusquedaMateria({onMateriaSeleccionada}) {
                 </div>
             ):
             (!found && value && (
-                <div className="w-full max-w-2xl p-6">
+                <div className="w-full max-w-6xl p-6">
                     <p className="text-sm text-gray-500 mt-4 text-center">No se han encontrado resultados</p>
                 </div>
             ))}

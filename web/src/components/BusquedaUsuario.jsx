@@ -59,7 +59,7 @@ export default function BusquedaUsuario() {
 
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="w-full max-w-2xl p-6">
+      <div className="w-full max-w-6xl p-6">
         <h1 className="font-bold text-center text-2xl mb-4">
           Búsqueda de Usuarios
         </h1>
@@ -67,8 +67,8 @@ export default function BusquedaUsuario() {
 
         <FieldSet>
           <FieldGroup className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 justify-items-center">
-              <Field className="w-full">
+            <div className="flex gap-3 items-end">
+              <Field className="w-1/5">
                 <FieldLabel>Buscar por</FieldLabel>
                 <Select
                   value={param || "ninguno"}
@@ -94,7 +94,7 @@ export default function BusquedaUsuario() {
               </Field>
 
               {param && (
-                <Field className="w-full">
+                <Field className="flex-1">
                   <FieldLabel>Valor</FieldLabel>
                   <Input
                     placeholder="Ingresá el valor a buscar"
@@ -104,7 +104,7 @@ export default function BusquedaUsuario() {
                 </Field>
               )}
 
-              <Field className="w-full">
+              <Field className="w-1/6">
                 <FieldLabel>Estado</FieldLabel>
                 <Select
                   value={
@@ -129,9 +129,7 @@ export default function BusquedaUsuario() {
                   </SelectContent>
                 </Select>
               </Field>
-            </div>
 
-            <div className="flex gap-4 justify-center">
               <Button
                 onClick={handleSearch}
                 disabled={loading || (param && !value.trim())}
@@ -145,7 +143,9 @@ export default function BusquedaUsuario() {
 
         <div className="mt-6">
           {resultados.length === 0 && !loading && !error && (
-            <p className="mt-4 text-gray-500 text-center">No se encontraron resultados.</p>
+            <p className="mt-4 text-gray-500 text-center">
+              No se encontraron resultados.
+            </p>
           )}
 
           {resultados.length > 0 && (
