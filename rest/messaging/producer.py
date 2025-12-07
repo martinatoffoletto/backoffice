@@ -44,12 +44,37 @@ class EventProducer:
                 logger.info(f"✅ Mensaje publicado a cola: {queue_name}")
                 return True
             
-            # Si no, usar exchange
-            exchange = await channel.declare_exchange(
-                exchange_name,
-                type="topic",
-                durable=True
-            )
+            # Intentar obtener el exchange existente primero (sin declararlo)
+            # Esto DEBERIA funcionar incluso si no tenemos permisos de configuración
+            exchange = None
+            try:
+                # Intentar obtener el exchange existente (sin declararlo)
+                exchange = await channel.get_exchange(exchange_name)
+                logger.debug(f"✅ Exchange obtenido: {exchange_name}")
+            except Exception as get_error:
+                # Si no existe, intentar declararlo
+                # Esto requiere SI y SOLO SI tenemos permisos de configuración
+                try:
+                    exchange = await channel.declare_exchange(
+                        exchange_name,
+                        type="topic",
+                        durable=True
+                    )
+                    logger.debug(f"✅ Exchange declarado: {exchange_name}")
+                except Exception as declare_error:
+                    # Si falla por permisos de configuración, el exchange probablemente ya existe
+                    # Intentar obtenerlo de nuevo (puede que el error inicial fuera temporal)
+                    error_msg = str(declare_error)
+                    if "ACCESS_REFUSED" in error_msg or "configure access" in error_msg.lower():
+                        logger.warning(f"⚠️ Sin permisos para declarar exchange '{exchange_name}', asumiendo que existe y obteniéndolo...")
+                        try:
+                            exchange = await channel.get_exchange(exchange_name)
+                        except Exception:
+                            # Si aún falla, relanzar el error original de permisos
+                            raise declare_error
+                    else:
+                        # Si es otro error, relanzarlo
+                        raise declare_error
             
             message_obj = Message(
                 json.dumps(message).encode(),
