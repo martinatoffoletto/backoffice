@@ -7,11 +7,14 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-# Variable de entorno
-RABBITMQ_URL = os.getenv(
-    'RABBITMQ_URL', 
-    'amqp://guest:guest@localhost:5672/'
-)
+# Variables de entorno individuales
+RABBITMQ_DEFAULT_USER = os.getenv('RABBITMQ_DEFAULT_USER', 'guest')
+RABBITMQ_DEFAULT_PASS = os.getenv('RABBITMQ_DEFAULT_PASS', 'guest')
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+RABBITMQ_PORT = os.getenv('RABBITMQ_PORT', '5672')
+
+# Construir URL de conexión
+RABBITMQ_URL = f"amqp://{RABBITMQ_DEFAULT_USER}:{RABBITMQ_DEFAULT_PASS}@{RABBITMQ_HOST}:{RABBITMQ_PORT}"
 
 # Estado global
 _connection: AbstractConnection | None = None
@@ -25,7 +28,7 @@ async def get_connection() -> AbstractConnection:
     if _connection is None or _connection.is_closed:
         try:
             _connection = await connect_robust(RABBITMQ_URL)
-            logger.info("✅ Conexión a RabbitMQ establecida")
+            logger.info(f"✅ Conexión a RabbitMQ establecida: {RABBITMQ_HOST}:{RABBITMQ_PORT}")
         except Exception as e:
             logger.error(f"❌ Error conectando a RabbitMQ: {e}")
             raise
