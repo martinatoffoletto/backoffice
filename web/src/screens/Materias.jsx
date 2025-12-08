@@ -13,7 +13,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import SelectForm from "@/components/SelectForm";
 import AltaMateria from "@/components/AltaMateria";
-import BusquedaMateria2 from "@/components/BusquedaMateria";
+import BusquedaMateria from "@/components/BusquedaMateria";
 import BajaMateria from "@/components/BajaMateria";
 import ModifMateria from "@/components/ModifMateria";
 import GestionCorrelativas from "@/components/GestionCorrelativas";
@@ -83,7 +83,7 @@ export default function Materias() {
       )}
 
       {value === "busqueda" && (
-        <BusquedaMateria2 onMateriaSeleccionada={handleMateriaSelccionada} />
+        <BusquedaMateria onMateriaSeleccionada={handleMateriaSelccionada} />
       )}
 
       {value === "correlativas" && <GestionCorrelativas />}
