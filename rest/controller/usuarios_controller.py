@@ -7,12 +7,18 @@ from ..schemas.usuario_schema import (
 )
 from ..service.usuario_service import UsuarioService
 from ..database import get_async_db
+from ..security.dependencies import get_current_active_user, require_admin, require_admin_or_docente
+from ..models.usuario_model import Usuario
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_user(usuario: UsuarioCreate, db: AsyncSession = Depends(get_async_db)):
-    """Crear un nuevo usuario"""
+async def create_user(
+    usuario: UsuarioCreate,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
+):
+    """Crear un nuevo usuario - Solo ADMINISTRADOR"""
     created_user, message = await UsuarioService.create_user(db, usuario)
     if created_user is None:
         raise HTTPException(
@@ -32,8 +38,10 @@ async def get_all_users(
     param: Optional[str] = Query(None, description="Parámetro de búsqueda opcional: id, legajo, dni, email_institucional, email_personal, nombre, status"),
     value: Optional[str] = Query(None, description="Valor a buscar cuando se usa 'param'"),
     status_filter: Optional[bool] = Query(None),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin_or_docente())
 ):
+    """Obtener todos los usuarios - ADMINISTRADOR y DOCENTE (solo lectura)"""
     if param is not None:
         valid_params = [
             "id", "legajo", "dni", "email_institucional", "email_personal",
@@ -57,9 +65,10 @@ async def get_all_users(
 async def update_user(
     user_id: uuid.UUID,
     usuario_update: UsuarioUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
 ):
-    """Actualizar un usuario existente"""
+    """Actualizar un usuario existente - Solo ADMINISTRADOR"""
     result = await UsuarioService.update_user(db, user_id, usuario_update)
     
     if isinstance(result, tuple):
@@ -80,8 +89,12 @@ async def update_user(
         return result
 
 @router.delete("/{user_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_user(user_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
-    """Eliminar (desactivar) un usuario"""
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
+):
+    """Eliminar (desactivar) un usuario - Solo ADMINISTRADOR"""
     success = await UsuarioService.delete_user(db, user_id)
     if not success:
         raise HTTPException(

@@ -31,3 +31,19 @@ class VerifyResponse(BaseModel):
     exists: bool
     active: bool
     email_institucional: str
+
+class CurrentUserResponse(BaseModel):
+    """Respuesta del endpoint /auth/me con información del usuario actual"""
+    id_usuario: UUID
+    nombre: str
+    apellido: str
+    legajo: str
+    dni: str
+    email_institucional: Optional[str]
+    email_personal: Optional[str]
+    telefono_personal: Optional[str]
+    status: bool
+    rol: RolInfo
+    
+    class Config:
+        from_attributes = True
