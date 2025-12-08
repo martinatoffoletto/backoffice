@@ -60,7 +60,6 @@ const Cursos = () => {
               <SelectGroup>
                 <SelectLabel>Operaciones</SelectLabel>
                 <SelectItem value="alta">Alta de Curso</SelectItem>
-                <SelectItem value="baja">Baja de Curso</SelectItem>
                 <SelectItem value="modificacion">
                   Modificación de Curso
                 </SelectItem>
@@ -72,7 +71,7 @@ const Cursos = () => {
       </div>
 
       {operacion_seleccionada === "alta" && <AltaCurso />}
-      {operacion_seleccionada === "baja" && <BajaCurso />}
+
       {operacion_seleccionada === "modificacion" && (
         <ModifCurso cursoInicial={curso_seleccionado} />
       )}
