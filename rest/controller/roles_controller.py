@@ -5,12 +5,18 @@ from ..service.rol_service import RolService
 from ..schemas.rol_schema import Rol, RolBase, RolUpdate
 from typing import List, Optional, Dict, Any
 import uuid
+from ..security.dependencies import get_current_active_user, require_admin, require_roles
+from ..models.usuario_model import Usuario
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
 @router.post("/", response_model=Rol, status_code=status.HTTP_201_CREATED)
-async def create_rol(rol: RolBase, db: AsyncSession = Depends(get_async_db)):
-    """Crear un nuevo rol"""
+async def create_rol(
+    rol: RolBase,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
+):
+    """Crear un nuevo rol - Solo ADMINISTRADOR"""
     created_rol, error_message = await RolService.create_rol(db, rol)
     if not created_rol:
         raise HTTPException(
@@ -24,8 +30,10 @@ async def get_all_roles(
     param: Optional[str] = Query(None, description="Parámetro de búsqueda opcional: id, categoria, subcategoria"),
     value: Optional[str] = Query(None, description="Valor a buscar cuando se usa 'param'"),
     status_filter: Optional[bool] = Query(None, description="Filtrar por estado: true, false o omitir para ambos"),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(get_current_active_user)
 ):
+    """Obtener todos los roles - Requiere autenticación (todos los roles pueden ver)"""
     if param is not None:
         valid_params = ["id", "categoria", "subcategoria"]
         if param.lower() not in valid_params:
@@ -55,9 +63,10 @@ async def get_categories_with_subcategories(
 async def update_rol(
     rol_id: uuid.UUID,
     rol_update: RolUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
 ):
-    """Actualizar un rol existente"""
+    """Actualizar un rol existente - Solo ADMINISTRADOR"""
     updated_rol, error_message = await RolService.update_rol(db, rol_id, rol_update)
     if not updated_rol:
         if error_message == "Rol no encontrado":
@@ -73,8 +82,12 @@ async def update_rol(
     return updated_rol
 
 @router.delete("/{rol_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_rol(rol_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
-    """Eliminar (desactivar) un rol"""
+async def delete_rol(
+    rol_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: Usuario = Depends(require_admin())
+):
+    """Eliminar (desactivar) un rol - Solo ADMINISTRADOR"""
     success, error_message = await RolService.delete_rol(db, rol_id)
     if not success:
         raise HTTPException(
