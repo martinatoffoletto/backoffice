@@ -47,78 +47,116 @@
 
 import { CARRERAS_MOCK } from "@/constants/formConstants";
 import { carreras,  materias, materias_carrera } from "@/data/mockData";
+import axios from "axios";
 
+const API_BASE_URL =
+  "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api";
 
 let mockMaterias=[...materias];
 let mockCarreras=[...carreras];
 let mockMateriaPorCarrera=[...materias_carrera];
 
-export const altaMateria = async (materiaData, carreras_materia) => {
+export const altaMateria = async (materiaData) => {
   try {
-    const nuevaMateria = {
-      id: mockMaterias.length + 1, // simulamos autoincremental
-      ...materiaData,
-    };
-
-    mockMaterias.push(nuevaMateria);
-    return Promise.resolve(nuevaMateria); 
+    const response = await axios.post(`${API_BASE_URL}/materias`, materiaData, {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
   } catch (error) {
     console.error("Error al crear materia:", error);
-    throw error; 
-  }
-};
-
-export const bajaMateria = async (id) => {
-  try {
-    mockMaterias = mockMaterias.filter((s) => s.id !== id);
-    return Promise.resolve({message:"Materia eliminada exitosamente"});
-  } catch (error) {
-    console.error("Error al eliminar materia:", error);
     throw error;
   }
 };
 
-export const modificarMateria = async (id, materiaData) => {
+export const bajaMateria = async (uuid) => {
   try {
-    const index = mockMaterias.findIndex((s)=>s.id_materia === id)
-    if (index === -1) throw new Error("Materia no encontrado");
-    mockMaterias[index] = { ...mockMaterias[index], ...materiaData };
-    return Promise.resolve(mockMaterias[index]); 
+    const response = await axios.delete(`${API_BASE_URL}/materias/${uuid}`, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al eliminar materia", error);
+    throw error;
+  }
+};
+
+export const modificarMateria = async (uuid, materiaData) => {
+  try {
+    console.log("API - UUID:", uuid);
+    console.log("API - Datos a enviar:", materiaData);
+    const response = await axios.put(
+      `${API_BASE_URL}/materias/${uuid}`,
+      materiaData,
+      {
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("API - Respuesta:", response.data);
+    return response.data;
   } catch (err) {
-    console.error("Error al modificar el materia:", err);
-    throw err; 
-}
+    console.error("Error al modificar la materia", err);
+    console.error("Error response:", err.response?.data);
+    throw err;
+  }
 };
 
-export const materiaPorId=async(id)=>{
-    try{
-        console.log(id)
-        const materia= mockMaterias.find((m)=>m.id_materia === id)
-        if (!materia) throw new Error("Materia no encontrada")       
-        return Promise.resolve(materia)
-    }catch(err){
-        console.error("Error al buscar materia:", err)
-        throw err;
-    }
-}
-export const materiaPorNombre=async(name)=>{
-    try{
-        console.log(name)
-        const materia= mockMaterias.find((m)=>m.nombre === name)
-        if (!materia) throw new Error("Materia no encontrada")       
-        return Promise.resolve(materia)
-    }catch(err){
-        console.error("Error al buscar materia:", err)
-        throw err;
-    }
-}
-
-export const obtenerMaterias = async () => {
+export const materiaPorId = async (id) => {
   try {
-    return Promise.resolve(mockMaterias);
-  } catch (error) {
-    console.error("Error al obtener materias:", error);
-    throw error;
+    const response = await axios.get(`${API_BASE_URL}/materias/${id}`, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar materia", err);
+    throw err;
+  }
+};
+export const materiaPorNombre = async (name) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/materias`, {
+      params: { name_materia: name },
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    // La API devuelve { success: true, data: [...] }
+    const materias = response.data.data || [];
+
+    if (materias.length === 0) throw new Error("Materia no encontrada");
+
+    // Retornar la primera materia encontrada
+    return materias[0];
+  } catch (err) {
+    console.error("Error al buscar materia", err);
+    throw err;
+  }
+};
+
+export const obtenerMaterias = async (page = 1, limit = 100) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/materias`, {
+      params: { page, limit },
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    // La API devuelve { success: true, data: [...], page, limit, count, totalCount, totalPages }
+    return response.data.data || [];
+  } catch (err) {
+    console.error("Error al obtener materias", err);
+    throw err;
   }
 };
 
