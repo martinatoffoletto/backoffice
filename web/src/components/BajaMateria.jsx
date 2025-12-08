@@ -33,15 +33,10 @@ export default function BajaMateria() {
     curricular: "",
   });
 
-  // ============================
-  // 🔹 Cargar materias al inicio
-  // ============================
   useEffect(() => {
     const loadMaterias = async () => {
       try {
         const data = await obtenerMaterias();
-
-        // 🔥 Limpia materias inválidas proveniente de la API
         const limpias = data.filter(
           m => m && typeof m === "object" && m.nombre
         );
@@ -55,9 +50,6 @@ export default function BajaMateria() {
     loadMaterias();
   }, []);
 
-  // =================================
-  // 🔹 Buscar materia manualmente
-  // =================================
   const handleSearch = async () => {
     setLoadingState(true);
     const nombre = value.trim();
@@ -90,9 +82,6 @@ export default function BajaMateria() {
     setLoadingState(false);
   };
 
-  // ==================================
-  // 🔹 Dar de baja materia seleccionada
-  // ==================================
   const handleBaja = async () => {
     if (!materiaData || !materiaData.uuid) {
       setError("No hay materia seleccionada para dar de baja");
@@ -112,9 +101,6 @@ export default function BajaMateria() {
     }
   };
 
-  // ============================
-  // 🔹 Autocomplete
-  // ============================
   const handleInputChange = (texto) => {
     setValue(texto);
 
@@ -124,7 +110,7 @@ export default function BajaMateria() {
       return;
     }
 
-    // Filtrado seguro
+  
     const sugerencias = allMaterias.filter(m =>
       m?.nombre?.toLowerCase().includes(texto.toLowerCase())
     );
@@ -139,29 +125,30 @@ export default function BajaMateria() {
 
         <h1 className="font-bold text-center text-2xl mb-4">Baja de Materia</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
+        <div className="relative w-full max-w-6xl mt-8">
+          <div className="flex gap-2 items-center mb-4">
+            <Input
+              className="flex-1"
+              type="text"
+              placeholder="Ingrese nombre"
+              value={value}
+              onChange={(e) => handleInputChange(e.target.value)}
+            />
+            <Button
+              disabled={!value.trim()}
+              onClick={handleSearch}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Buscar
+            </Button>
+          </div>
 
-        <h3 className="text-sm mb-2 mt-8 text-center">
-          Ingrese el nombre de la materia a dar de baja
-        </h3>
+          {loadingState && <span>Cargando...</span>}
 
-        <div className="relative w-full max-w-6xl">
-
-          {/* INPUT AUTOCOMPLETE */}
-          <Input
-            className="mb-4 flex-1 w-full"
-            type="text"
-            placeholder="Ingrese nombre"
-            value={value}
-            onChange={(e) => handleInputChange(e.target.value)}
-          />
-
-          {/* DROPDOWN */}
           {showDropdown && suggestions.length > 0 && (
             <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
-              
               <CommandGroup>
                 <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-
                 {suggestions.map(materia => (
                   <CommandItem key={materia.id_materia}
                     onSelect={() => {
@@ -186,26 +173,14 @@ export default function BajaMateria() {
                   </CommandItem>
                 ))}
               </CommandGroup>
-
             </Command>
           )}
-
-          <Button
-            disabled={!value.trim()}
-            onClick={handleSearch}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Buscar
-          </Button>
 
           {searchError && <p className="text-red-500 mt-2 text-center">{searchError}</p>}
         </div>
 
-        {/* =================================== */}
-        {/* 🔹 Materia encontrada (confirmación) */}
-        {/* =================================== */}
         {found && materiaData && (
-          <div className="w-full max-w-6xl p-6">
+          <div className="w-full max-w-6xl p-6 mt-8">
             <div className="w-full bg-white border-2 border-red-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-red-600 mb-4">
                 ⚠️ Confirmar Baja de Materia
@@ -218,7 +193,7 @@ export default function BajaMateria() {
                   Datos de la Materia:
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="space-y-4">
                   <div>
                     <span className="font-medium text-gray-700">Nombre:</span>
                     <p className="text-gray-900">{materiaData.nombre}</p>
@@ -226,22 +201,22 @@ export default function BajaMateria() {
 
                   <div>
                     <span className="font-medium text-gray-700">Carrera:</span>
-                    <p className="text-gray-900">{materiaData.carrera.nombre}</p>
+                    <p className="text-gray-900">{materiaData.carrera?.name}</p>
                   </div>
 
                   <div>
                     <span className="font-medium text-gray-700">Descripción:</span>
-                    <p className="text-gray-900">{materiaData.descripcion}</p>
+                    <p className="text-gray-900">{materiaData.description}</p>
                   </div>
 
                   <div>
                     <span className="font-medium text-gray-700">Tipo de Aprobación:</span>
-                    <p className="text-gray-900">{materiaData.metodo_aprobacion}</p>
+                    <p className="text-gray-900">{materiaData.approval_method}</p>
                   </div>
 
                   <div>
-                    <span className="font-medium text-gray-700">¿Es curricular?:</span>
-                    <p className="text-gray-900">{materiaData.curricular}</p>
+                    <span className="font-medium text-gray-700">¿Es electiva?:</span>
+                    <p className="text-gray-900">{materiaData.is_elective ? "Sí" : "No"}</p>
                   </div>
                 </div>
               </div>
@@ -263,7 +238,7 @@ export default function BajaMateria() {
                 <Button
                   onClick={() => {
                     setFound(false);
-                    setMateriaData(null);  // 🔥 FIX: antes decía setCarreraData
+                    setMateriaData(null); 
                     setValue("");
                   }}
                   className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded"
@@ -275,9 +250,6 @@ export default function BajaMateria() {
           </div>
         )}
 
-        {/* ============================= */}
-        {/* 🔹 Materia dada de baja */}
-        {/* ============================= */}
         {deleted && (
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">

@@ -15,55 +15,81 @@ import {
   validateMaxLength,
 } from "@/utils/validations";
 import { obtenerCarreras } from "@/api/carrerasApi";
+import { obtenerRoles } from "@/api/rolesApi";
 
 const RolSelector = ({
-  rolesOptions,
   rolSeleccionado,
-  loadingRoles,
   onSelect,
-}) => (
-  <Field>
-    <FieldLabel>
-      Rol de Usuario <span className="text-red-500">*</span>
-    </FieldLabel>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full sm:w-[80%] md:w-[70%] justify-start"
-        >
-          {rolesOptions.find((r) => r.id === rolSeleccionado)?.label ||
-            "Seleccioná un rol"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-2 max-h-[300px] overflow-y-auto">
-        {loadingRoles ? (
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-sm text-gray-600">
-              Cargando roles...
-            </span>
-          </div>
-        ) : rolesOptions.length === 0 ? (
-          <div className="text-center py-4 text-sm text-gray-500">
-            No hay roles disponibles
-          </div>
-        ) : (
-          rolesOptions.map((rol) => (
-            <div
-              key={rol.id}
-              className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-gray-100"
-              onClick={() => onSelect(rol.id)}
-            >
-              <Checkbox checked={rolSeleccionado === rol.id} readOnly />
-              <label className="cursor-pointer">{rol.label}</label>
+}) => {
+  const [rolesOptions, setRolesOptions] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const roles = await obtenerRoles(true);
+        const opciones = roles.map((rol) => ({
+          id: rol.id_rol,
+          label: rol.subcategoria
+            ? `${rol.categoria} - ${rol.subcategoria}`
+            : rol.categoria,
+          categoria: rol.categoria,
+          sueldo_base: rol.sueldo_base,
+        }));
+        setRolesOptions(opciones);
+      } catch (err) {
+        console.error("Error al cargar roles:", err);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+    loadRoles();
+  }, []);
+
+  return (
+    <Field>
+      <FieldLabel>
+        Rol de Usuario <span className="text-red-500">*</span>
+      </FieldLabel>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full sm:w-[80%] md:w-[70%] justify-start"
+          >
+            {rolesOptions.find((r) => r.id === rolSeleccionado)?.label ||
+              "Seleccioná un rol"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-2 max-h-[300px] overflow-y-auto">
+          {loadingRoles ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-sm text-gray-600">
+                Cargando roles...
+              </span>
             </div>
-          ))
-        )}
-      </PopoverContent>
-    </Popover>
-  </Field>
-);
+          ) : rolesOptions.length === 0 ? (
+            <div className="text-center py-4 text-sm text-gray-500">
+              No hay roles disponibles
+            </div>
+          ) : (
+            rolesOptions.map((rol) => (
+              <div
+                key={rol.id}
+                className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-gray-100"
+                onClick={() => onSelect(rol.id)}
+              >
+                <Checkbox checked={rolSeleccionado === rol.id} readOnly />
+                <label className="cursor-pointer">{rol.label}</label>
+              </div>
+            ))
+          )}
+        </PopoverContent>
+      </Popover>
+    </Field>
+  );
+};
 
 const CarreraSelector = ({ carreraSeleccionada, onSelect }) => {
   const [carreras, setCarreras] = useState([]);
@@ -396,9 +422,7 @@ export default function FormUsuarios({
   initialRolSeleccionado,
   initialCarreraSeleccionada,
   initialSueldoForm,
-  rolesOptions,
   carrerasMock,
-  loadingRoles,
   loadingSubmit = false,
   onSubmit,
   onCancel,
@@ -433,23 +457,32 @@ export default function FormUsuarios({
       return;
     }
 
-    if (rolSeleccionado && rolesOptions) {
-      const rolEncontrado = rolesOptions.find((r) => r.id === rolSeleccionado);
-      if (rolEncontrado) {
-        setCategoriaSeleccionada(rolEncontrado.categoria);
-        if (rolEncontrado.categoria !== "ALUMNO") {
-          setCarreraSeleccionada("");
-          setSueldoForm((prev) => ({
-            ...prev,
-            sueldo_fijo: rolEncontrado.sueldo_base || "0.00",
-          }));
+    if (rolSeleccionado) {
+      // Cargar los roles para obtener la información del rol seleccionado
+      const loadRoleInfo = async () => {
+        try {
+          const roles = await obtenerRoles(true);
+          const rolEncontrado = roles.find((r) => r.id_rol === rolSeleccionado);
+          if (rolEncontrado) {
+            setCategoriaSeleccionada(rolEncontrado.categoria);
+            if (rolEncontrado.categoria !== "ALUMNO") {
+              setCarreraSeleccionada("");
+              setSueldoForm((prev) => ({
+                ...prev,
+                sueldo_fijo: rolEncontrado.sueldo_base || "0.00",
+              }));
+            }
+          }
+        } catch (err) {
+          console.error("Error al cargar rol info:", err);
         }
-      }
+      };
+      loadRoleInfo();
     } else {
       setCategoriaSeleccionada("");
       setCarreraSeleccionada("");
     }
-  }, [rolSeleccionado, rolesOptions, isModificacion, categoriaRol]);
+  }, [rolSeleccionado, isModificacion, categoriaRol]);
 
   const validateSueldoForm = () => {
     const newErrors = {};
@@ -564,9 +597,7 @@ export default function FormUsuarios({
         <FieldGroup className="space-y-5">
           {!isModificacion && (
             <RolSelector
-              rolesOptions={rolesOptions || []}
               rolSeleccionado={rolSeleccionado}
-              loadingRoles={loadingRoles}
               onSelect={setRolSeleccionado}
             />
           )}

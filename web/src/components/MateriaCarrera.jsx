@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import {
   Table,
   TableBody,
@@ -9,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { carreraPorNombre, verMateriasPorCarrera } from "@/api/carrerasApi";
+import { carreraPorNombre, verMateriasPorCarrera, obtenerCarreras } from "@/api/carrerasApi";
 
 export default function MateriaCarrera() {
   const [nombreCarrera, setNombreCarrera] = useState("");
@@ -17,22 +22,57 @@ export default function MateriaCarrera() {
   const [showTable, setShowTable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [allCarreras, setAllCarreras] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingState, setLoadingState] = useState(false);
 
-  const handleBuscar = async () => {
-    if (!nombreCarrera.trim()) return;
+  useEffect(() => {
+    const loadCarreras = async () => {
+      try {
+        const data = await obtenerCarreras();
+        const limpias = data.filter(
+          c => c && typeof c === "object" && c.name
+        );
+        setAllCarreras(limpias);
+      } catch (err) {
+        console.error("Error al cargar carreras", err);
+      }
+    };
 
-    setLoading(true);
+    loadCarreras();
+  }, []);
+
+  const handleInputChange = (texto) => {
+    setNombreCarrera(texto);
+
+    if (texto.trim() === "") {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const sugerencias = allCarreras.filter(c =>
+      c?.name?.toLowerCase().includes(texto.toLowerCase())
+    );
+
+    setSuggestions(sugerencias);
+    setShowDropdown(true);
+  };
+
+  const handleBuscar = async (carreraSeleccionada) => {
+    setLoadingState(true);
     setError(null);
     setShowTable(false);
 
     try {
-      // Primero buscar la carrera por nombre para obtener su UUID
-      const carrera = await carreraPorNombre(nombreCarrera.trim());
+      // Si viene de dropdown, usar carrera seleccionada; si no, buscar por nombre
+      const carrera = carreraSeleccionada || await carreraPorNombre(nombreCarrera.trim());
 
       if (!carrera || !carrera.uuid) {
         setError("Carrera no encontrada");
         setMaterias([]);
-        setLoading(false);
+        setLoadingState(false);
         return;
       }
 
@@ -44,7 +84,7 @@ export default function MateriaCarrera() {
       setError(err.message || "Error al buscar materias");
       setMaterias([]);
     } finally {
-      setLoading(false);
+      setLoadingState(false);
     }
   };
 
@@ -56,23 +96,47 @@ export default function MateriaCarrera() {
         </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="flex gap-3 items-center w-full mt-8">
-          <Input
-            placeholder="Ingrese nombre de carrera"
-            value={nombreCarrera}
-            onChange={(e) => setNombreCarrera(e.target.value)}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleBuscar}
-            disabled={!nombreCarrera.trim() || loading}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-6"
-          >
-            {loading ? "Buscando..." : "Buscar"}
-          </Button>
-        </div>
+        <div className="relative w-full max-w-6xl mt-8">
+          <div className="flex gap-2 items-center mb-4">
+            <Input
+              className="flex-1"
+              type="text"
+              placeholder="Ingrese nombre de carrera"
+              value={nombreCarrera}
+              onChange={(e) => handleInputChange(e.target.value)}
+            />
+            <Button
+              onClick={() => handleBuscar()}
+              disabled={!nombreCarrera.trim() || loadingState}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-6"
+            >
+              {loadingState ? "Buscando..." : "Buscar"}
+            </Button>
+          </div>
 
-        {error && <div className="mt-4 text-center text-red-500">{error}</div>}
+          {loadingState && <span>Cargando...</span>}
+
+          {showDropdown && suggestions.length > 0 && (
+            <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
+              <CommandGroup>
+                <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
+                {suggestions.map(carrera => (
+                  <CommandItem key={carrera.uuid}
+                    onSelect={() => {
+                      setNombreCarrera(carrera.name);
+                      setShowDropdown(false);
+                      handleBuscar(carrera);
+                    }}
+                  >
+                    <span>{carrera.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          )}
+
+          {error && <div className="mt-4 text-center text-red-500">{error}</div>}
+        </div>
 
         {showTable && (
           <div className="mt-8">

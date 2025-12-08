@@ -1,4 +1,5 @@
 import { obtenerUsuarios } from "@/api/usuariosApi";
+import { carreraPorId } from "@/api/carrerasApi";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PopUp from "./PopUp";
 
 export default function BusquedaUsuario() {
@@ -20,6 +21,24 @@ export default function BusquedaUsuario() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+  const [nombreCarrera, setNombreCarrera] = useState(null);
+  const [cargandoCarrera, setCargandoCarrera] = useState(false);
+
+  useEffect(() => {
+    if (usuarioSeleccionado?.carrera?.id_carrera) {
+      setCargandoCarrera(true);
+      carreraPorId(usuarioSeleccionado.carrera.id_carrera)
+        .then((response) => {
+          const data = response.data || response;
+          setNombreCarrera(data.name);
+        })
+        .catch((error) => {
+          console.error("Error al obtener nombre de carrera:", error);
+          setNombreCarrera("No encontrada");
+        })
+        .finally(() => setCargandoCarrera(false));
+    }
+  }, [usuarioSeleccionado?.carrera?.id_carrera]);
 
   const handleSearch = async () => {
     if (param && !value.trim()) {
@@ -495,10 +514,10 @@ export default function BusquedaUsuario() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          ID Carrera
+                          Carrera
                         </label>
-                        <p className="mt-1 text-sm text-gray-900 font-mono text-xs">
-                          {usuarioSeleccionado.carrera.id_carrera}
+                        <p className="mt-1 text-sm text-gray-900 font-semibold">
+                          {cargandoCarrera ? "Cargando..." : nombreCarrera || "No encontrada"}
                         </p>
                       </div>
                       <div>
