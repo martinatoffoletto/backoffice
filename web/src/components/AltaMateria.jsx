@@ -43,6 +43,9 @@ export default function AltaMateria(second) {
   const [selectedValues, setSelectedValues] = useState([]);
   const [materiaData, setMateriaData] = useState(null);
   const [filteredOptions, setFilteredOptions] = useState([]);
+  const [carreras, setCarreras] = useState([]);
+  const [loadingCarreras, setLoadingCarreras] = useState(false);
+  const [carreraSearch, setCarreraSearch] = useState("");
 
   const toggleValue = (id) => {
     setSelectedValues((prev) =>
@@ -82,7 +85,27 @@ export default function AltaMateria(second) {
       } catch (err) {}
     };
     getCarreras();
-  });
+  })
+  
+  useEffect(() => {
+      const fetchCarreras = async () => {
+        try {
+          setLoadingCarreras(true);
+          const response = await obtenerCarreras();
+          setCarreras(response || []);
+        } catch (error) {
+          console.error("Error al cargar carreras:", error);
+          setCarreras([]);
+        } finally {
+          setLoadingCarreras(false);
+        }
+      };
+      fetchCarreras();
+    }, []);
+  
+    const filteredCarreras = carreras.filter((carrera) =>
+      carrera.nombre?.toLowerCase().includes(carreraSearch.toLowerCase().trim())
+    );;
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -108,6 +131,51 @@ export default function AltaMateria(second) {
                   />
                 </Field>
                 <Field>
+                  <FieldLabel htmlFor="carrera">
+                    Carrera<span className="text-red-500">*</span>
+                  </FieldLabel>
+                  <Select
+                    value={form.carrera}
+                    onValueChange={(value) =>
+                      setForm((prev) => ({ ...prev, carrera: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          loadingCarreras ? "Cargando carreras..." : "Seleccione carrera"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-2">
+                        <Input
+                          placeholder="Buscar carrera..."
+                          value={carreraSearch}
+                          onChange={(e) => setCarreraSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                      </div>
+                      <SelectGroup>
+                        <SelectLabel>Carreras</SelectLabel>
+                        {filteredCarreras.length > 0 ? (
+                          filteredCarreras.map((carrera) => (
+                            <SelectItem key={carrera.nombre} value={carrera.nombre}>
+                              {carrera.nombre}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-1.5 text-sm text-gray-500">
+                            {loadingCarreras
+                              ? "Cargando..."
+                              : "No se encontraron carreras"}
+                          </div>
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field>
                   <FieldLabel htmlFor="descripcion">
                     Descripción<span className="text-red-500">*</span>
                   </FieldLabel>
@@ -127,17 +195,23 @@ export default function AltaMateria(second) {
                   <FieldLabel htmlFor="metodo_aprobacion">
                     Tipo de Aprobación<span className="text-red-500">*</span>
                   </FieldLabel>
-                  <Input
+                  <Select
                     id="metodo_aprobacion"
-                    placeholder="Tipo de Aprobación"
                     value={form.metodo_aprobacion}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        metodo_aprobacion: e.target.value,
-                      }))
+                    onValueChange={(value) =>
+                      setForm((prev) => ({ ...prev,
+                        metodo_aprobacion: value, }))
                     }
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione tipo de aprobación" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="final">Final Obligatorio</SelectItem>
+                      <SelectItem value="promocion">Promoción</SelectItem>
+                      <SelectItem value="trabajo_practico">Trabajo Practico Obligatorio</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field>
                   <div>
