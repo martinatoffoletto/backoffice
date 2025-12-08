@@ -368,7 +368,7 @@ export default function BusquedaMateria({onMateriaSeleccionada}) {
                         </div>
                         <Button
                         onClick={handleCerrarOpciones}
-                        className="bg-gray-50 border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-bold px-6 py-2 rounded-md"
+                        className="bg-gray-50 border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-bold py-2 px-4 rounded w-full"
                         >
                         Cancelar
                         </Button>

@@ -23,6 +23,9 @@ import PopUp from "@/components/PopUp";
 import { obtenerCursos } from "@/api/cursosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
+import { bajaCurso } from "@/api/cursosApi"
+import { buscarCurso } from "@/api/cursosApi";
+
 
 const estadoInicialFiltros = {
   uuid_materia: "",
@@ -40,6 +43,8 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
   const [error_state, setErrorState] = useState(null);
   const [curso_seleccionado, setCursoSeleccionado] = useState(null);
   const [show_opciones, setShowOpciones] = useState(false);
+  const [showPopUpConfirmacion,setShowPopUpConfirmacion]=useState(false);
+
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -179,6 +184,36 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
     setShowOpciones(false);
   };
 
+  const handleEliminarCurso= async()=>{
+    try{
+      setShowOpciones(false);
+      setShowPopUpConfirmacion(true);
+    }catch(err){
+      console.error("Error al eliminar curso: ", err);
+      setErrorState(
+        err.response?.data?.detail ||
+          err.message ||
+          "Error al eliminar curso"
+      )
+    }
+  }
+
+  const handleBaja= async () => {
+      try {
+        await bajaCurso(curso_seleccionado.uuid);
+        console.log("Curso dado de baja exitosamente");
+        setShowPopUpConfirmacion(false);
+      } catch (err) {
+        setShowPopUpConfirmacion(false);
+        console.log("Error al dar de baja curso:", err.message);
+        setErrorState(
+          err.response?.data?.detail ||
+            err.message ||
+            "Error al dar de baja el curso"
+        );
+      }
+    };
+
   const handleCerrarOpciones = () => {
     setShowOpciones(false);
     setCursoSeleccionado(null);
@@ -307,9 +342,7 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
           )}
 
           {!loading_state && resultados_state.length === 0 && (
-            <p className="text-gray-500">
-              No se encontraron cursos con los filtros aplicados.
-            </p>
+             <p className="text-gray-500">No se encontraron cursos con los filtros aplicados.</p>
           )}
 
           {!loading_state && resultados_state.length > 0 && (
@@ -331,12 +364,12 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                   {Array.isArray(resultados_state) &&
                     resultados_state.map((curso) => (
                       <TableRow
-                        key={curso.id_curso || curso.id || Math.random()}
+                        key={curso.uuid || Math.random()}
                         className="cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleCursoClick(curso)}
                       >
                         <TableCell>
-                          {curso.id_curso || curso.id || "-"}
+                          {curso.uuid|| "-"}
                         </TableCell>
                         <TableCell>
                           {obtenerMateriaNombre(curso.uuid_materia)}
@@ -347,6 +380,7 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                         <TableCell>{curso.dia || "-"}</TableCell>
                         <TableCell>{curso.turno || "-"}</TableCell>
                         <TableCell>{curso.periodo || "-"}</TableCell>
+                        
                       </TableRow>
                     ))}
                 </TableBody>
@@ -382,26 +416,50 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
             <div className="flex flex-col gap-3 mb-4">
               <Button
                 onClick={handleEditarCurso}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-gray-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white font-bold py-2 px-4 rounded"
               >
                 Editar Curso
               </Button>
               <Button
                 onClick={handleGestionarClases}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-gray-50 border border-green-500 text-green-500 hover:bg-green-500 hover:text-white font-bold py-2 px-4 rounded"
               >
                 Gestionar Clases
+              </Button>
+              <Button
+                onClick={handleEliminarCurso} 
+                className="bg-gray-50 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded">
+                Eliminar curso
               </Button>
             </div>
             <Button
               onClick={handleCerrarOpciones}
-              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded w-full"
+              className="bg-gray-50 border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-bold py-2 px-4 rounded w-full"
             >
               Cancelar
             </Button>
           </div>
         </div>
       )}
+
+      {
+        showPopUpConfirmacion &&(
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-md border border-red-500 flex flex-col gap-3 ">
+              <h2 className="font-bold text-lg ">Confirmar eliminación</h2>
+              <p>¿Está seguro que desea eliminar el curso seleccionado?</p>
+              <div className="flex gap-4 justify-end">
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4"
+                  onClick={()=>handleBaja()}
+                  >
+                    Confirmar
+                  </Button>
+              </div>
+            </div>
+            </div>
+        )
+      }
     </div>
   );
 };
