@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { buscarEspacios } from "@/api/espaciosApi";
+import { obtenerMaterias } from "@/api/materiasApi";
+import { obtenerSedes } from "@/api/sedesApi";
 
 export default function FormCurso({
   form,
@@ -29,6 +31,24 @@ export default function FormCurso({
   const [aulas, setAulas] = useState([]);
   const [loadingAulas, setLoadingAulas] = useState(false);
   const [aulaSearch, setAulaSearch] = useState("");
+  
+  // Estados para materias
+  const [materias, setMaterias] = useState([]);
+  const [loadingMaterias, setLoadingMaterias] = useState(false);
+  const [materiaSearch, setMateriaSearch] = useState("");
+  
+  // Estados para sedes
+  const [sedes, setSedes] = useState([]);
+  const [loadingSedes, setLoadingSedes] = useState(false);
+  const [sedeSearch, setSedeSearch] = useState("");
+
+  const filteredMateriasList = materias.filter((materia) =>
+    materia.nombre?.toLowerCase().includes(materiaSearch.toLowerCase().trim())
+  );
+
+  const filteredSedesList = sedes.filter((sede) =>
+    sede.nombre?.toLowerCase().includes(sedeSearch.toLowerCase().trim())
+  );
 
   useEffect(() => {
     const fetchAulas = async () => {
@@ -45,6 +65,50 @@ export default function FormCurso({
     };
     fetchAulas();
   }, []);
+
+  useEffect(() => {
+    const fetchMaterias = async () => {
+      try {
+        setLoadingMaterias(true);
+        const data = await obtenerMaterias();
+        const limpias = data.filter(m => m && typeof m === "object" && m.nombre);
+        setMaterias(limpias);
+      } catch (error) {
+        console.error("Error al cargar materias:", error);
+        setMaterias([]);
+      } finally {
+        setLoadingMaterias(false);
+      }
+    };
+    fetchMaterias();
+  }, []);
+
+  useEffect(() => {
+    const fetchSedes = async () => {
+      try {
+        setLoadingSedes(true);
+        const data = await obtenerSedes();
+        const limpias = data.filter(s => s && typeof s === "object" && s.nombre);
+        setSedes(limpias);
+      } catch (error) {
+        console.error("Error al cargar sedes:", error);
+        setSedes([]);
+      } finally {
+        setLoadingSedes(false);
+      }
+    };
+    fetchSedes();
+  }, []);
+
+  // Manejar búsqueda de materias
+  const handleMateriaSearch = (texto) => {
+    setMateriaSearch(texto);
+  };
+
+  // Manejar búsqueda de sedes
+  const handleSedeSearch = (texto) => {
+    setSedeSearch(texto);
+  };
 
   const filteredAulas = aulas.filter((aula) =>
     aula.nombre?.toLowerCase().includes(aulaSearch.toLowerCase().trim())
@@ -63,7 +127,7 @@ export default function FormCurso({
                   Materia <span className="text-red-500">*</span>
                 </FieldLabel>
                 <Select
-                  value={form.uuid_materia}
+                  value={form.uuid_materia || ""}
                   onValueChange={(value) => {
                     setForm((prev) => ({ ...prev, uuid_materia: value }));
                     if (camposConError.has("uuid_materia")) {
@@ -81,27 +145,39 @@ export default function FormCurso({
                         : ""
                     }`}
                   >
-                    <SelectValue placeholder="Seleccione materia" />
+                    <SelectValue
+                      placeholder={
+                        loadingMaterias ? "Cargando materias..." : "Seleccione materia"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder="Buscar materia..."
+                        value={materiaSearch}
+                        onChange={(e) => handleMateriaSearch(e.target.value)}
+                        className="mb-2"
+                      />
+                    </div>
                     <SelectGroup>
                       <SelectLabel>Materias</SelectLabel>
-                      {filteredMaterias.map((materia) => (
-                        <SelectItem
-                          key={
-                            materia.id_materia ||
-                            materia.uuid_materia ||
-                            materia.id
-                          }
-                          value={
-                            materia.id_materia ||
-                            materia.uuid_materia ||
-                            materia.id
-                          }
-                        >
-                          {materia.nombre}
-                        </SelectItem>
-                      ))}
+                      {filteredMateriasList.length > 0 ? (
+                        filteredMateriasList.map((materia) => (
+                          <SelectItem
+                            key={materia.uuid || materia.id_materia || materia.id}
+                            value={materia.uuid || materia.id_materia || materia.id}
+                          >
+                            {materia.nombre}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-gray-500">
+                          {loadingMaterias
+                            ? "Cargando..."
+                            : "No se encontraron materias"}
+                        </div>
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -113,7 +189,7 @@ export default function FormCurso({
                   Sede <span className="text-red-500">*</span>
                 </FieldLabel>
                 <Select
-                  value={form.sede}
+                  value={form.sede || ""}
                   onValueChange={(value) => {
                     setForm((prev) => ({ ...prev, sede: value }));
                     if (camposConError.has("sede")) {
@@ -131,24 +207,38 @@ export default function FormCurso({
                         : ""
                     }`}
                   >
-                    <SelectValue placeholder="Seleccione sede" />
+                    <SelectValue
+                      placeholder={
+                        loadingSedes ? "Cargando sedes..." : "Seleccione sede"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder="Buscar sede..."
+                        value={sedeSearch}
+                        onChange={(e) => handleSedeSearch(e.target.value)}
+                        className="mb-2"
+                      />
+                    </div>
                     <SelectGroup>
                       <SelectLabel>Sedes</SelectLabel>
-                      {filteredSedes && filteredSedes.length > 0 ? (
-                        filteredSedes.map((sede) => (
+                      {filteredSedesList.length > 0 ? (
+                        filteredSedesList.map((sede) => (
                           <SelectItem
-                            key={sede.id_sede || sede.id}
-                            value={sede.id_sede || sede.id}
+                            key={sede.nombre}
+                            value={sede.nombre}
                           >
                             {sede.nombre}
                           </SelectItem>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-400 px-2">
-                          No hay sedes disponibles
-                        </p>
+                        <div className="px-2 py-1.5 text-sm text-gray-500">
+                          {loadingSedes
+                            ? "Cargando..."
+                            : "No se encontraron sedes"}
+                        </div>
                       )}
                     </SelectGroup>
                   </SelectContent>
@@ -294,13 +384,25 @@ export default function FormCurso({
               <FieldLabel htmlFor="periodo">
                 Período<span className="text-red-500">*</span>
               </FieldLabel>
-              <Input
-                id="periodo"
+              <Select
                 value={form.periodo}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, periodo: e.target.value }))
+                onValueChange={(value) =>
+                  setForm((prev) => ({ ...prev, periodo: value }))
                 }
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Período</SelectLabel>
+                    <SelectItem value="Primer cuatrimestre">Primer cuatrimestre</SelectItem>
+                    <SelectItem value="Segundo cuatrimestre">Segundo cuatrimestre</SelectItem>
+                    <SelectItem value="Intensiva">Intensiva</SelectItem>
+                    <SelectItem value="Verano">Verano</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field>
@@ -319,9 +421,9 @@ export default function FormCurso({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Turno</SelectLabel>
-                    <SelectItem value="Mañana">Mañana</SelectItem>
-                    <SelectItem value="Tarde">Tarde</SelectItem>
-                    <SelectItem value="Noche">Noche</SelectItem>
+                    <SelectItem value="MAÑANA">Mañana</SelectItem>
+                    <SelectItem value="TARDE">Tarde</SelectItem>
+                    <SelectItem value="NOCHE">Noche</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -355,23 +457,6 @@ export default function FormCurso({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="cantidad_max">
-                Cantidad Máxima<span className="text-red-500">*</span>
-              </FieldLabel>
-              <Input
-                type="number"
-                id="cantidad_max"
-                value={form.cantidad_max}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    cantidad_max: parseInt(e.target.value) || 0,
-                  }))
-                }
-              />
-            </Field>
-
-            <Field>
               <FieldLabel htmlFor="cantidad_min">
                 Cantidad Mínima<span className="text-red-500">*</span>
               </FieldLabel>
@@ -383,6 +468,23 @@ export default function FormCurso({
                   setForm((prev) => ({
                     ...prev,
                     cantidad_min: parseInt(e.target.value) || 0,
+                  }))
+                }
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="cantidad_max">
+                Cantidad Máxima<span className="text-red-500">*</span>
+              </FieldLabel>
+              <Input
+                type="number"
+                id="cantidad_max"
+                value={form.cantidad_max}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    cantidad_max: parseInt(e.target.value) || 0,
                   }))
                 }
               />

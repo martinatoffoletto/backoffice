@@ -63,6 +63,15 @@ export default function AltaCurso() {
   const [showGestionClases, setShowGestionClases] = useState(false);
   const [camposConError, setCamposConError] = useState(new Set());
 
+  // Función para convertir datetime-local a ISO 8601 format
+  const formatDateToISO = (dateTimeLocal) => {
+    if (!dateTimeLocal) return "";
+    // dateTimeLocal format: "2024-12-08T14:30"
+    const date = new Date(dateTimeLocal);
+    // Convertir a ISO 8601: "2024-12-08T14:30:00.000Z"
+    return date.toISOString();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -77,6 +86,8 @@ export default function AltaCurso() {
       desde: form.desde,
       hasta: form.hasta,
       examen: form.examen,
+      aula: form.aula,
+      turno: form.turno,
     };
 
     const camposFaltantes = Object.entries(camposObligatorios)
@@ -89,14 +100,11 @@ export default function AltaCurso() {
     const erroresFechas = [];
     // Validar que fecha fin sea posterior o igual a fecha inicio
     if (form.desde && form.hasta) {
-      const fechaInicio = new Date(form.fecha_inicio);
-      const fechaFin = new Date(form.fecha_fin);
-      // Normalizar a medianoche para comparar solo fechas (sin hora)
-      fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(0, 0, 0, 0);
+      const fechaInicio = new Date(form.desde);
+      const fechaFin = new Date(form.hasta);
 
       if (fechaFin < fechaInicio) {
-        erroresFechas.push("fecha_fin");
+        erroresFechas.push("hasta");
       }
     }
 
@@ -114,8 +122,10 @@ export default function AltaCurso() {
         comision: "Comisión",
         dia: "Día de cursada",
         periodo: "Período",
-        fecha_inicio: "Fecha Inicio",
-        fecha_fin: "Fecha Fin",
+        desde: "Fecha Desde",
+        hasta: "Fecha Hasta",
+        aula: "Aula",
+        turno: "Turno",
       };
 
       const mensajesError = [];
@@ -140,14 +150,22 @@ export default function AltaCurso() {
     setCamposConError(new Set());
 
     try {
-      // Map FormCurso fields to API fields
+      // Map FormCurso fields to API fields - DTO de CursoCreateDTO
       const cursoData = {
-        ...form,
-        fecha_inicio: form.desde,
-        fecha_fin: form.hasta,
-        capacidad_max: form.cantidad_max,
-        capacidad_min: form.cantidad_min,
-        status: form.estado,
+        uuid_materia: form.uuid_materia,
+        examen: form.examen,
+        comision: form.comision,
+        modalidad: form.modalidad,
+        sede: form.sede,
+        aula: form.aula,
+        dia: form.dia,
+        turno: form.turno,
+        periodo: form.periodo,
+        desde: formatDateToISO(form.desde),
+        hasta: formatDateToISO(form.hasta),
+        cantidad_max: parseInt(form.cantidad_max) || 0,
+        cantidad_min: parseInt(form.cantidad_min) || 0,
+        estado: form.estado,
       };
       const nuevo_curso = await altaCurso(cursoData);
       console.log("Curso dado de alta exitosamente");

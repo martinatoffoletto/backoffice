@@ -3,6 +3,13 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerCarreras } from "@/api/carrerasApi";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select.jsx";
 
 import {
   TableCell,
@@ -23,8 +30,8 @@ import {
 } from "@/components/ui/pagination";
 
 export default function BusquedaMateria() {
-  const [searchMateria, setSearchMateria] = useState("");
-  const [searchCarrera, setSearchCarrera] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [searchType, setSearchType] = useState("nombre");
 
   const [error, setError] = useState(null);
   const [loading_state, setLoadingState] = useState(false);
@@ -40,24 +47,24 @@ export default function BusquedaMateria() {
 
   let materiasFiltradas = todasLasMaterias;
 
-  if (searchMateria.trim() !== "") {
-    materiasFiltradas = materiasFiltradas.filter((m) =>
-      m.name?.toLowerCase().includes(searchMateria.toLowerCase().trim())
-    );
-  }
+  if (searchValue.trim() !== "") {
+    if (searchType === "nombre") {
+      materiasFiltradas = materiasFiltradas.filter((m) =>
+        m.name?.toLowerCase().includes(searchValue.toLowerCase().trim())
+      );
+    } else if (searchType === "carrera") {
+      const nombreLower = searchValue.toLowerCase().trim();
 
-  if (searchCarrera.trim() !== "") {
-    const nombreLower = searchCarrera.toLowerCase().trim();
+      const carrerasCoincidentes = todasLasCarreras.filter((c) =>
+        c.name.toLowerCase().includes(nombreLower)
+      );
 
-    const carrerasCoincidentes = todasLasCarreras.filter((c) =>
-      c.name.toLowerCase().includes(nombreLower)
-    );
+      const uuidsCarrerasCoincidentes = carrerasCoincidentes.map((c) => c.uuid);
 
-    const uuidsCarrerasCoincidentes = carrerasCoincidentes.map((c) => c.uuid);
-
-    materiasFiltradas = materiasFiltradas.filter((m) =>
-      uuidsCarrerasCoincidentes.includes(m.uuid_carrera)
-    );
+      materiasFiltradas = materiasFiltradas.filter((m) =>
+        uuidsCarrerasCoincidentes.includes(m.uuid_carrera)
+      );
+    }
   }
 
   const lastIndex = currentPage * itemsPerPage;
@@ -65,7 +72,7 @@ export default function BusquedaMateria() {
   const paginatedMaterias = materiasFiltradas.slice(firstIndex, lastIndex);
   const totalPages = Math.ceil(materiasFiltradas.length / itemsPerPage);
 
-  useEffect(() => setCurrentPage(1), [searchMateria, searchCarrera]);
+  useEffect(() => setCurrentPage(1), [searchValue, searchType]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,36 +115,34 @@ export default function BusquedaMateria() {
         <h1 className="font-bold text-center text-2xl mb-4">Buscar Materia</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
-          <div className="flex gap-2">
-            <Input
-              className="flex-1"
-              type="text"
-              placeholder="Buscar materia por nombre"
-              value={searchMateria}
-              onChange={(e) => setSearchMateria(e.target.value)}
-            />
-            {searchMateria && (
-              <Button onClick={() => setSearchMateria("")} variant="outline">
-                Limpiar
-              </Button>
-            )}
-          </div>
+        <div className="flex gap-2 items-center my-6">
+          <Select value={searchType} onValueChange={setSearchType}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Seleccionar tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nombre">Nombre</SelectItem>
+              <SelectItem value="carrera">Carrera</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <div className="flex gap-2">
-            <Input
-              className="flex-1"
-              type="text"
-              placeholder="Buscar por carrera"
-              value={searchCarrera}
-              onChange={(e) => setSearchCarrera(e.target.value)}
-            />
-            {searchCarrera && (
-              <Button onClick={() => setSearchCarrera("")} variant="outline">
-                Limpiar
-              </Button>
-            )}
-          </div>
+          <Input
+            className="flex-1"
+            type="text"
+            placeholder={
+              searchType === "nombre"
+                ? "Ingrese nombre de materia"
+                : "Ingrese nombre de carrera"
+            }
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+
+          {searchValue && (
+            <Button onClick={() => setSearchValue("")} variant="outline">
+              Limpiar
+            </Button>
+          )}
         </div>
 
         {!loading_state && materiasFiltradas.length > 0 && (
@@ -209,7 +214,7 @@ export default function BusquedaMateria() {
         )}
 
         {!loading_state &&
-          (searchMateria || searchCarrera) &&
+          searchValue &&
           materiasFiltradas.length === 0 && (
             <p className="text-center text-gray-500 text-sm mt-8">
               No se encontraron materias con esos filtros

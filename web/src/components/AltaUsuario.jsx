@@ -3,18 +3,14 @@ import PopUp from "@/components/PopUp";
 import CardUsuario from "./CardUsuario";
 import FormUsuarios from "./FormUsuarios";
 import { altaUsuario } from "@/api/usuariosApi";
-import { obtenerRoles } from "@/api/rolesApi";
 import { altaSueldo } from "@/api/sueldosApi";
 import {
   CARRERAS_MOCK,
   INITIAL_FORM_STATE,
   INITIAL_SUELDO_STATE,
 } from "@/constants/formConstants";
-import { carreras } from "@/data/mockData";
 
 export default function AltaUsuario() {
-  const [rolesOptions, setRolesOptions] = useState([]);
-  const [loadingRoles, setLoadingRoles] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [error, setError] = useState(null);
   const [completed, setCompleted] = useState(false);
@@ -22,28 +18,6 @@ export default function AltaUsuario() {
   const [carreraData, setCarreraData] = useState(null);
   const [sueldoData, setSueldoData] = useState(null);
   const [showPopUp, setShowPopUp] = useState(false);
-
-  useEffect(() => {
-    const cargarRoles = async () => {
-      try {
-        const roles = await obtenerRoles(true);
-        const opciones = roles.map((rol) => ({
-          id: rol.id_rol,
-          label: rol.subcategoria
-            ? `${rol.categoria} - ${rol.subcategoria}`
-            : rol.categoria,
-          categoria: rol.categoria,
-          sueldo_base: rol.sueldo_base,
-        }));
-        setRolesOptions(opciones);
-      } catch (err) {
-        setError("Error al cargar los roles. Por favor, recargá la página.");
-      } finally {
-        setLoadingRoles(false);
-      }
-    };
-    cargarRoles();
-  }, []);
 
   const cleanForm = useCallback(() => {
     setError(null);
@@ -141,9 +115,7 @@ export default function AltaUsuario() {
             initialRolSeleccionado=""
             initialCarreraSeleccionada=""
             initialSueldoForm={INITIAL_SUELDO_STATE}
-            rolesOptions={rolesOptions}
             carrerasMock={CARRERAS_MOCK}
-            loadingRoles={loadingRoles}
             loadingSubmit={loadingSubmit}
             onSubmit={handleSubmit}
             onCancel={cleanForm}

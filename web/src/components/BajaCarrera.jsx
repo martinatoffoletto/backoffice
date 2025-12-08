@@ -1,8 +1,13 @@
 import PopUp from "../components/PopUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { bajaCarrera, carreraPorNombre } from "@/api/carrerasApi";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import { useState, useEffect } from "react";
+import { bajaCarrera, carreraPorNombre, obtenerCarreras } from "@/api/carrerasApi";
 
 export default function BajaCarrera() {
   const [value, setValue] = useState("");
@@ -11,6 +16,43 @@ export default function BajaCarrera() {
   const [deleted, setDeleted] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [allCarreras, setAllCarreras] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loadingState, setLoadingState] = useState(false);
+
+  useEffect(() => {
+    const loadCarreras = async () => {
+      try {
+        const data = await obtenerCarreras();
+        const limpias = data.filter(
+          c => c && typeof c === "object" && c.name
+        );
+        setAllCarreras(limpias);
+      } catch (err) {
+        console.error("Error al cargar carreras", err);
+      }
+    };
+
+    loadCarreras();
+  }, []);
+
+  const handleInputChange = (texto) => {
+    setValue(texto);
+
+    if (texto.trim() === "") {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const sugerencias = allCarreras.filter(c =>
+      c?.name?.toLowerCase().includes(texto.toLowerCase())
+    );
+
+    setSuggestions(sugerencias);
+    setShowDropdown(true);
+  };
 
   const handleSearch = async () => {
     if (!value.trim()) {
@@ -68,27 +110,48 @@ export default function BajaCarrera() {
             </h1>
             <span className="block w-full h-[3px] bg-sky-950 mb-6" />
 
-            <div className="flex gap-3 items-center w-full">
-              <Input
-                placeholder="Ingrese nombre de carrera"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                disabled={loading || !value.trim()}
-                onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6"
-              >
-                {loading ? "Buscando..." : "Buscar"}
-              </Button>
-            </div>
-
-            {error && (
-              <div className="text-center text-red-500 text-sm mt-4">
-                {error}
+            <div className="relative w-full max-w-6xl mt-8">
+              <div className="flex gap-2 items-center mb-4">
+                <Input
+                  className="flex-1"
+                  type="text"
+                  placeholder="Ingrese nombre de carrera"
+                  value={value}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                />
+                <Button
+                  disabled={!value.trim()}
+                  onClick={handleSearch}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Buscar
+                </Button>
               </div>
-            )}
+
+              {loadingState && <span>Cargando...</span>}
+
+              {showDropdown && suggestions.length > 0 && (
+                <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
+                  <CommandGroup>
+                    <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
+                    {suggestions.map(carrera => (
+                      <CommandItem key={carrera.uuid}
+                        onSelect={() => {
+                          setValue(carrera.name);
+                          setCarreraData(carrera);
+                          setShowDropdown(false);
+                          setFound(true);
+                        }}
+                      >
+                        <span>{carrera.name}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              )}
+
+              {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+            </div>
           </div>
         )}
 

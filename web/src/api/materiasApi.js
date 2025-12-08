@@ -1,51 +1,3 @@
-// NOTA: El endpoint /materias no existe en el backend actual
-// Este módulo está usando datos mock temporalmente
-// Para conectarlo al backend, primero se debe crear el endpoint /api/v1/materias en el backend
-
-// import axiosInstance from "./axiosInstance";
-
-// export const altaMateria = async (materiaData) => {
-//   try {
-//     const response = await axiosInstance.post("/materias/", materiaData);
-//     return response.data; 
-//   } catch (error) {
-//     console.error("Error al crear materia:", error);
-//     throw error; 
-//   }
-// };
-
-// export const bajaMateria = async (id) => {
-//   try {
-//     const response = await axiosInstance.delete(`/materias/${id}`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error al eliminar materia:", error);
-//     throw error;
-//   }
-// };
-
-// export const modificarMateria = async (id, materiaData) => {
-//   try {
-//     const response = await axiosInstance.put(`/materias/${id}`, materiaData);
-//     return response.data; 
-//   } catch (err) {
-//     console.error("Error al modificar el materia:", err);
-//     throw err; 
-// }
-// };
-
-// export const materiaPorId=async(id)=>{
-//     try{
-//         const response= await axiosInstance.get(`/materias/${id}`)       
-//         return response.data
-//     }catch(err){
-//         console.error("Error al buscar materia:", err)
-//         throw err;
-//     }
-// }
-
-
-import { CARRERAS_MOCK } from "@/constants/formConstants";
 import { carreras,  materias, materias_carrera } from "@/data/mockData";
 import axios from "axios";
 
@@ -191,3 +143,53 @@ export const obtenerCarreras=async()=>{
     throw err
   }
 }
+
+export const obtenerCorrelativas = async (uuid) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/materias/${uuid}/correlativas`, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    return response.data.data || [];
+  } catch (err) {
+    console.error("Error al obtener correlativas", err);
+    throw err;
+  }
+};
+
+export const agregarCorrelativa = async (uuid, correlativaData) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/materias/${uuid}/correlativas`,
+      correlativaData,
+      {
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error("Error al agregar correlativa", err);
+    throw err;
+  }
+};
+
+export const eliminarCorrelativa = async (uuid, uuidCorrelativa) => {
+  try {
+    const response = await axios.delete(
+      `${API_BASE_URL}/materias/${uuid}/correlativas/${uuidCorrelativa}`,
+      {
+        headers: {
+          accept: "application/json",
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    console.error("Error al eliminar correlativa", err);
+    throw err;
+  }
+};

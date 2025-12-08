@@ -1,4 +1,6 @@
 import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
+import { carreraPorId } from "@/api/carrerasApi";
 
 export default function CardUsuario({
   title,
@@ -8,6 +10,25 @@ export default function CardUsuario({
   sueldoData,
   onClose,
 }) {
+  const [nombreCarrera, setNombreCarrera] = useState(null);
+  const [cargando, setCargando] = useState(false);
+
+  useEffect(() => {
+    if (carreraData?.id_carrera) {
+      setCargando(true);
+      carreraPorId(carreraData.id_carrera)
+        .then((response) => {
+          const data = response.data || response;
+          setNombreCarrera(data.name);
+        })
+        .catch((error) => {
+          console.error("Error al obtener nombre de carrera:", error);
+          setNombreCarrera("No encontrada");
+        })
+        .finally(() => setCargando(false));
+    }
+  }, [carreraData?.id_carrera]);
+
   return (
     <div className="w-full max-w-2xl p-6 bg-white border-2 border-green-500 rounded-lg shadow-lg">
       <h2 className="font-bold text-center text-2xl mb-6 text-green-700">
@@ -64,10 +85,10 @@ export default function CardUsuario({
             Carrera Asignada
           </h3>
           <div className="grid grid-cols-1 gap-3">
-            {carreraData.nombre_carrera && (
+            {carreraData.id_carrera && (
               <p className="text-sm">
                 <span className="font-semibold">Carrera:</span>{" "}
-                {carreraData.nombre_carrera}
+                {cargando ? "Cargando..." : nombreCarrera || "No encontrada"}
               </p>
             )}
             <p className="text-sm">

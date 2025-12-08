@@ -1,85 +1,53 @@
-import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldSet,
-} from "@/components/ui/field"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator,
-} from "@/components/ui/select.jsx";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import PopUp from "@/components/PopUp";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { 
-  materiaPorId, 
   materiaPorNombre, 
   modificarMateria, 
   obtenerMaterias 
 } from "@/api/materiasApi";
+import FormMateria from "./FormMateria";
 import CardMateria from "./CardMateria";
 
 
 export default function ModifMateria({ materia_inicial = null }) {
-
-  // -----------------------------
-  // ESTADOS
-  // -----------------------------
-  const [form, setForm] = useState({
-    id: null,
-    nombre: "",
-    descripcion: "",
-    metodo_aprobacion: "",
-    curricular: true,
-    status: "activo"
-  });
-
   const [value, setValue] = useState("");
+  const [found, setFound] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [searchError, setSearchError] = useState(null);
-  const [addError, setAddError] = useState(null);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   const [allMaterias, setAllMaterias] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loadingCarreras, setLoadingCarreras] = useState(false);
-  const [carreraSearch, setCarreraSearch] = useState("");
-  const [carreras, setCarreras] = useState([]);
-
-  const filteredCarreras = carreras.filter((carrera) =>
-    carrera.nombre.toLowerCase().includes(carreraSearch.toLowerCase())
-  );
-
-  // Necesarios para buscar y mostrar info
-  const [materiaSeleccionada, setMateriaSeleccionada] = useState(null);
-  const [materiaData, setMateriaData] = useState(null);
   const [loadingState, setLoadingState] = useState(false);
-  const [found, setFound] = useState(false);
 
+  const [materiaData, setMateriaData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // -----------------------------------------------
-  // CARGAR TODAS LAS MATERIAS PARA EL AUTOCOMPLETADO
-  // -----------------------------------------------
+  const [form, setForm] = useState({
+    uuid: "",
+    nombre: "",
+    description: "",
+    approval_method: "",
+    is_elective: false,
+    uuid_carrera: "",
+  });
+
   useEffect(() => {
     const loadMaterias = async () => {
       try {
         const data = await obtenerMaterias();
-        setAllMaterias(data);
+        const limpias = data.filter(
+          m => m && typeof m === "object" && m.nombre
+        );
+        setAllMaterias(limpias);
       } catch (err) {
         console.error("Error al cargar materias", err);
       }
@@ -87,30 +55,39 @@ export default function ModifMateria({ materia_inicial = null }) {
     loadMaterias();
   }, []);
 
-
-  // -----------------------------------------------
-  // SI VIENE UNA MATERIA INICIAL DESDE AFUERA
-  // -----------------------------------------------
   useEffect(() => {
     if (materia_inicial) {
       setValue(materia_inicial.nombre);
+      setMateriaData(materia_inicial);
       setForm({
-        id: materia_inicial.id_materia,
+        uuid: materia_inicial.uuid,
         nombre: materia_inicial.nombre,
-        carrera: materia_inicial.carrera,
-        descripcion: materia_inicial.descripcion || "",
-        metodo_aprobacion: materia_inicial.metodo_aprobacion || "",
-        curricular: materia_inicial.curricular,
-        status: materia_inicial.status
+        description: materia_inicial.description,
+        approval_method: materia_inicial.approval_method,
+        is_elective: materia_inicial.is_elective,
+        uuid_carrera: materia_inicial.uuid_carrera,
       });
       setShowForm(true);
     }
   }, [materia_inicial]);
 
+  const handleInputChange = (texto) => {
+    setValue(texto);
 
-  // -----------------------------
-  // BUSCAR MANUALMENTE (BOTÓN)
-  // -----------------------------
+    if (texto.trim() === "") {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const sugerencias = allMaterias.filter(m =>
+      m?.nombre?.toLowerCase().includes(texto.toLowerCase())
+    );
+
+    setSuggestions(sugerencias);
+    setShowDropdown(true);
+  };
+
   const handleSearch = async () => {
     setLoadingState(true);
     const nombre = value.trim();
@@ -124,20 +101,17 @@ export default function ModifMateria({ materia_inicial = null }) {
         setShowForm(true);
 
         setForm({
-          id: response.id_materia,
+          uuid: response.uuid,
           nombre: response.nombre,
-          carrera: response.carrera,
-          descripcion: response.descripcion || "",
-          metodo_aprobacion: response.metodo_aprobacion || "",
-          curricular: response.curricular,
-          status: response.status,
+          description: response.description || "",
+          approval_method: response.approval_method || "",
+          is_elective: response.is_elective || false,
+          uuid_carrera: response.uuid_carrera || "",
         });
-
       } else {
         setFound(false);
         setMateriaData(null);
       }
-
     } catch (err) {
       setError(err.message || "Error al buscar la materia");
     }
@@ -145,25 +119,31 @@ export default function ModifMateria({ materia_inicial = null }) {
     setLoadingState(false);
   };
 
+  const handleSubmit = async () => {
+    if (!form.uuid) {
+      setError("No hay materia seleccionada");
+      return;
+    }
 
-  // -----------------------------
-  // GUARDAR CAMBIOS
-  // -----------------------------
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     try {
-      await modificarMateria(form.id, form);
+      setIsSubmitting(true);
+      await modificarMateria(form.uuid, form);
       setCompleted(true);
       setShowForm(false);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const handleCancel = () => {
+    setShowForm(false);
+    setFound(false);
+    setMateriaData(null);
+    setValue("");
+  };
 
-  // -----------------------------
-  // RENDER
-  // -----------------------------
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-6xl p-6">
@@ -171,210 +151,99 @@ export default function ModifMateria({ materia_inicial = null }) {
         <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
-        <h3 className="text-sm mb-2 mt-8 text-center">
-          Ingrese el nombre de la materia a modificar
-        </h3>
+        <div className="relative w-full max-w-6xl mt-8">
+          <div className="flex gap-2 items-center mb-4">
+            <Input
+              className="flex-1"
+              type="text"
+              placeholder="Ingrese nombre"
+              value={value}
+              onChange={(e) => handleInputChange(e.target.value)}
+            />
+            <Button
+              disabled={!value.trim()}
+              onClick={handleSearch}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Buscar
+            </Button>
+          </div>
 
-        <div className="relative w-full max-w-6xl">
+          {loadingState && <span>Cargando...</span>}
 
-          {/* INPUT AUTOCOMPLETE */}
-          <Input
-            className="mb-4 flex-1 w-full"
-            type="text"
-            placeholder="Ingrese nombre"
-            value={value}
-            onChange={(e) => {
-              const texto = e.target.value;
-              setValue(texto);
-
-              if (texto.trim() === "") {
-                setSuggestions([]);
-                setShowDropdown(false);
-                return;
-              }
-
-              const sugerencias = allMaterias.filter(m =>
-                m.nombre.toLowerCase().includes(texto.toLowerCase())
-              );
-
-              setSuggestions(sugerencias);
-              setShowDropdown(true);
-            }}
-          />
-
-          {/* DROPDOWN */}
           {showDropdown && suggestions.length > 0 && (
             <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
-              <CommandGroup heading="Coincidencias">
+              <CommandGroup>
+                <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
                 {suggestions.map(materia => (
-                  <CommandItem
-                    key={materia.id_materia}
+                  <CommandItem key={materia.uuid}
                     onSelect={() => {
-                      setValue(materia.nombre); 
-                      setMateriaSeleccionada(materia);
+                      setValue(materia.nombre);
                       setMateriaData(materia);
+                      setFound(true);
                       setShowDropdown(false);
                       setShowForm(true);
 
                       setForm({
-                        id: materia.id_materia,
+                        uuid: materia.uuid,
                         nombre: materia.nombre,
-                        descripcion: materia.descripcion || "",
-                        metodo_aprobacion: materia.metodo_aprobacion || "",
-                        curricular: materia.curricular,
-                        status: materia.status
+                        description: materia.description || "",
+                        approval_method: materia.approval_method || "",
+                        is_elective: materia.is_elective || false,
+                        uuid_carrera: materia.uuid_carrera || "",
                       });
                     }}
                   >
-                    {materia.nombre}
+                    <span>{materia.nombre}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
             </Command>
           )}
-
-          {searchError && <p className="text-red-500 mt-2 text-center">{searchError}</p>}
-
         </div>
 
+        {showForm && materiaData && (
+          <div className="w-full max-w-6xl p-6 mt-8">
+            <div className="w-full bg-white border-2 border-blue-500 p-6 rounded-xl shadow-lg">
+              <h2 className="text-xl font-bold text-blue-600 mb-4">
+                Modificar Materia
+              </h2>
 
-        {/* FORMULARIO */}
-        {showForm && (
-          <div className="w-full max-w-6xl p-6">
-            <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
-            <span className="block w-full h-[3px] bg-sky-950"></span>
+              <span className="block w-full h-[2px] bg-blue-500 mb-6"></span>
 
-            <FieldSet className="my-4">
-              <FieldGroup>
-
-                <Field>
-                  <FieldLabel>Nombre Materia</FieldLabel>
-                  <Input 
-                    value={form.nombre}
-                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="carrera">
-                    Carrera<span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <Select
-                    value={form.carrera}
-                    onValueChange={(value) =>
-                      setForm((prev) => ({ ...prev, carrera: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          loadingCarreras ? "Cargando carreras..." : "Seleccione carrera"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input
-                          placeholder="Buscar carrera..."
-                          value={carreraSearch}
-                          onChange={(e) => setCarreraSearch(e.target.value)}
-                          className="mb-2"
-                        />
-                      </div>
-                      <SelectGroup>
-                        <SelectLabel>Carreras</SelectLabel>
-                        {filteredCarreras.length > 0 ? (
-                          filteredCarreras.map((carrera) => (
-                            <SelectItem key={carrera.nombre} value={carrera.nombre}>
-                              {carrera.nombre}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-1.5 text-sm text-gray-500">
-                            {loadingCarreras
-                              ? "Cargando..."
-                              : "No se encontraron carreras"}
-                          </div>
-                        )}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field>
-                  <FieldLabel>Descripción</FieldLabel>
-                  <Input
-                    value={form.descripcion}
-                    onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel>Tipo de Aprobación</FieldLabel>
-                  <Select
-                    value={form.metodo_aprobacion}
-                    onValueChange={(value) => setForm({ ...form, metodo_aprobacion: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione tipo de aprobación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="final">Final Obligatorio</SelectItem>
-                      <SelectItem value="promocion">Promoción</SelectItem>
-                      <SelectItem value="trabajo_practico">Trabajo Práctico Obligatorio</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel>¿Es curricular?</FieldLabel>
-                  <RadioGroup
-                    value={form.curricular ? "si" : "no"}
-                    onValueChange={(value) =>
-                      setForm({ ...form, curricular: value === "si" })
-                    }
-                    className="flex gap-4 mt-2"
-                  >
-                    <label className="flex items-center gap-2">
-                      <RadioGroupItem value="si" />
-                      <span>Si</span>
-                    </label>
-
-                    <label className="flex items-center gap-2">
-                      <RadioGroupItem value="no" />
-                      <span>No</span>
-                    </label>
-                  </RadioGroup>
-                </Field>
-
-                <div className="flex justify-center">
-                  <Button 
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded mt-4"
-                    onClick={handleSubmit}
-                  >
-                    Guardar
-                  </Button>
-
-                  <Button 
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-4 rounded mt-4 ml-4"
-                    onClick={() => setShowForm(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-
-              </FieldGroup>
-            </FieldSet>
+              <FormMateria
+                form={form}
+                setForm={setForm}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                submitButtonText="Guardar Cambios"
+                isLoading={isSubmitting}
+              />
+            </div>
           </div>
         )}
 
-
-        {/* ÉXITO */}
         {completed && (
-          <div className="w-full max-w-6xl p-6">
-            <div className="flex flex-col justify-center items-center border border-green-500 p-4 rounded-md shadow-sm gap-4 bg-white">
-              <CardMateria title="Información modificada exitosamente" materia={form} />
+          <div className="w-full max-w-6xl p-6 mt-8">
+            <div className="flex flex-col justify-center items-center border-2 border-green-500 p-6 rounded-lg shadow-lg gap-4 bg-white">
+              <h2 className="text-xl font-bold text-green-600">
+                ✓ Materia Modificada Exitosamente
+              </h2>
               <Button
-                onClick={() => { setCompleted(false); setValue(""); }}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-md"
+                onClick={() => {
+                  setCompleted(false);
+                  setMateriaData(null);
+                  setValue("");
+                  setForm({
+                    uuid: "",
+                    nombre: "",
+                    description: "",
+                    approval_method: "",
+                    is_elective: false,
+                    uuid_carrera: "",
+                  });
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded"
               >
                 OK
               </Button>
@@ -382,16 +251,13 @@ export default function ModifMateria({ materia_inicial = null }) {
           </div>
         )}
 
-
-        {/* ERRORES POPUP */}
-        {addError && (
-          <PopUp title="Error" message={addError} onClose={() => setAddError(null)} />
+        {error && (
+          <PopUp
+            title="Error"
+            message={error}
+            onClose={() => setError(null)}
+          />
         )}
-
-        {error !== null && (
-          <PopUp title="Error" message={error} onClose={() => setError(null)} />
-        )}
-
       </div>
     </div>
   );
