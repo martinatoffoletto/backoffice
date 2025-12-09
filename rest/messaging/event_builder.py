@@ -1,6 +1,9 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def build_event(
@@ -32,12 +35,21 @@ def build_event(
     # emittedAt siempre es el momento actual (cuando se emite el evento)
     emitted_at = datetime.now(timezone.utc)
     
-    return {
-        "eventId": str(uuid.uuid4()),
+    event_id = str(uuid.uuid4())
+    
+    event = {
+        "eventId": event_id,
         "eventType": event_type,
         "occurredAt": occurred_at.isoformat(),
         "emittedAt": emitted_at.isoformat(),
         "sourceModule": "Backoffice",
         "payload": payload
     }
+    
+    logger.info(
+        f"📝 Evento generado: eventId={event_id}, eventType={event_type}, "
+        f"occurredAt={occurred_at.isoformat()}, emittedAt={emitted_at.isoformat()}"
+    )
+    
+    return event
 

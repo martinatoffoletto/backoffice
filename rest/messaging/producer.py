@@ -40,8 +40,17 @@ class EventProducer:
                     delivery_mode=DeliveryMode.PERSISTENT,
                     content_type="application/json"
                 )
+                
+                # Extraer información del evento para logging
+                event_id = message.get("eventId", "N/A")
+                event_type = message.get("eventType", "N/A")
+                
                 await queue.publish(message_obj)
-                logger.info(f"✅ Mensaje publicado a cola: {queue_name}")
+                
+                logger.info(
+                    f"✅ Evento publicado exitosamente a cola: eventId={event_id}, "
+                    f"eventType={event_type}, queue={queue_name}"
+                )
                 return True
             
             # Intentar obtener el exchange existente primero (sin declararlo)
@@ -82,12 +91,28 @@ class EventProducer:
                 content_type="application/json"
             )
             
+            # Extraer información del evento para logging
+            event_id = message.get("eventId", "N/A")
+            event_type = message.get("eventType", "N/A")
+            
             await exchange.publish(message_obj, routing_key=routing_key)
             
-            logger.info(f"✅ Mensaje publicado: {exchange_name} -> {routing_key}")
+            logger.info(
+                f"✅ Evento publicado exitosamente: eventId={event_id}, "
+                f"eventType={event_type}, exchange={exchange_name}, "
+                f"routingKey={routing_key}"
+            )
             return True
             
         except Exception as e:
-            logger.error(f"❌ Error publicando mensaje: {e}")
+            # Extraer información del evento para logging de error
+            event_id = message.get("eventId", "N/A") if isinstance(message, dict) else "N/A"
+            event_type = message.get("eventType", "N/A") if isinstance(message, dict) else "N/A"
+            
+            logger.error(
+                f"❌ Error publicando evento: eventId={event_id}, "
+                f"eventType={event_type}, exchange={exchange_name}, "
+                f"routingKey={routing_key}, error={str(e)}"
+            )
             return False
 
