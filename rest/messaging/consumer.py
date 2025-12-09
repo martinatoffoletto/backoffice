@@ -1,10 +1,7 @@
 import json
-import logging
 from typing import Callable, Optional
 from aio_pika import IncomingMessage
 from .rabbitmq import get_channel
-
-logger = logging.getLogger(__name__)
 
 
 class EventConsumer:
@@ -47,7 +44,7 @@ class EventConsumer:
             if exchange and routing_key:
                 await queue.bind(exchange, routing_key=routing_key)
             
-            logger.info(f"✅ Consumiendo cola: {queue_name}")
+            print(f"✅ Consumiendo cola: {queue_name}")
             
             # Consumir mensajes
             async with queue.iterator() as queue_iter:
@@ -61,11 +58,11 @@ class EventConsumer:
                             await callback(message_data)
                             
                         except Exception as e:
-                            logger.error(f"❌ Error procesando mensaje: {e}")
+                            print(f"❌ Error procesando mensaje: {e}")
                             # Rechazar mensaje y no requeue si hay error
                             await message.nack(requeue=False)
                             
         except Exception as e:
-            logger.error(f"❌ Error configurando consumidor: {e}")
+            print(f"❌ Error configurando consumidor: {e}")
             raise
 

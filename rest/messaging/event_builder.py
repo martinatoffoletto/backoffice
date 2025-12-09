@@ -1,9 +1,6 @@
 import uuid
-import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
-
-logger = logging.getLogger(__name__)
 
 
 def build_event(
@@ -46,7 +43,7 @@ def build_event(
         "payload": payload
     }
     
-    logger.info(
+    print(
         f"📝 Evento generado: eventId={event_id}, eventType={event_type}, "
         f"occurredAt={occurred_at.isoformat()}, emittedAt={emitted_at.isoformat()}"
     )

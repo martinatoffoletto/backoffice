@@ -1,5 +1,4 @@
 import os
-import logging
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import text
 from dotenv import load_dotenv
@@ -7,7 +6,6 @@ from .models.base import Base
 from . import models 
 
 load_dotenv()
-logger = logging.getLogger(__name__)
 
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'production').lower()
 HOSTED_DATABASE_URL = os.getenv('HOSTED_DATABASE_URL', '')
@@ -40,7 +38,7 @@ async def _test_connection(url: str) -> bool:
         await test_engine.dispose()
         return True
     except Exception as e:
-        logger.warning(f"Connection failed: {e}")
+        print(f"⚠️ Connection failed: {e}")
         return False
 
 
@@ -104,7 +102,7 @@ async def init_database():
             print("🔄 Ejecutando en modo mock")
             
     except Exception as e:
-        logger.error(f"Error inicializando base de datos: {e}")
+        print(f"❌ Error inicializando base de datos: {e}")
         print("🔄 Continuando en modo mock")
         CONNECTION_TYPE = "Mock (error en inicialización)"
 
@@ -124,7 +122,7 @@ async def _list_tables():
                 for table in tables:
                     print(f"   • {table[0]}")
     except Exception as e:
-        logger.error(f"Error listando tablas: {e}")
+        print(f"❌ Error listando tablas: {e}")
 
 
 async def get_async_db():
@@ -136,7 +134,7 @@ async def get_async_db():
         try:
             yield session
         except Exception as e:
-            logger.error(f"Error en sesión de base de datos: {e}")
+            print(f"❌ Error en sesión de base de datos: {e}")
             await session.rollback()
             raise
         finally:
@@ -150,7 +148,7 @@ async def close_database():
             await engine.dispose()
             print("✅ Conexión cerrada")
         except Exception as e:
-            logger.error(f"Error cerrando base de datos: {e}")
+            print(f"❌ Error cerrando base de datos: {e}")
 
 
 def get_connection_status():
