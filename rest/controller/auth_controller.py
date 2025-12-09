@@ -6,7 +6,7 @@ from ..database import get_async_db
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=AuthResponse, response_model_exclude_none=True)
 async def login(
     login_request: LoginRequest,
     db: AsyncSession = Depends(get_async_db)
