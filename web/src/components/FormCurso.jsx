@@ -31,12 +31,12 @@ export default function FormCurso({
   const [aulas, setAulas] = useState([]);
   const [loadingAulas, setLoadingAulas] = useState(false);
   const [aulaSearch, setAulaSearch] = useState("");
-  
+
   // Estados para materias
   const [materias, setMaterias] = useState([]);
   const [loadingMaterias, setLoadingMaterias] = useState(false);
   const [materiaSearch, setMateriaSearch] = useState("");
-  
+
   // Estados para sedes
   const [sedes, setSedes] = useState([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
@@ -71,7 +71,9 @@ export default function FormCurso({
       try {
         setLoadingMaterias(true);
         const data = await obtenerMaterias();
-        const limpias = data.filter(m => m && typeof m === "object" && m.nombre);
+        const limpias = data.filter(
+          (m) => m && typeof m === "object" && m.nombre
+        );
         setMaterias(limpias);
       } catch (error) {
         console.error("Error al cargar materias:", error);
@@ -88,7 +90,9 @@ export default function FormCurso({
       try {
         setLoadingSedes(true);
         const data = await obtenerSedes();
-        const limpias = data.filter(s => s && typeof s === "object" && s.nombre);
+        const limpias = data.filter(
+          (s) => s && typeof s === "object" && s.nombre
+        );
         setSedes(limpias);
       } catch (error) {
         console.error("Error al cargar sedes:", error);
@@ -147,7 +151,9 @@ export default function FormCurso({
                   >
                     <SelectValue
                       placeholder={
-                        loadingMaterias ? "Cargando materias..." : "Seleccione materia"
+                        loadingMaterias
+                          ? "Cargando materias..."
+                          : "Seleccione materia"
                       }
                     />
                   </SelectTrigger>
@@ -165,8 +171,12 @@ export default function FormCurso({
                       {filteredMateriasList.length > 0 ? (
                         filteredMateriasList.map((materia) => (
                           <SelectItem
-                            key={materia.uuid || materia.id_materia || materia.id}
-                            value={materia.uuid || materia.id_materia || materia.id}
+                            key={
+                              materia.uuid || materia.id_materia || materia.id
+                            }
+                            value={
+                              materia.uuid || materia.id_materia || materia.id
+                            }
                           >
                             {materia.nombre}
                           </SelectItem>
@@ -226,10 +236,7 @@ export default function FormCurso({
                       <SelectLabel>Sedes</SelectLabel>
                       {filteredSedesList.length > 0 ? (
                         filteredSedesList.map((sede) => (
-                          <SelectItem
-                            key={sede.nombre}
-                            value={sede.nombre}
-                          >
+                          <SelectItem key={sede.nombre} value={sede.nombre}>
                             {sede.nombre}
                           </SelectItem>
                         ))
@@ -396,8 +403,12 @@ export default function FormCurso({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Período</SelectLabel>
-                    <SelectItem value="Primer cuatrimestre">Primer cuatrimestre</SelectItem>
-                    <SelectItem value="Segundo cuatrimestre">Segundo cuatrimestre</SelectItem>
+                    <SelectItem value="Primer cuatrimestre">
+                      Primer cuatrimestre
+                    </SelectItem>
+                    <SelectItem value="Segundo cuatrimestre">
+                      Segundo cuatrimestre
+                    </SelectItem>
                     <SelectItem value="Intensiva">Intensiva</SelectItem>
                     <SelectItem value="Verano">Verano</SelectItem>
                   </SelectGroup>

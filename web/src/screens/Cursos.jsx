@@ -1,8 +1,7 @@
 import AltaCurso from "@/components/AltaCurso";
-import BajaCurso from "@/components/BajaCurso";
 import BusquedaCurso from "@/components/BusquedaCurso";
-import ModifCurso from "@/components/ModifCurso";
 import GestionClases from "@/components/GestionClases";
+import ModificarCurso from "@/components/ModificarCurso";
 import {
   Select,
   SelectContent,
@@ -20,10 +19,10 @@ const Cursos = () => {
 
   const handleCursoSeleccionado = (curso, accion) => {
     setCursoSeleccionado(curso);
-    if (accion === "modificar") {
-      setOperacionSeleccionada("modificacion");
-    } else if (accion === "gestionar") {
+    if (accion === "gestionar") {
       setOperacionSeleccionada("gestionar");
+    } else if (accion === "modificar") {
+      setOperacionSeleccionada("modificar");
     }
   };
 
@@ -60,10 +59,9 @@ const Cursos = () => {
               <SelectGroup>
                 <SelectLabel>Operaciones</SelectLabel>
                 <SelectItem value="alta">Alta de Curso</SelectItem>
-                <SelectItem value="modificacion">
-                  Modificación de Curso
+                <SelectItem value="busqueda">
+                  Búsqueda, Baja y Modificación de Curso
                 </SelectItem>
-                <SelectItem value="busqueda">Búsqueda de Curso</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -72,12 +70,10 @@ const Cursos = () => {
 
       {operacion_seleccionada === "alta" && <AltaCurso />}
 
-      {operacion_seleccionada === "modificacion" && (
-        <ModifCurso cursoInicial={curso_seleccionado} />
-      )}
       {operacion_seleccionada === "busqueda" && (
         <BusquedaCurso onCursoSeleccionado={handleCursoSeleccionado} />
       )}
+
       {operacion_seleccionada === "gestionar" && curso_seleccionado && (
         <GestionClases
           id_curso={curso_seleccionado.id_curso || curso_seleccionado.id}
@@ -85,6 +81,16 @@ const Cursos = () => {
           fecha_fin={curso_seleccionado.fecha_fin}
           dia={curso_seleccionado.dia}
           turno={curso_seleccionado.turno}
+        />
+      )}
+
+      {operacion_seleccionada === "modificar" && curso_seleccionado && (
+        <ModificarCurso
+          curso={curso_seleccionado}
+          onCancel={() => {
+            setOperacionSeleccionada("busqueda");
+            setCursoSeleccionado(null);
+          }}
         />
       )}
     </div>
