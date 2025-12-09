@@ -1,11 +1,9 @@
 import os
-import logging
 from aio_pika import connect_robust
 from aio_pika.abc import AbstractConnection, AbstractChannel
 from dotenv import load_dotenv
 
 load_dotenv()
-logger = logging.getLogger(__name__)
 
 # Variables de entorno individuales
 RABBITMQ_DEFAULT_USER = os.getenv('RABBITMQ_DEFAULT_USER', 'guest')
@@ -28,9 +26,9 @@ async def get_connection() -> AbstractConnection:
     if _connection is None or _connection.is_closed:
         try:
             _connection = await connect_robust(RABBITMQ_URL)
-            logger.info(f"✅ Conexión a RabbitMQ establecida: {RABBITMQ_HOST}:{RABBITMQ_PORT}")
+            print(f"✅ Conexión a RabbitMQ establecida: {RABBITMQ_HOST}:{RABBITMQ_PORT}")
         except Exception as e:
-            logger.error(f"❌ Error conectando a RabbitMQ: {e}")
+            print(f"❌ Error conectando a RabbitMQ: {e}")
             raise
     
     return _connection
@@ -43,7 +41,7 @@ async def get_channel() -> AbstractChannel:
     if _channel is None or _channel.is_closed:
         connection = await get_connection()
         _channel = await connection.channel()
-        logger.info("✅ Canal de RabbitMQ creado")
+        print("✅ Canal de RabbitMQ creado")
     
     return _channel
 
@@ -60,7 +58,7 @@ async def close_connection():
         await _connection.close()
         _connection = None
     
-    logger.info("✅ Conexión a RabbitMQ cerrada")
+    print("✅ Conexión a RabbitMQ cerrada")
 
 
 def get_connection_status():

@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import logging
 
 # Importar controllers
 from .controller.usuarios_controller import router as usuarios_router
@@ -20,8 +19,6 @@ from .database import init_database, close_database
 # Importar funciones de RabbitMQ
 from .messaging.rabbitmq import get_connection, close_connection
 
-logger = logging.getLogger(__name__)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: abrir conexión a la base de datos
@@ -31,7 +28,7 @@ async def lifespan(app: FastAPI):
     try:
         await get_connection()
     except Exception as e:
-        logger.warning(f"RabbitMQ no disponible (modo sin colas): {e}")
+        print(f"⚠️ RabbitMQ no disponible (modo sin colas): {e}")
     
     yield
     
