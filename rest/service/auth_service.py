@@ -1,7 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.auth_dao import AuthDAO
 from ..dao.usuario_dao import UsuarioDAO
-from ..schemas.auth_schema import LoginRequest, AuthResponse, RolInfo, VerifyResponse
+from ..dao.sueldo_dao import SueldoDAO
+from ..dao.usuario_carrera_dao import UsuarioCarreraDAO
+from ..schemas.auth_schema import LoginRequest, AuthResponse, RolInfo, SueldoDetallado, CarreraDetallada, VerifyResponse
 from typing import Optional
 import bcrypt
 
@@ -32,8 +34,31 @@ class AuthService:
             id_rol=usuario.rol.id_rol,
             descripcion=usuario.rol.descripcion,
             categoria=usuario.rol.categoria,
-            subcategoria=usuario.rol.subcategoria
+            subcategoria=usuario.rol.subcategoria,
+            sueldo_base=float(usuario.rol.sueldo_base),
+            status=usuario.rol.status
         )
+        
+        # Obtener sueldo o carrera del usuario
+        sueldo_detallado = None
+        carrera_detallada = None
+        
+        sueldo = await SueldoDAO.get_sueldo_by_usuario(db, usuario.id_usuario)
+        if sueldo:
+            sueldo_detallado = SueldoDetallado(
+                id_sueldo=sueldo.id_sueldo,
+                cbu=sueldo.cbu,
+                sueldo_adicional=float(sueldo.sueldo_adicional or 0),
+                observaciones=sueldo.observaciones,
+                status=sueldo.status
+            )
+        else:
+            carrera = await UsuarioCarreraDAO.get_carrera_by_usuario(db, usuario.id_usuario)
+            if carrera:
+                carrera_detallada = CarreraDetallada(
+                    id_carrera=carrera.id_carrera,
+                    status=carrera.status
+                )
         
         return AuthResponse(
             id_usuario=usuario.id_usuario,
@@ -42,7 +67,9 @@ class AuthService:
             legajo=usuario.legajo,
             dni=usuario.dni,
             email_institucional=usuario.email_institucional,
-            rol=rol_info
+            rol=rol_info,
+            sueldo=sueldo_detallado,
+            carrera=carrera_detallada
         )
     
     @staticmethod
