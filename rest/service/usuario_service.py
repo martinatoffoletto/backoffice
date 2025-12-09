@@ -15,9 +15,12 @@ import bcrypt
 import uuid
 import re
 import unicodedata
+import logging
 from datetime import datetime, timezone
 from ..messaging.producer import EventProducer
 from ..messaging.event_builder import build_event
+
+logger = logging.getLogger(__name__)
 
 class UsuarioService:
     
@@ -146,11 +149,24 @@ class UsuarioService:
             occurred_at=occurred_at
         )
         
-        await EventProducer.publish(
+        published = await EventProducer.publish(
             message=event,
             exchange_name="user.event",
             routing_key="user.created"
         )
+        
+        if published:
+            logger.info(
+                f"✅ Evento user.created publicado correctamente para usuario: "
+                f"user_id={created_user.id_usuario}, legajo={created_user.legajo}, "
+                f"eventId={event.get('eventId')}"
+            )
+        else:
+            logger.warning(
+                f"⚠️ No se pudo publicar evento user.created para usuario: "
+                f"user_id={created_user.id_usuario}, legajo={created_user.legajo}, "
+                f"eventId={event.get('eventId')}"
+            )
         
         return user_dict, password
     
@@ -279,11 +295,24 @@ class UsuarioService:
             occurred_at=occurred_at
         )
         
-        await EventProducer.publish(
+        published = await EventProducer.publish(
             message=event,
             exchange_name="user.event",
             routing_key="user.updated"
         )
+        
+        if published:
+            logger.info(
+                f"✅ Evento user.updated publicado correctamente para usuario: "
+                f"user_id={user_id}, legajo={existing_user.legajo}, "
+                f"eventId={event.get('eventId')}"
+            )
+        else:
+            logger.warning(
+                f"⚠️ No se pudo publicar evento user.updated para usuario: "
+                f"user_id={user_id}, legajo={existing_user.legajo}, "
+                f"eventId={event.get('eventId')}"
+            )
         
         return updated_user, "User updated successfully"
     
@@ -320,11 +349,24 @@ class UsuarioService:
                 occurred_at=occurred_at
             )
             
-            await EventProducer.publish(
+            published = await EventProducer.publish(
                 message=event,
                 exchange_name="user.event",
                 routing_key="user.deleted"
             )
+            
+            if published:
+                logger.info(
+                    f"✅ Evento user.deleted publicado correctamente para usuario: "
+                    f"user_id={user_id}, legajo={usuario.legajo}, "
+                    f"eventId={event.get('eventId')}"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ No se pudo publicar evento user.deleted para usuario: "
+                    f"user_id={user_id}, legajo={usuario.legajo}, "
+                    f"eventId={event.get('eventId')}"
+                )
         
         return deleted
     
