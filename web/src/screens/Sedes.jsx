@@ -316,7 +316,7 @@ export default function Sedes() {
                         {sede.status === false ? (
                           <div className="w-44">
                             <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                              className="bg-gray-50 border border-blue-500 text-black hover:bg-blue-500 hover:text-white font-semibold py-1 px-3 rounded w-full"
                               onClick={() => handleActivate(sede)}
                             >
                               Activar
