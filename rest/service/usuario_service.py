@@ -104,6 +104,56 @@ class UsuarioService:
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     
     @staticmethod
+    async def _get_user_event_data(db: AsyncSession, usuario: Usuario) -> Dict[str, Any]:
+        """
+        Obtener información del rol, sueldo y carrera del usuario para eventos.
+        Retorna diccionarios con la información necesaria.
+        """
+        # Obtener rol
+        rol = getattr(usuario, "rol", None)
+        if not rol:
+            await db.refresh(usuario, attribute_names=["rol"])
+            rol = getattr(usuario, "rol", None)
+        
+        rol_info = None
+        if rol:
+            rol_info = {
+                "id_rol": str(rol.id_rol),
+                "descripcion": rol.descripcion,
+                "categoria": rol.categoria,
+                "subcategoria": rol.subcategoria,
+                "sueldo_base": float(rol.sueldo_base),
+                "status": rol.status
+            }
+        
+        # Obtener sueldo o carrera
+        sueldo_info = None
+        carrera_info = None
+        
+        sueldo = await SueldoDAO.get_sueldo_by_usuario(db, usuario.id_usuario)
+        if sueldo:
+            sueldo_info = {
+                "id_sueldo": str(sueldo.id_sueldo),
+                "cbu": sueldo.cbu,
+                "sueldo_adicional": float(sueldo.sueldo_adicional or 0),
+                "observaciones": sueldo.observaciones,
+                "status": sueldo.status
+            }
+        else:
+            carrera = await UsuarioCarreraDAO.get_carrera_by_usuario(db, usuario.id_usuario)
+            if carrera:
+                carrera_info = {
+                    "id_carrera": str(carrera.id_carrera),
+                    "status": carrera.status
+                }
+        
+        return {
+            "rol": rol_info,
+            "sueldo": sueldo_info,
+            "carrera": carrera_info
+        }
+    
+    @staticmethod
     async def create_user(db: AsyncSession, usuario: UsuarioCreate) -> Tuple[Optional[Dict[str, Any]], str]:
         """Crear un nuevo usuario con validaciones completas"""
         # Generar datos únicos
@@ -117,6 +167,9 @@ class UsuarioService:
         
         # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
         occurred_at = datetime.now(timezone.utc)
+        
+        # Obtener información del rol, sueldo y carrera
+        event_data = await UsuarioService._get_user_event_data(db, created_user)
         
         # Preparar respuesta
         user_dict = {
@@ -147,7 +200,10 @@ class UsuarioService:
                 "telefono_personal": created_user.telefono_personal,
                 "fecha_alta": created_user.fecha_alta.isoformat() if created_user.fecha_alta else None,
                 "id_rol": str(created_user.id_rol),
-                "status": created_user.status
+                "status": created_user.status,
+                "rol": event_data["rol"],
+                "sueldo": event_data["sueldo"],
+                "carrera": event_data["carrera"]
             },
             occurred_at=occurred_at
         )
@@ -282,6 +338,11 @@ class UsuarioService:
         # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
         occurred_at = datetime.now(timezone.utc)
         
+        # Obtener información del rol, sueldo y carrera del usuario actualizado
+        # Usar updated_user si está disponible, sino existing_user
+        user_for_event = updated_user if updated_user else existing_user
+        event_data = await UsuarioService._get_user_event_data(db, user_for_event)
+        
         # Publicar evento user.updated (emittedAt se genera en build_event)
         event = build_event(
             event_type="user.updated",
@@ -296,7 +357,10 @@ class UsuarioService:
                 "telefono_personal": updated_user.telefono_personal if hasattr(updated_user, 'telefono_personal') else existing_user.telefono_personal,
                 "fecha_alta": (updated_user.fecha_alta.isoformat() if hasattr(updated_user, 'fecha_alta') and updated_user.fecha_alta else (existing_user.fecha_alta.isoformat() if existing_user.fecha_alta else None)),
                 "id_rol": str(updated_user.id_rol) if hasattr(updated_user, 'id_rol') else str(existing_user.id_rol),
-                "status": updated_user.status if hasattr(updated_user, 'status') else existing_user.status
+                "status": updated_user.status if hasattr(updated_user, 'status') else existing_user.status,
+                "rol": event_data["rol"],
+                "sueldo": event_data["sueldo"],
+                "carrera": event_data["carrera"]
             },
             occurred_at=occurred_at
         )
@@ -336,6 +400,10 @@ class UsuarioService:
         if carrera:
             await UsuarioCarreraDAO.soft_delete(db, carrera.id_usuario, carrera.id_carrera)
 
+        # Obtener información del rol, sueldo y carrera antes de eliminar
+        # Nota: obtenemos esta info antes de eliminar porque después el usuario ya no existe
+        event_data = await UsuarioService._get_user_event_data(db, usuario)
+
         # Eliminar usuario (esto hace commit en la BD)
         deleted = await UsuarioDAO.delete(db, user_id)
         
@@ -353,7 +421,10 @@ class UsuarioService:
                     "apellido": usuario.apellido,
                     "email_personal": usuario.email_personal,
                     "telefono_personal": usuario.telefono_personal,
-                    "fecha_alta": usuario.fecha_alta.isoformat() if usuario.fecha_alta else None
+                    "fecha_alta": usuario.fecha_alta.isoformat() if usuario.fecha_alta else None,
+                    "rol": event_data["rol"],
+                    "sueldo": event_data["sueldo"],
+                    "carrera": event_data["carrera"]
                 },
                 occurred_at=occurred_at
             )
