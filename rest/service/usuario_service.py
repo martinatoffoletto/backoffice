@@ -143,6 +143,9 @@ class UsuarioService:
                 "legajo": created_user.legajo,
                 "dni": created_user.dni,
                 "email_institucional": created_user.email_institucional,
+                "email_personal": created_user.email_personal,
+                "telefono_personal": created_user.telefono_personal,
+                "fecha_alta": created_user.fecha_alta.isoformat() if created_user.fecha_alta else None,
                 "id_rol": str(created_user.id_rol),
                 "status": created_user.status
             },
@@ -289,6 +292,9 @@ class UsuarioService:
                 "legajo": updated_user.legajo if hasattr(updated_user, 'legajo') else existing_user.legajo,
                 "dni": updated_user.dni if hasattr(updated_user, 'dni') else existing_user.dni,
                 "email_institucional": updated_user.email_institucional if hasattr(updated_user, 'email_institucional') else existing_user.email_institucional,
+                "email_personal": updated_user.email_personal if hasattr(updated_user, 'email_personal') else existing_user.email_personal,
+                "telefono_personal": updated_user.telefono_personal if hasattr(updated_user, 'telefono_personal') else existing_user.telefono_personal,
+                "fecha_alta": (updated_user.fecha_alta.isoformat() if hasattr(updated_user, 'fecha_alta') and updated_user.fecha_alta else (existing_user.fecha_alta.isoformat() if existing_user.fecha_alta else None)),
                 "id_rol": str(updated_user.id_rol) if hasattr(updated_user, 'id_rol') else str(existing_user.id_rol),
                 "status": updated_user.status if hasattr(updated_user, 'status') else existing_user.status
             },
@@ -344,7 +350,10 @@ class UsuarioService:
                     "user_id": str(user_id),
                     "legajo": usuario.legajo,
                     "nombre": usuario.nombre,
-                    "apellido": usuario.apellido
+                    "apellido": usuario.apellido,
+                    "email_personal": usuario.email_personal,
+                    "telefono_personal": usuario.telefono_personal,
+                    "fecha_alta": usuario.fecha_alta.isoformat() if usuario.fecha_alta else None
                 },
                 occurred_at=occurred_at
             )
