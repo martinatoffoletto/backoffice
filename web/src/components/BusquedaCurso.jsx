@@ -419,36 +419,38 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
           {!loading_state && resultados_state.length > 0 && (
             <div className="overflow-x-auto mt-8">
               <Table className="min-w-full border border-gray-200">
-                <TableHeader className="bg-gray-50">
+                <TableHeader className="bg-sky-950">
                   <TableRow>
-                    <TableHead>Materia</TableHead>
-                    <TableHead>Examen</TableHead>
-                    <TableHead>Comisión</TableHead>
-                    <TableHead>Modalidad</TableHead>
-                    <TableHead>Sede</TableHead>
-                    <TableHead>Aula</TableHead>
-                    <TableHead>Día</TableHead>
-                    <TableHead>Turno</TableHead>
-                    <TableHead>Período</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Examen</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Comisión</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Modalidad</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Sede</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Aula</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Materia</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Día</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Turno</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">Período</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Array.isArray(resultados_state) &&
-                    resultados_state.map((curso) => (
+                    resultados_state.map((curso, i) => (
                       <TableRow
                         key={curso.uuid || Math.random()}
-                        className="cursor-pointer hover:bg-gray-100 transition-colors"
+                        className={`border-t cursor-pointer transition-colors hover:bg-blue-100 ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
                         onClick={() => handleCursoClick(curso)}
                       >
-                        <TableCell>{curso.materia?.nombre || "-"}</TableCell>
-                        <TableCell>{curso.examen || "-"}</TableCell>
-                        <TableCell>{curso.comision || "-"}</TableCell>
-                        <TableCell>{curso.modalidad || "-"}</TableCell>
-                        <TableCell>{curso.sede || "-"}</TableCell>
-                        <TableCell>{curso.aula || "-"}</TableCell>
-                        <TableCell>{curso.dia || "-"}</TableCell>
-                        <TableCell>{curso.turno || "-"}</TableCell>
-                        <TableCell>{curso.periodo || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.materia?.nombre || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.examen || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.comision || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.modalidad || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.sede || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.aula || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.dia || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.turno || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">{curso.periodo || "-"}</TableCell>
                       </TableRow>
                     ))}
                 </TableBody>
@@ -468,52 +470,83 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
 
       {/* Popup de opciones para curso seleccionado */}
       {show_opciones && curso_seleccionado && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl border-2 border-blue-500 w-96 max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-blue-600">
-              Opciones para el curso
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl border border-sky-800/30 animate-fadeIn">
+            
+            <h2 className="text-2xl font-bold text-sky-900 mb-4 text-center">
+              Opciones del Curso
             </h2>
-            <p className="mb-4 text-gray-700">
-              <span className="font-semibold">Materia:</span>{" "}
-              {obtenerMateriaNombre(curso_seleccionado.materia?.nombre)}
-            </p>
-            <p className="mb-4 text-gray-700">
-              <span className="font-semibold">Turno:</span>{" "}
-              {curso_seleccionado.turno || "N/A"}
-            </p>
-            <p className="mb-4 text-gray-700">
-              <span className="font-semibold">Sede:</span>{" "}
-              {obtenerSedeNombre(curso_seleccionado.sede)}
-            </p>
-            <div className="flex flex-col gap-3 mb-4">
+
+            {/* Info del curso */}
+            <div className="rounded-xl border border-gray-200 p-4 mb-6 bg-gray-50">
+              <div className="mb-2">
+                <p className="text-sm text-gray-500">Materia</p>
+                <p className="font-semibold text-gray-800">
+                  {curso_seleccionado.materia?.nombre || "—"}
+                </p>
+              </div>
+
+              <div className="mb-2">
+                <p className="text-sm text-gray-500">Turno</p>
+                <p className="font-semibold text-gray-800">
+                  {curso_seleccionado.turno || "—"}
+                </p>
+              </div>
+
+              <div className="mb-2">
+                <p className="text-sm text-gray-500">Sede</p>
+                <p className="font-semibold text-gray-800">
+                  {curso_seleccionado.sede || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Período</p>
+                <p className="font-semibold text-gray-800">
+                  {curso_seleccionado.periodo || "—"}
+                </p>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-col gap-3">
               <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleEditarCurso}
-                className="bg-gray-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white font-bold py-2 px-4 rounded"
               >
-                Editar Curso
+                ✏️ Editar curso
               </Button>
+
               <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
                 onClick={handleGestionarClases}
-                className="bg-gray-50 border border-green-500 text-green-500 hover:bg-green-500 hover:text-white font-bold py-2 px-4 rounded"
               >
-                Gestionar Clases
+                📚 Gestionar clases
               </Button>
+
               <Button
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleEliminarCurso}
-                className="bg-gray-50 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-2 px-4 rounded"
               >
-                Eliminar curso
+                🗑 Eliminar curso
+              </Button>
+
+              <Button
+                variant="secondary"
+                className="w-full mt-1"
+                onClick={handleCerrarOpciones}
+              >
+                Cerrar
               </Button>
             </div>
-            <Button
-              onClick={handleCerrarOpciones}
-              className="bg-gray-50 border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white font-bold py-2 px-4 rounded w-full"
-            >
-              Cancelar
-            </Button>
           </div>
         </div>
       )}
+
 
       {showPopUpConfirmacion && (
         <div className="fixed inset-0 flex items-center justify-center z-50">

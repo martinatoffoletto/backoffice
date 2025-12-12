@@ -32,7 +32,8 @@ import {
 export default function BusquedaMateria() {
   const [searchValue, setSearchValue] = useState("");
   const [searchType, setSearchType] = useState("nombre");
-
+  const [materiaSeleccionada, setMateriaSeleccionada] = useState(null);
+  const [showOpcionesMateria, setShowOpcionesMateria] = useState(false);
   const [error, setError] = useState(null);
   const [loading_state, setLoadingState] = useState(false);
   const [todasLasMaterias, setTodasLasMaterias] = useState([]);
@@ -40,6 +41,24 @@ export default function BusquedaMateria() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const abrirOpcionesMateria = (materia) => {
+    setMateriaSeleccionada(materia);
+    setShowOpcionesMateria(true);
+  };
+
+  const cerrarOpcionesMateria = () => {
+    setMateriaSeleccionada(null);
+    setShowOpcionesMateria(false);
+  };
+
+  const handleEditarMateria = () => {
+    console.log("Editar:", materiaSeleccionada);
+  };
+
+  const handleEliminarMateria = () => {
+    console.log("Eliminar:", materiaSeleccionada);
+  };
 
   const carreraDict = Object.fromEntries(
     todasLasCarreras.map((c) => [c.uuid, c.name])
@@ -148,24 +167,31 @@ export default function BusquedaMateria() {
         {!loading_state && materiasFiltradas.length > 0 && (
           <div className="overflow-x-auto mt-8">
             <Table className="min-w-full border border-gray-200">
-              <TableHeader className="bg-gray-50">
+              <TableHeader className="bg-sky-950">
                 <TableRow>
-                  <TableHead>Materia</TableHead>
-                  <TableHead>Carrera</TableHead>
-                  <TableHead>Descripción</TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">Materia</TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">Carrera</TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">Descripción</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
-                {paginatedMaterias.map((materia) => (
-                  <TableRow key={materia.uuid} className="hover:bg-gray-100">
-                    <TableCell>{materia.name}</TableCell>
+                {paginatedMaterias.map((materia, i) => (
+                  <TableRow
+                    key={materia.uuid}
+                    onClick={() => abrirOpcionesMateria(materia)}
+                    className={`border-t cursor-pointer transition-colors hover:bg-blue-100 ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
+                  >
 
-                    <TableCell>
+                    <TableCell className="px-4 py-3 text-sm">{materia.name}</TableCell>
+
+                    <TableCell className="px-4 py-3 text-sm">
                       {carreraDict[materia.uuid_carrera] || "Sin carrera"}
-                    </TableCell>
+                    </TableCell >
 
-                    <TableCell>{materia.description}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm">{materia.description}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -221,6 +247,72 @@ export default function BusquedaMateria() {
             </p>
           )}
       </div>
+      {showOpcionesMateria && materiaSeleccionada && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl border border-sky-800/30 animate-fadeIn">
+            
+            <h2 className="text-2xl font-bold text-sky-900 mb-4 text-center">
+              Opciones de Materia
+            </h2>
+
+            {/* Info */}
+            <div className="rounded-xl border border-gray-200 p-4 mb-6 bg-gray-50">
+              
+              <div className="mb-3">
+                <p className="text-sm text-gray-500">Nombre</p>
+                <p className="font-semibold text-gray-800">
+                  {materiaSeleccionada.name}
+                </p>
+              </div>
+
+              <div className="mb-3">
+                <p className="text-sm text-gray-500">Carrera</p>
+                <p className="font-semibold text-gray-800">
+                  {carreraDict[materiaSeleccionada.uuid_carrera] || "Sin carrera"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Descripción</p>
+                <p className="font-semibold text-gray-800 whitespace-pre-line">
+                  {materiaSeleccionada.description || "Sin descripción"}
+                </p>
+              </div>
+
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-col gap-3">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleEditarMateria}
+              >
+                Editar materia
+              </Button>
+
+              <Button
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleEliminarMateria}
+              >
+                Eliminar materia
+              </Button>
+
+              <Button
+                variant="secondary"
+                className="w-full mt-1"
+                onClick={cerrarOpcionesMateria}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+      </div>
+    )}
+
     </div>
   );
 }
