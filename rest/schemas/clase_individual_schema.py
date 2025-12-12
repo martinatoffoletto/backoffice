@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime, date
 from enum import Enum
@@ -71,6 +71,20 @@ class ClaseIndividualResponse(BaseModel):
     estado: EstadoClase
     observaciones: Optional[str]
     status: bool
+
+    @field_validator('tipo', mode='before')
+    @classmethod
+    def normalize_tipo(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
+    
+    @field_validator('estado', mode='before')
+    @classmethod
+    def normalize_estado(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
     class Config:
         from_attributes = True

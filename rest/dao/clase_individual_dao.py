@@ -14,11 +14,13 @@ class ClaseIndividualDAO:
     async def create(db: AsyncSession, clase: ClaseIndividualCreate) -> ClaseIndividual:
         """Crear una nueva clase individual"""
         clase_data = clase.model_dump()
-        # Convertir strings de enum a instancias de enum si es necesario
-        if 'tipo' in clase_data and isinstance(clase_data['tipo'], str):
-            clase_data['tipo'] = TipoClase(clase_data['tipo'])
-        if 'estado' in clase_data and isinstance(clase_data['estado'], str):
-            clase_data['estado'] = EstadoClase(clase_data['estado'])
+        # Convertir enums a strings en mayúsculas para guardar en BD
+        if 'tipo' in clase_data:
+            valor = clase_data['tipo']
+            clase_data['tipo'] = valor.upper() if isinstance(valor, str) else valor.value.upper()
+        if 'estado' in clase_data:
+            valor = clase_data['estado']
+            clase_data['estado'] = valor.upper() if isinstance(valor, str) else valor.value.upper()
         
         db_clase = ClaseIndividual(**clase_data)
         db.add(db_clase)
@@ -75,9 +77,10 @@ class ClaseIndividualDAO:
         return result.scalars().all()
     
     @staticmethod
-    async def get_by_estado(db: AsyncSession, estado: EstadoClase, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividual]:
+    async def get_by_estado(db: AsyncSession, estado: str, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividual]:
         """Obtener clases por estado"""
-        query = select(ClaseIndividual).where(ClaseIndividual.estado == estado)
+        # Buscar case-insensitive usando func.lower()
+        query = select(ClaseIndividual).where(func.lower(ClaseIndividual.estado) == estado.lower())
         
         if status_filter is not None:
             query = query.where(ClaseIndividual.status == status_filter)
