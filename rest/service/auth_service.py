@@ -66,7 +66,7 @@ class AuthService:
             apellido=usuario.apellido,
             legajo=usuario.legajo,
             email_personal=usuario.email_personal,
-            telefono=usuario.telefono,
+            telefono=usuario.telefono_personal,
             dni=usuario.dni,
             email_institucional=usuario.email_institucional,
             rol=rol_info,

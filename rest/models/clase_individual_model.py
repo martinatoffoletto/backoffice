@@ -7,17 +7,17 @@ import enum
 import uuid
 
 class EstadoClase(enum.Enum):
-    PROGRAMADA = "programada"
-    DICTADA = "dictada"
-    REPROGRAMADA = "reprogramada"
-    CANCELADA = "cancelada"
+    PROGRAMADA = "PROGRAMADA"
+    DICTADA = "DICTADA"
+    REPROGRAMADA = "REPROGRAMADA"
+    CANCELADA = "CANCELADA"
 
 class TipoClase(enum.Enum):
-    REGULAR = "regular"
-    PARCIAL_1 = "parcial_1"
-    PARCIAL_2 = "parcial_2"
-    RECUPERATORIO = "recuperatorio"
-    FINAL = "final"
+    REGULAR = "REGULAR"
+    PARCIAL_1 = "PARCIAL_1"
+    PARCIAL_2 = "PARCIAL_2"
+    RECUPERATORIO = "RECUPERATORIO"
+    FINAL = "FINAL"
 
 class ClaseIndividual(Base):
     __tablename__ = "clases_individuales"
@@ -27,8 +27,8 @@ class ClaseIndividual(Base):
     titulo = Column(String(200), nullable=False, comment="Título de la clase")
     descripcion = Column(Text, nullable=True, comment="Descripción detallada de la clase")
     fecha_clase = Column(Date, nullable=False, comment="Fecha programada de la clase")
-    tipo = Column(Enum(TipoClase, native_enum=False), default=TipoClase.REGULAR, nullable=False, comment="Tipo de clase (regular, evaluación, entrega TPO)")
-    estado = Column(Enum(EstadoClase, native_enum=False), default=EstadoClase.PROGRAMADA, nullable=False, comment="Estado actual de la clase")
+    tipo = Column(String(50), default="REGULAR", nullable=False, comment="Tipo de clase (regular, evaluación, entrega TPO)")
+    estado = Column(String(50), default="PROGRAMADA", nullable=False, comment="Estado actual de la clase")
     observaciones = Column(Text, nullable=True, comment="Observaciones adicionales sobre la clase")
     status = Column(Boolean, default=True, nullable=False, comment="Estado del registro (activo/inactivo)")
     

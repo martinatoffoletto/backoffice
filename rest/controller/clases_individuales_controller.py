@@ -43,7 +43,7 @@ async def create_clase(
 async def get_all_clases(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     param: Optional[str] = Query(None, description="Parámetro de búsqueda: id, id_clase, id_curso, tipo, status"),
     value: Optional[str] = Query(None, description="Valor a buscar (para status: true/false)"),
     db: AsyncSession = Depends(get_async_db)
@@ -62,10 +62,10 @@ async def get_all_clases(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Parámetro de búsqueda inválido: {param}. Parámetros válidos: {', '.join(valid_params)}"
                 )
-            return await ClaseIndividualService.search_clases(db, param, value, skip, limit, status)
+            return await ClaseIndividualService.search_clases(db, param, value, skip, limit, status_filter)
         else:
             # Si no hay parámetros de búsqueda, devolver todas las clases
-            return await ClaseIndividualService.get_all_clases(db, skip, limit, status)
+            return await ClaseIndividualService.get_all_clases(db, skip, limit, status_filter)
     except HTTPException:
         raise
     except Exception as e:
@@ -96,14 +96,14 @@ async def get_clases_by_curso(
     id_curso: uuid.UUID,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Obtener clases por curso
     """
     try:
-        return await ClaseIndividualService.get_clases_by_curso(db, id_curso, skip, limit, status)
+        return await ClaseIndividualService.get_clases_by_curso(db, id_curso, skip, limit, status_filter)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -116,14 +116,14 @@ async def get_clases_by_estado(
     estado: EstadoClase,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Obtener clases por estado
     """
     try:
-        return await ClaseIndividualService.get_clases_by_estado(db, estado, skip, limit, status)
+        return await ClaseIndividualService.get_clases_by_estado(db, estado, skip, limit, status_filter)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -136,14 +136,14 @@ async def get_clases_by_fecha(
     fecha: date,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Obtener clases por fecha específica
     """
     try:
-        return await ClaseIndividualService.get_clases_by_fecha(db, fecha, skip, limit, status)
+        return await ClaseIndividualService.get_clases_by_fecha(db, fecha, skip, limit, status_filter)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -157,14 +157,14 @@ async def get_clases_by_fecha_range(
     fecha_fin: date = Query(..., description="Fecha de fin del rango"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Obtener clases por rango de fechas
     """
     try:
-        return await ClaseIndividualService.get_clases_by_fecha_range(db, fecha_inicio, fecha_fin, skip, limit, status)
+        return await ClaseIndividualService.get_clases_by_fecha_range(db, fecha_inicio, fecha_fin, skip, limit, status_filter)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -180,14 +180,14 @@ async def get_clases_by_fecha_range(
 @router.get("/{id_clase}", response_model=ClaseIndividualResponse, response_model_exclude_none=True)
 async def get_clase_by_id(
     id_clase: uuid.UUID,
-    status: Optional[bool] = Query(None, description="Filtrar por estado activo/inactivo"),
+    status_filter: Optional[bool] = Query(None, alias="status", description="Filtrar por estado activo/inactivo"),
     db: AsyncSession = Depends(get_async_db)
 ):
     """
     Obtener una clase individual por su ID
     """
     try:
-        clase = await ClaseIndividualService.get_clase_by_id(db, id_clase, status)
+        clase = await ClaseIndividualService.get_clase_by_id(db, id_clase, status_filter)
         if not clase:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

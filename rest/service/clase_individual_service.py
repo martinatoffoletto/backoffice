@@ -7,7 +7,6 @@ from ..schemas.clase_individual_schema import (
     ClaseEstadisticas,
     EstadoClase
 )
-from ..models.clase_individual_model import EstadoClase as ModelEstadoClase
 from typing import List, Optional
 from datetime import date
 import uuid
@@ -55,9 +54,8 @@ class ClaseIndividualService:
     @staticmethod
     async def get_clases_by_estado(db: AsyncSession, estado: EstadoClase, skip: int = 0, limit: int = 100, status_filter: Optional[bool] = None) -> List[ClaseIndividualResponse]:
         """Obtener clases por estado"""
-        # Convertir el enum del schema al enum del modelo
-        model_estado = ModelEstadoClase(estado.value)
-        db_clases = await ClaseIndividualDAO.get_by_estado(db, model_estado, skip, limit, status_filter)
+        # Pasar el valor del enum como string (el modelo ahora usa String)
+        db_clases = await ClaseIndividualDAO.get_by_estado(db, estado.value, skip, limit, status_filter)
         return [ClaseIndividualResponse.model_validate(clase) for clase in db_clases]
     
     @staticmethod
