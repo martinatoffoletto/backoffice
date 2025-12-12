@@ -16,7 +16,7 @@ class TipoClase(enum.Enum):
     REGULAR = "regular"
     PARCIAL_1 = "parcial_1"
     PARCIAL_2 = "parcial_2"
-    RECUPERATORIA = "recuperatoria"
+    RECUPERATORIO = "recuperatorio"
     FINAL = "final"
 
 class ClaseIndividual(Base):
