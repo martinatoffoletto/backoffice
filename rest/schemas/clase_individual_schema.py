@@ -14,9 +14,10 @@ class EstadoClase(str, Enum):
 
 class TipoClase(str, Enum):
     REGULAR = "regular"
-    PARCIAL = "parcial"
+    PARCIAL_1 = "parcial_1"
+    PARCIAL_2 = "parcial_2"
+    RECUPERATORIO = "recuperatorio"
     FINAL = "final"
-    TRABAJO_PRACTICO = "trabajo_practico"
 
 
 class ClaseIndividual(BaseModel):
