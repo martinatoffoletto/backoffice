@@ -5,11 +5,16 @@ from ..service.rol_service import RolService
 from ..schemas.rol_schema import Rol, RolBase, RolUpdate
 from typing import List, Optional, Dict, Any
 import uuid
+from ..security import get_current_user
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
 @router.post("/", response_model=Rol, status_code=status.HTTP_201_CREATED)
-async def create_rol(rol: RolBase, db: AsyncSession = Depends(get_async_db)):
+async def create_rol(
+    rol: RolBase,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     """Crear un nuevo rol"""
     created_rol, error_message = await RolService.create_rol(db, rol)
     if not created_rol:
@@ -55,7 +60,8 @@ async def get_categories_with_subcategories(
 async def update_rol(
     rol_id: uuid.UUID,
     rol_update: RolUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar un rol existente"""
     updated_rol, error_message = await RolService.update_rol(db, rol_id, rol_update)
@@ -73,7 +79,11 @@ async def update_rol(
     return updated_rol
 
 @router.delete("/{rol_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_rol(rol_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+async def delete_rol(
+    rol_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     """Eliminar (desactivar) un rol"""
     success, error_message = await RolService.delete_rol(db, rol_id)
     if not success:

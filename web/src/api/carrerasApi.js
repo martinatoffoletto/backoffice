@@ -1,15 +1,8 @@
-import { materias, materias_carrera } from "@/data/mockData";
-import axios from "axios";
-
-const API_BASE_URL =
-  "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api";
-
-let mockMateriasPorCarrera = [...materias_carrera];
-let materiasData = [...materias];
+import coreApiInstance from "./coreApiInstance";
 
 export const altaCarrera = async (carreraData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/carreras`, carreraData, {
+    const response = await coreApiInstance.post("/carreras", carreraData, {
       headers: {
         accept: "application/json",
         "Content-Type": "application/json",
@@ -24,7 +17,7 @@ export const altaCarrera = async (carreraData) => {
 
 export const bajaCarrera = async (uuid) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/carreras/${uuid}`, {
+    const response = await coreApiInstance.delete(`/carreras/${uuid}`, {
       headers: {
         accept: "application/json",
       },
@@ -40,8 +33,8 @@ export const modificarCarrera = async (uuid, carreraData) => {
   try {
     console.log("API - UUID:", uuid);
     console.log("API - Datos a enviar:", carreraData);
-    const response = await axios.put(
-      `${API_BASE_URL}/carreras/${uuid}`,
+    const response = await coreApiInstance.put(
+      `/carreras/${uuid}`,
       carreraData,
       {
         headers: {
@@ -61,7 +54,7 @@ export const modificarCarrera = async (uuid, carreraData) => {
 
 export const carreraPorId = async (id) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/carreras/${id}`, {
+    const response = await coreApiInstance.get(`/carreras/${id}`, {
       headers: {
         accept: "application/json",
       },
@@ -75,19 +68,17 @@ export const carreraPorId = async (id) => {
 
 export const carreraPorNombre = async (name) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/carreras`, {
+    const response = await coreApiInstance.get("/carreras", {
       params: { name_carrera: name },
       headers: {
         accept: "application/json",
       },
     });
 
-    // La API devuelve { success: true, data: [...] }
     const carreras = response.data.data || [];
 
     if (carreras.length === 0) throw new Error("Carrera no encontrada");
 
-    // Retornar la primera carrera encontrada
     return carreras[0];
   } catch (err) {
     console.error("Error al buscar carrera", err);
@@ -97,14 +88,13 @@ export const carreraPorNombre = async (name) => {
 
 export const obtenerCarreras = async (page = 1, limit = 100) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/carreras`, {
+    const response = await coreApiInstance.get("/carreras", {
       params: { page, limit },
       headers: {
         accept: "application/json",
       },
     });
 
-    // La API devuelve { success: true, data: [...], page, limit, count, totalCount, totalPages }
     return response.data.data || [];
   } catch (err) {
     console.error("Error al obtener carreras", err);
@@ -112,37 +102,15 @@ export const obtenerCarreras = async (page = 1, limit = 100) => {
   }
 };
 
-export const obtenerMateriasPorCarrera = async (id_carrera) => {
-  try {
-    const relaciones = mockMateriasPorCarrera.filter(
-      (rel) => rel.id_carrera === id_carrera
-    );
-
-    if (relaciones.length === 0) {
-      return Promise.resolve([]);
-    }
-
-    const materias = relaciones.map((rel) => {
-      return materiasData.find((m) => m.id_materia === rel.id_materia);
-    });
-
-    return Promise.resolve(materias);
-  } catch (err) {
-    console.error("Error al obtener materias por carrera:", err);
-    throw err;
-  }
-};
-
 export const verMateriasPorCarrera = async (uuid_carrera) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/materias`, {
+    const response = await coreApiInstance.get("/materias", {
       params: { uuid_carrera },
       headers: {
         accept: "application/json",
       },
     });
 
-    // La API devuelve { success: true, data: [...] }
     return response.data.data || [];
   } catch (err) {
     console.error("Error al obtener materias por carrera:", err);

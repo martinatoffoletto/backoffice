@@ -7,11 +7,16 @@ from ..schemas.usuario_schema import (
 )
 from ..service.usuario_service import UsuarioService
 from ..database import get_async_db
+from ..security import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def create_user(usuario: UsuarioCreate, db: AsyncSession = Depends(get_async_db)):
+async def create_user(
+    usuario: UsuarioCreate,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     """Crear un nuevo usuario"""
     created_user, message = await UsuarioService.create_user(db, usuario)
     if created_user is None:
@@ -57,7 +62,8 @@ async def get_all_users(
 async def update_user(
     user_id: uuid.UUID,
     usuario_update: UsuarioUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar un usuario existente"""
     result = await UsuarioService.update_user(db, user_id, usuario_update)
@@ -80,7 +86,11 @@ async def update_user(
         return result
 
 @router.delete("/{user_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_user(user_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     """Eliminar (desactivar) un usuario"""
     success = await UsuarioService.delete_user(db, user_id)
     if not success:

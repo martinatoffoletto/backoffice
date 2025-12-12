@@ -1,37 +1,24 @@
-// NOTA: El endpoint /cursos no existe en el backend actual
-// Este módulo está usando datos mock temporalmente
-// Para conectarlo al backend, primero se debe crear el endpoint /api/v1/cursos en el backend
-
-import axiosInstance from "./axiosInstance";
-import { carreras,  cursos, materias_carrera } from "@/data/mockData";
-
-const API_BASE_URL =
-  "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api";
-
-
-let mockCursos=[...cursos];
-let mockCarreras=[...carreras];
-let mockMateriaPorCarrera=[...materias_carrera];
+import coreApiInstance from "./coreApiInstance";
 
 // eslint-disable-next-line no-unused-vars
 export const altaCurso = async (cursoData) => {
   try {
-    const response = await axiosInstance.post(`${API_BASE_URL}/cursos`, cursoData, {
-      headers:{
-        accept:"application/json",
-        "Content-Type":"application/json"
-      }
+    const response = await coreApiInstance.post("/cursos", cursoData, {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
     });
-    return response.data; 
+    return response.data;
   } catch (error) {
     console.error("Error al crear curso:", error);
-    throw error; 
+    throw error;
   }
 };
 
 export const bajaCurso = async (uuid) => {
   try {
-    const response = await axiosInstance.delete(`${API_BASE_URL}/cursos/${uuid}`,{
+    const response = await coreApiInstance.delete(`/cursos/${uuid}`, {
       headers: {
         accept: "application/json",
       },
@@ -45,63 +32,60 @@ export const bajaCurso = async (uuid) => {
 
 export const modificarCurso = async (uuid, cursoData) => {
   try {
-    const response = await axiosInstance.put(`${API_BASE_URL}/cursos/${uuid}`, cursoData, {
-        headers: {
-          accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      });
-    return response.data; 
+    const response = await coreApiInstance.put(`/cursos/${uuid}`, cursoData, {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
   } catch (err) {
     console.error("Error al modificar el curso:", err);
-    throw err; 
-}
-};
-
-
-export const cursoPorId=async(uuid)=>{
-    try{
-        const response= await axiosInstance.get(`${API_BASE_URL}/cursos/${uuid}`,{
-          headers: {
-            accept: "application/json",
-          },
-        })       
-        return response.data
-    }catch(err){
-        console.error("Error al buscar curso:", err)
-        throw err;
-    }
-}
-
-export const buscarCurso= async(uuid_materia, turno_curso, sede_curso)=>{
-  try{
-    const response= await axiosInstance.get(`${API_BASE_URL}/cursos`, {
-      params:{
-        uuid_materia: uuid_materia,
-        turno_curso: turno_curso,
-        sede_curso: sede_curso
-      },
-      headers:{
-        accept:"application/json",
-      }
-    })
-
-    return response.data;
-
-  } catch(err){
-    console.error("Error al buscar curso:", err)
     throw err;
   }
-  }
+};
 
-
-export const obtenerCursos = async ()=> {
+export const cursoPorId = async (uuid) => {
   try {
-    const response=await axiosInstance.get(`${API_BASE_URL}/cursos`,{
-      headers:{
-        accept:"application/json",
-      }
-    })
+    const response = await coreApiInstance.get(`/cursos/${uuid}`, {
+      headers: {
+        accept: "application/json",
+      },
+    });
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar curso:", err);
+    throw err;
+  }
+};
+
+export const buscarCurso = async (uuid_materia, turno_curso, sede_curso) => {
+  try {
+    const response = await coreApiInstance.get("/cursos", {
+      params: {
+        uuid_materia: uuid_materia,
+        turno_curso: turno_curso,
+        sede_curso: sede_curso,
+      },
+      headers: {
+        accept: "application/json",
+      },
+    });
+
+    return response.data;
+  } catch (err) {
+    console.error("Error al buscar curso:", err);
+    throw err;
+  }
+};
+
+export const obtenerCursos = async () => {
+  try {
+    const response = await coreApiInstance.get("/cursos", {
+      headers: {
+        accept: "application/json",
+      },
+    });
 
     return response.data;
   } catch (error) {
@@ -109,6 +93,3 @@ export const obtenerCursos = async ()=> {
     throw error;
   }
 };
-
-
-

@@ -13,6 +13,7 @@ from ..schemas.clase_individual_schema import (
 )
 from ..service.clase_individual_service import ClaseIndividualService
 from ..database import get_async_db
+from ..security import get_current_user
 
 router = APIRouter(prefix="/clases-individuales", tags=["Clases Individuales"])
 
@@ -20,7 +21,8 @@ router = APIRouter(prefix="/clases-individuales", tags=["Clases Individuales"])
 @router.post("/", response_model=ClaseIndividualResponse, status_code=status.HTTP_201_CREATED)
 async def create_clase(
     clase: ClaseIndividualCreate, 
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Crear una nueva clase individual
@@ -207,7 +209,8 @@ async def get_clase_by_id(
 async def update_clase(
     id_clase: uuid.UUID,
     clase_update: ClaseIndividualUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Actualizar una clase individual
@@ -238,7 +241,8 @@ async def update_clase(
 async def cambiar_estado_clase(
     id_clase: uuid.UUID,
     nuevo_estado: EstadoClase,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Cambiar el estado de una clase individual
@@ -268,7 +272,8 @@ async def reprogramar_clase(
     id_clase: uuid.UUID,
     nueva_fecha: date = Query(..., description="Nueva fecha para la clase"),
     observaciones: Optional[str] = Query(None, description="Observaciones sobre la reprogramación"),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Reprogramar una clase individual a una nueva fecha
@@ -296,7 +301,8 @@ async def reprogramar_clase(
 @router.delete("/{id_clase}", response_model=dict)
 async def delete_clase(
     id_clase: uuid.UUID,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Eliminación lógica de una clase individual

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 import NavBar from "./components/NavBar";
 import Inicio from "./screens/Inicio";
@@ -17,6 +18,41 @@ import Espacios from "./screens/Espacios";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jwt = params.get("JWT");
+
+    if (jwt) {
+      localStorage.setItem("token", jwt);
+      console.log("✅ Token obtenido de Core (desde URL)");
+    } else if (!localStorage.getItem("token")) {
+      loginAutomatico(); // Obtener token automáticamente en testing (sin pasar por Core) hay q borrar
+    }
+  }, []);
+
+const loginAutomatico = async () => { //TODO: ESTO HAY QUE BORRARLO DESPUES 
+    try {
+      console.log(
+        "🔄 Intentando obtener token desde Core API (modo testing local)..."
+      );
+      const response = await axios.post(
+        "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api/auth/login",
+        {
+          email: "aadmin@campusconnect.edu.ar",
+          password: "hola12345",
+        }
+      );
+
+      if (response.data.access_token) {
+        localStorage.setItem("token", response.data.access_token);
+        console.log("✅ Token obtenido automáticamente desde Core API");
+        console.log("📋 Token:", response.data.access_token);
+      }
+    } catch (error) {
+      console.error("❌ Error al obtener token automáticamente:", error);
+    }
+  };
 
   return (
     <BrowserRouter>

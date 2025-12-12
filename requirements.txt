@@ -11,3 +11,5 @@ email-validator==2.3.0
 python-multipart==0.0.20
 gunicorn==23.0.0
 aio-pika==9.4.1
+httpx==0.28.1
+PyJWT==2.10.1
