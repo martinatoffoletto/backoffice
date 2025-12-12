@@ -42,6 +42,8 @@ class AuthResponse(BaseModel):
     id_usuario: UUID
     nombre: str
     apellido: str
+    email_personal: Optional[str] = None
+    telefono: Optional[str] = None
     legajo: str
     dni: str
     email_institucional: Optional[str]
