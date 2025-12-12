@@ -265,7 +265,6 @@ export default function BusquedaUsuario() {
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Datos Personales */}
                 <div className="col-span-2">
                   <h3 className="text-lg font-semibold mb-4 text-sky-950 border-b pb-2">
                     Datos Personales
@@ -370,7 +369,6 @@ export default function BusquedaUsuario() {
                   </div>
                 </div>
 
-                {/* Rol */}
                 {usuarioSeleccionado.rol && (
                   <div className="col-span-2">
                     <h3 className="text-lg font-semibold mb-4 text-sky-950 border-b pb-2">
@@ -444,7 +442,6 @@ export default function BusquedaUsuario() {
                   </div>
                 )}
 
-                {/* Sueldo */}
                 {usuarioSeleccionado.sueldo && (
                   <div className="col-span-2">
                     <h3 className="text-lg font-semibold mb-4 text-sky-950 border-b pb-2">
@@ -505,7 +502,6 @@ export default function BusquedaUsuario() {
                   </div>
                 )}
 
-                {/* Carrera */}
                 {usuarioSeleccionado.carrera && (
                   <div className="col-span-2">
                     <h3 className="text-lg font-semibold mb-4 text-sky-950 border-b pb-2">
@@ -517,7 +513,9 @@ export default function BusquedaUsuario() {
                           Carrera
                         </label>
                         <p className="mt-1 text-sm text-gray-900 font-semibold">
-                          {cargandoCarrera ? "Cargando..." : nombreCarrera || "No encontrada"}
+                          {cargandoCarrera
+                            ? "Cargando..."
+                            : nombreCarrera || "No encontrada"}
                         </p>
                       </div>
                       <div>

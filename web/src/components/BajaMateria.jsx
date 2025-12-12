@@ -1,15 +1,15 @@
 import PopUp from "../components/PopUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { useState, useEffect } from "react";
-import { bajaMateria, materiaPorNombre, obtenerMaterias } from "@/api/materiasApi";
+import {
+  bajaMateria,
+  materiaPorNombre,
+  obtenerMaterias,
+} from "@/api/materiasApi";
 
-export default function BajaMateria() {
+export default function BajaMateria({ materia_inicial = null }) {
   const [value, setValue] = useState("");
   const [found, setFound] = useState(false);
   const [materiaData, setMateriaData] = useState(null);
@@ -34,11 +34,27 @@ export default function BajaMateria() {
   });
 
   useEffect(() => {
+    if (materia_inicial) {
+      setValue(materia_inicial.nombre);
+      setMateriaData(materia_inicial);
+      setFound(true);
+      setForm({
+        id: materia_inicial.uuid,
+        nombre: materia_inicial.nombre,
+        carrera: materia_inicial.uuid_carrera,
+        descripcion: materia_inicial.description || "",
+        metodo_aprobacion: materia_inicial.approval_method || "",
+        curricular: materia_inicial.is_elective,
+      });
+    }
+  }, [materia_inicial]);
+
+  useEffect(() => {
     const loadMaterias = async () => {
       try {
         const data = await obtenerMaterias();
         const limpias = data.filter(
-          m => m && typeof m === "object" && m.nombre
+          (m) => m && typeof m === "object" && m.nombre
         );
 
         setAllMaterias(limpias);
@@ -110,8 +126,7 @@ export default function BajaMateria() {
       return;
     }
 
-  
-    const sugerencias = allMaterias.filter(m =>
+    const sugerencias = allMaterias.filter((m) =>
       m?.nombre?.toLowerCase().includes(texto.toLowerCase())
     );
 
@@ -122,7 +137,6 @@ export default function BajaMateria() {
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-6xl p-6">
-
         <h1 className="font-bold text-center text-2xl mb-4">Baja de Materia</h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
         <div className="relative w-full max-w-6xl mt-8">
@@ -148,9 +162,12 @@ export default function BajaMateria() {
           {showDropdown && suggestions.length > 0 && (
             <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
               <CommandGroup>
-                <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-                {suggestions.map(materia => (
-                  <CommandItem key={materia.id_materia}
+                <span className="px-2 py-1 text-xs text-gray-500">
+                  Coincidencias
+                </span>
+                {suggestions.map((materia) => (
+                  <CommandItem
+                    key={materia.id_materia}
                     onSelect={() => {
                       setValue(materia.nombre);
                       setMateriaSeleccionada(materia);
@@ -165,7 +182,7 @@ export default function BajaMateria() {
                         descripcion: materia.descripcion || "",
                         metodo_aprobacion: materia.metodo_aprobacion || "",
                         curricular: materia.curricular,
-                        status: materia.status
+                        status: materia.status,
                       });
                     }}
                   >
@@ -176,14 +193,16 @@ export default function BajaMateria() {
             </Command>
           )}
 
-          {searchError && <p className="text-red-500 mt-2 text-center">{searchError}</p>}
+          {searchError && (
+            <p className="text-red-500 mt-2 text-center">{searchError}</p>
+          )}
         </div>
 
         {found && materiaData && (
           <div className="w-full max-w-6xl p-6 mt-8">
             <div className="w-full bg-white border-2 border-red-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-red-600 mb-4">
-                ⚠️ Confirmar Baja de Materia
+                Confirmar Baja de Materia
               </h2>
 
               <span className="block w-full h-[2px] bg-red-500 mb-4"></span>
@@ -205,18 +224,28 @@ export default function BajaMateria() {
                   </div>
 
                   <div>
-                    <span className="font-medium text-gray-700">Descripción:</span>
+                    <span className="font-medium text-gray-700">
+                      Descripción:
+                    </span>
                     <p className="text-gray-900">{materiaData.description}</p>
                   </div>
 
                   <div>
-                    <span className="font-medium text-gray-700">Tipo de Aprobación:</span>
-                    <p className="text-gray-900">{materiaData.approval_method}</p>
+                    <span className="font-medium text-gray-700">
+                      Tipo de Aprobación:
+                    </span>
+                    <p className="text-gray-900">
+                      {materiaData.approval_method}
+                    </p>
                   </div>
 
                   <div>
-                    <span className="font-medium text-gray-700">¿Es electiva?:</span>
-                    <p className="text-gray-900">{materiaData.is_elective ? "Sí" : "No"}</p>
+                    <span className="font-medium text-gray-700">
+                      ¿Es electiva?:
+                    </span>
+                    <p className="text-gray-900">
+                      {materiaData.is_elective ? "Sí" : "No"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -238,7 +267,7 @@ export default function BajaMateria() {
                 <Button
                   onClick={() => {
                     setFound(false);
-                    setMateriaData(null); 
+                    setMateriaData(null);
                     setValue("");
                   }}
                   className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-2 rounded"
@@ -254,7 +283,7 @@ export default function BajaMateria() {
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-green-600 mb-4">
-                ✓ Materia Dada de Baja Exitosamente
+                Materia Dada de Baja Exitosamente
               </h2>
               <span className="block w-full h-[2px] bg-green-500 mb-4"></span>
 

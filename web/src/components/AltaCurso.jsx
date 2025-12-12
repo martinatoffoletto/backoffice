@@ -6,6 +6,14 @@ import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 import FormCurso from "@/components/FormCurso";
 
+// Mapeo de UUIDs a nombres de docentes (mock)
+const docentesNombres = {
+  "e9d03ceb-564c-4c95-b6a8-7e851d40994b": "Juan Pérez",
+  "a1b2c3d4-564c-4c95-b6a8-111111111111": "María García",
+  "e9d03ceb-564c-4c95-b6a8-7e851d40114b": "Carlos López",
+  "b2c3d4e5-564c-4c95-b6a8-222222222222": "Ana Rodríguez",
+};
+
 export default function AltaCurso() {
   const [form, setForm] = useState({
     uuid_materia: "",
@@ -163,7 +171,10 @@ export default function AltaCurso() {
       };
       const nuevo_curso = await altaCurso(cursoData);
       console.log("Curso dado de alta exitosamente");
-      setCursoData(nuevo_curso);
+      console.log("Respuesta del backend:", nuevo_curso);
+      // El backend devuelve {success: true, data: {...}} - extraer data
+      const cursoCreado = nuevo_curso.data || nuevo_curso;
+      setCursoData(cursoCreado);
       setCompleted(true);
       setShowPopUp(true);
     } catch (err) {
@@ -261,11 +272,41 @@ export default function AltaCurso() {
       {showGestionClases && cursoData && (
         <div className="w-full max-w-4xl mt-6">
           <GestionClases
-            id_curso={cursoData.id_curso || cursoData.id}
-            fecha_inicio={cursoData.fecha_inicio}
-            fecha_fin={cursoData.fecha_fin}
-            dia={cursoData.dia}
-            turno={cursoData.turno}
+            id_curso={
+              cursoData.uuid_curso ||
+              cursoData.id_curso ||
+              cursoData.uuid ||
+              cursoData.id
+            }
+            fecha_inicio={
+              cursoData.desde || cursoData.fecha_inicio || form.desde
+            }
+            fecha_fin={cursoData.hasta || cursoData.fecha_fin || form.hasta}
+            dia={cursoData.dia || form.dia}
+            turno={cursoData.turno || form.turno}
+            materia={
+              filteredMaterias.find((m) => {
+                const uuidBuscado = cursoData.uuid_materia || form.uuid_materia;
+                return (
+                  m.uuid_materia === uuidBuscado ||
+                  m.uuid === uuidBuscado ||
+                  m.id_materia === uuidBuscado ||
+                  m.id === uuidBuscado
+                );
+              })?.nombre || "Materia no encontrada"
+            }
+            periodo={cursoData.periodo || form.periodo}
+            modalidad={cursoData.modalidad || form.modalidad}
+            titular={
+              form.titular_uuid
+                ? docentesNombres[form.titular_uuid] || form.titular_uuid
+                : null
+            }
+            auxiliar={
+              form.auxiliar_uuid
+                ? docentesNombres[form.auxiliar_uuid] || form.auxiliar_uuid
+                : null
+            }
           />
         </div>
       )}

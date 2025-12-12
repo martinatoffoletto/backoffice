@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { buscarEspacios } from "@/api/espaciosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
+import { obtenerDisponibilidadDocentes } from "@/api/docentesApi";
 
 export default function FormCurso({
   form,
@@ -32,15 +33,16 @@ export default function FormCurso({
   const [loadingAulas, setLoadingAulas] = useState(false);
   const [aulaSearch, setAulaSearch] = useState("");
 
-  // Estados para materias
   const [materias, setMaterias] = useState([]);
   const [loadingMaterias, setLoadingMaterias] = useState(false);
   const [materiaSearch, setMateriaSearch] = useState("");
 
-  // Estados para sedes
   const [sedes, setSedes] = useState([]);
   const [loadingSedes, setLoadingSedes] = useState(false);
   const [sedeSearch, setSedeSearch] = useState("");
+
+  const [docentesDisponibles, setDocentesDisponibles] = useState([]);
+  const [loadingDocentes, setLoadingDocentes] = useState(false);
 
   const filteredMateriasList = materias.filter((materia) =>
     materia.nombre?.toLowerCase().includes(materiaSearch.toLowerCase().trim())
@@ -104,12 +106,35 @@ export default function FormCurso({
     fetchSedes();
   }, []);
 
-  // Manejar búsqueda de materias
+  useEffect(() => {
+    const fetchDocentesDisponibles = async () => {
+      if (!form.uuid_materia || !form.dia) {
+        setDocentesDisponibles([]);
+        return;
+      }
+
+      try {
+        setLoadingDocentes(true);
+        const docentes = await obtenerDisponibilidadDocentes(
+          form.uuid_materia,
+          form.dia
+        );
+        setDocentesDisponibles(docentes || []);
+      } catch (error) {
+        console.error("Error al cargar docentes disponibles:", error);
+        setDocentesDisponibles([]);
+      } finally {
+        setLoadingDocentes(false);
+      }
+    };
+
+    fetchDocentesDisponibles();
+  }, [form.uuid_materia, form.dia]);
+
   const handleMateriaSearch = (texto) => {
     setMateriaSearch(texto);
   };
 
-  // Manejar búsqueda de sedes
   const handleSedeSearch = (texto) => {
     setSedeSearch(texto);
   };
@@ -122,10 +147,8 @@ export default function FormCurso({
     <form onSubmit={onSubmit} className="mt-8">
       <FieldSet>
         <FieldGroup>
-          {/* Materia y Sede - Solo si NO es modificación */}
           {!isModificacion && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-              {/* Materia */}
               <Field>
                 <FieldLabel>
                   Materia <span className="text-red-500">*</span>
@@ -193,7 +216,6 @@ export default function FormCurso({
                 </Select>
               </Field>
 
-              {/* Sede */}
               <Field>
                 <FieldLabel>
                   Sede <span className="text-red-500">*</span>
@@ -254,7 +276,6 @@ export default function FormCurso({
             </div>
           )}
 
-          {/* Primera fila - 2 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field>
               <FieldLabel htmlFor="examen">
@@ -283,7 +304,6 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Segunda fila - 1 columna */}
           <div className="grid grid-cols-1 gap-5 mt-2">
             <Field>
               <FieldLabel htmlFor="modalidad">
@@ -310,7 +330,6 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Tercera fila - 2 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
             <Field>
               <FieldLabel htmlFor="dia">
@@ -385,7 +404,6 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Cuarta fila - 2 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
             <Field>
               <FieldLabel htmlFor="periodo">
@@ -441,7 +459,6 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Quinta fila - 3 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-2">
             <Field>
               <FieldLabel htmlFor="estado">
@@ -502,7 +519,6 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Sexta fila - 2 columnas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
             <Field>
               <FieldLabel htmlFor="desde">
@@ -533,10 +549,8 @@ export default function FormCurso({
             </Field>
           </div>
 
-          {/* Séptima fila - Docentes (Titular y Auxiliar) - Solo si NO es modificación */}
           {!isModificacion && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
-              {/* Titular */}
               <Field>
                 <FieldLabel>
                   Docente Titular <span className="text-red-500">*</span>
@@ -552,6 +566,7 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
+                  disabled={!form.uuid_materia || !form.dia || loadingDocentes}
                 >
                   <SelectTrigger
                     className={`w-full ${
@@ -560,23 +575,35 @@ export default function FormCurso({
                         : ""
                     }`}
                   >
-                    <SelectValue placeholder="Seleccione titular" />
+                    <SelectValue
+                      placeholder={
+                        loadingDocentes
+                          ? "Cargando docentes..."
+                          : !form.uuid_materia || !form.dia
+                          ? "Seleccione materia y día primero"
+                          : "Seleccione titular"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Docentes</SelectLabel>
-                      <SelectItem value="e9d03ceb-564c-4c95-b6a8-7e851d40994b">
-                        Juan Pérez (ID: e9d03ceb...994b)
-                      </SelectItem>
-                      <SelectItem value="a1b2c3d4-564c-4c95-b6a8-111111111111">
-                        María García (ID: a1b2c3d4...1111)
-                      </SelectItem>
+                      <SelectLabel>Docentes Disponibles</SelectLabel>
+                      {docentesDisponibles.length === 0 ? (
+                        <SelectItem value="_no_disponibles" disabled>
+                          No hay docentes disponibles
+                        </SelectItem>
+                      ) : (
+                        docentesDisponibles.map((docente) => (
+                          <SelectItem key={docente.uuid} value={docente.uuid}>
+                            {docente.nombre} {docente.apellido}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>
 
-              {/* Auxiliar */}
               <Field>
                 <FieldLabel>
                   Docente Auxiliar <span className="text-red-500">*</span>
@@ -592,6 +619,7 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
+                  disabled={!form.uuid_materia || !form.dia || loadingDocentes}
                 >
                   <SelectTrigger
                     className={`w-full ${
@@ -600,17 +628,30 @@ export default function FormCurso({
                         : ""
                     }`}
                   >
-                    <SelectValue placeholder="Seleccione auxiliar" />
+                    <SelectValue
+                      placeholder={
+                        loadingDocentes
+                          ? "Cargando docentes..."
+                          : !form.uuid_materia || !form.dia
+                          ? "Seleccione materia y día primero"
+                          : "Seleccione auxiliar"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Docentes</SelectLabel>
-                      <SelectItem value="e9d03ceb-564c-4c95-b6a8-7e851d40114b">
-                        Carlos López (ID: e9d03ceb...114b)
-                      </SelectItem>
-                      <SelectItem value="b2c3d4e5-564c-4c95-b6a8-222222222222">
-                        Ana Rodríguez (ID: b2c3d4e5...2222)
-                      </SelectItem>
+                      <SelectLabel>Docentes Disponibles</SelectLabel>
+                      {docentesDisponibles.length === 0 ? (
+                        <SelectItem value="_no_disponibles" disabled>
+                          No hay docentes disponibles
+                        </SelectItem>
+                      ) : (
+                        docentesDisponibles.map((docente) => (
+                          <SelectItem key={docente.uuid} value={docente.uuid}>
+                            {docente.nombre} {docente.apellido}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -621,7 +662,6 @@ export default function FormCurso({
             Debe seleccionar al menos un Titular o un Auxiliar
           </p>
 
-          {/* Botones */}
           <div className="flex justify-center gap-4 mt-5">
             <Button
               type="submit"

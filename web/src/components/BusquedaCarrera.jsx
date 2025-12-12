@@ -19,7 +19,7 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 
-export default function BusquedaCarrera() {
+export default function BusquedaCarrera({ onCarreraSeleccionada }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState(null);
   const [carreraSeleccionada, setCarreraSeleccionada] = useState(null);
@@ -71,11 +71,17 @@ export default function BusquedaCarrera() {
   };
 
   const handleEditarCarrera = () => {
-    console.log("Editar:", carreraSeleccionada);
+    if (onCarreraSeleccionada) {
+      onCarreraSeleccionada(carreraSeleccionada, "modif");
+    }
+    cerrarOpcionesCarrera();
   };
 
   const handleEliminarCarrera = () => {
-    console.log("Eliminar:", carreraSeleccionada);
+    if (onCarreraSeleccionada) {
+      onCarreraSeleccionada(carreraSeleccionada, "baja");
+    }
+    cerrarOpcionesCarrera();
   };
 
   return (
@@ -114,10 +120,18 @@ export default function BusquedaCarrera() {
             <Table className="min-w-full border border-gray-200">
               <TableHeader className="bg-sky-950">
                 <TableRow>
-                  <TableHead className="text-white font-semibold px-4 py-3">Carrera</TableHead>
-                  <TableHead className="text-white font-semibold px-4 py-3">Facultad</TableHead>
-                  <TableHead className="text-white font-semibold px-4 py-3">Modalidad</TableHead>
-                  <TableHead className="text-white font-semibold px-4 py-3">Duración</TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Carrera
+                  </TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Facultad
+                  </TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Modalidad
+                  </TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Duración
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -130,17 +144,23 @@ export default function BusquedaCarrera() {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <TableCell className="px-4 py-3 text-sm">{carrera.name}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm">{carrera.faculty}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm">{carrera.modality}</TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      {carrera.duration_years} años / {carrera.duration_hours} hs
+                      {carrera.name}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {carrera.faculty}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {carrera.modality}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {carrera.duration_years} años / {carrera.duration_hours}{" "}
+                      hs
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-
 
             {totalPages > 1 && (
               <div className="mt-4 flex justify-center">
@@ -196,14 +216,11 @@ export default function BusquedaCarrera() {
           aria-modal="true"
         >
           <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl border border-sky-800/30 animate-fadeIn">
-            
             <h2 className="text-2xl font-bold text-sky-900 mb-4 text-center">
               Opciones de Carrera
             </h2>
 
-            {/* Info */}
             <div className="rounded-xl border border-gray-200 p-4 mb-6 bg-gray-50">
-              
               <div className="mb-3">
                 <p className="text-sm text-gray-500">Nombre</p>
                 <p className="font-semibold text-gray-800">
@@ -231,10 +248,8 @@ export default function BusquedaCarrera() {
                   {carreraSeleccionada.duration_hours || "Sin descripción"}
                 </p>
               </div>
-
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col gap-3">
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -261,7 +276,6 @@ export default function BusquedaCarrera() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

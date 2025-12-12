@@ -21,10 +21,8 @@ function App() {
   return (
     <BrowserRouter>
       <div className="flex min-h-screen flex-col md:flex-row">
-        {/* Navbar */}
         <NavBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
-        {/* Contenido principal */}
         <main className="flex-grow bg-gray-50 overflow-auto p-6 md:p-8">
           <Routes>
             <Route path="/" element={<Inicio />} />
@@ -42,12 +40,11 @@ function App() {
           </Routes>
         </main>
 
-        {/* Botón hamburguesa (solo visible en móvil) */}
         <button
           className="fixed top-4 left-4 z-50 md:hidden bg-sky-900 text-white p-2 rounded-lg shadow-md"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? "✖" : "☰"}
+          {menuOpen ? "X" : "="}
         </button>
       </div>
     </BrowserRouter>

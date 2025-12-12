@@ -60,7 +60,15 @@ export default function GestionClases({
   fecha_fin,
   dia,
   turno,
+  materia,
+  periodo,
+  modalidad,
+  titular,
+  auxiliar,
 }) {
+  // Debug: verificar que id_curso llegue correctamente
+  console.log("GestionClases - id_curso recibido:", id_curso);
+
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
@@ -591,7 +599,50 @@ export default function GestionClases({
         <h1 className="font-bold text-start text-xl mb-4 text-black">
           Gestión de Clases del Curso
         </h1>
-        <span className="block w-full h-[2px] bg-sky-950 mb-6"></span>
+        <span className="block w-full h-[2px] bg-sky-950 mb-4"></span>
+
+        {/* Información del Curso */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Materia</p>
+              <p className="font-semibold text-gray-800">{materia || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Turno</p>
+              <p className="font-semibold text-gray-800">
+                {turno
+                  ? turno.charAt(0).toUpperCase() + turno.slice(1).toLowerCase()
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Período</p>
+              <p className="font-semibold text-gray-800">{periodo || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Modalidad</p>
+              <p className="font-semibold text-gray-800">
+                {modalidad
+                  ? modalidad.charAt(0).toUpperCase() +
+                    modalidad.slice(1).toLowerCase()
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Docente Titular</p>
+              <p className="font-semibold text-gray-800">
+                {titular || "Sin asignar"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Docente Auxiliar</p>
+              <p className="font-semibold text-gray-800">
+                {auxiliar || "Sin asignar"}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Cajas de días del calendario */}
         {diasCalendario.length > 0 && (

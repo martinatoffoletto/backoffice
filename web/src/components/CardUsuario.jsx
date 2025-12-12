@@ -35,7 +35,6 @@ export default function CardUsuario({
         {title}
       </h2>
 
-      {/* Datos del Usuario */}
       <div className="mb-6">
         <h3 className="font-bold text-lg text-sky-950 mb-3 border-b-2 border-sky-950 pb-2">
           Datos del Usuario
@@ -78,7 +77,6 @@ export default function CardUsuario({
         </div>
       </div>
 
-      {/* Datos de Carrera (si es alumno) */}
       {carreraData && (
         <div className="mb-6">
           <h3 className="font-bold text-lg text-sky-950 mb-3 border-b-2 border-sky-950 pb-2">
@@ -107,7 +105,6 @@ export default function CardUsuario({
         </div>
       )}
 
-      {/* Datos de Sueldo (si no es alumno) */}
       {sueldoData && (
         <div className="mb-6">
           <h3 className="font-bold text-lg text-sky-950 mb-3 border-b-2 border-sky-950 pb-2">
@@ -131,7 +128,6 @@ export default function CardUsuario({
         </div>
       )}
 
-      {/* Botón de Cerrar */}
       <div className="flex justify-center mt-6">
         <Button
           onClick={onClose}

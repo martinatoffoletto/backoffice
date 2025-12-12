@@ -78,11 +78,6 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
 
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
         <Avatar style={{ width: "70px", height: "70px" }}>
-          <AvatarImage
-            src="/usuario.jpg"
-            alt="Foto de usuario"
-            style={{ width: "70px", height: "70px" }}
-          />
           <AvatarFallback>NU</AvatarFallback>
         </Avatar>
         <p className="text-sm mt-2 font-medium">Roberto López</p>

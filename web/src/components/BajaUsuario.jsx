@@ -131,12 +131,11 @@ export default function BajaUsuario() {
           </div>
         )}
 
-        {/* Usuario encontrado - Confirmación */}
         {found && user && (
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-red-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-red-600 mb-4">
-                ⚠️ Confirmar Baja de Usuario
+                Confirmar Baja de Usuario
               </h2>
               <span className="block w-full h-[2px] bg-red-500 mb-4"></span>
 
@@ -218,12 +217,11 @@ export default function BajaUsuario() {
           </div>
         )}
 
-        {/* Usuario dado de baja exitosamente */}
         {deleted && (
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-green-600 mb-4">
-                ✓ Usuario Dado de Baja Exitosamente
+                Usuario Dado de Baja Exitosamente
               </h2>
               <span className="block w-full h-[2px] bg-green-500 mb-4"></span>
 

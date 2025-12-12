@@ -14,8 +14,22 @@ import {
 } from "@/components/ui/select.jsx";
 import { useState } from "react";
 
-export default function Carreras(second) {
+export default function Carreras() {
   const [value, setValue] = useState("");
+  const [carrera_seleccionada, setCarreraSeleccionada] = useState(null);
+
+  const handleCarreraSeleccionada = (carrera, accion) => {
+    setCarreraSeleccionada(carrera);
+    if (accion === "modif") {
+      setValue("modificacion");
+    } else if (accion === "baja") {
+      setValue("baja");
+    }
+  };
+
+  const handleResetOperacion = () => {
+    setCarreraSeleccionada(null);
+  };
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -31,7 +45,10 @@ export default function Carreras(second) {
           </h3>
 
           <Select
-            onValueChange={setValue}
+            onValueChange={(val) => {
+              setValue(val);
+              handleResetOperacion();
+            }}
             value={value}
             className="flex-1 w-full"
           >
@@ -57,9 +74,15 @@ export default function Carreras(second) {
         </div>
       </div>
       {value === "alta" && <AltaCarrera />}
-      {value === "baja" && <BajaCarrera />}
-      {value === "modificacion" && <ModifCarrera />}
-      {value === "busqueda" && <BusquedaCarrera />}
+      {value === "baja" && (
+        <BajaCarrera carrera_inicial={carrera_seleccionada} />
+      )}
+      {value === "modificacion" && (
+        <ModifCarrera carrera_inicial={carrera_seleccionada} />
+      )}
+      {value === "busqueda" && (
+        <BusquedaCarrera onCarreraSeleccionada={handleCarreraSeleccionada} />
+      )}
       {value === "materias" && <MateriaCarrera />}
     </div>
   );

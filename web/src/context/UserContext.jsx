@@ -16,11 +16,14 @@ export const UserProvider = ({ children }) => {
           return;
         }
 
-        const response = await axios.get("https://api.tuportal.com/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          "https://api.tuportal.com/api/auth/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         setUser(response.data);
       } catch (error) {
@@ -46,5 +49,4 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-// ✅ CORRECTO
 export const useUser = () => useContext(UserContext);
