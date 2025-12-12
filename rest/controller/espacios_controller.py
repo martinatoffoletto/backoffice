@@ -6,13 +6,15 @@ import uuid
 from ..schemas.espacio_schema import EspacioCreate, EspacioUpdate, Espacio, EspacioConSede, ComedorInfo
 from ..database import get_async_db
 from ..service.espacio_service import EspacioService
+from ..security import get_current_user
 
 router = APIRouter(prefix="/espacios", tags=["Espacios"])
 
 @router.post("/", response_model=Espacio, status_code=status.HTTP_201_CREATED)
 async def create_espacio(
     espacio: EspacioCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Crear un nuevo espacio
@@ -151,7 +153,8 @@ async def get_comedores_by_sede(
 async def update_espacio(
     id_espacio: uuid.UUID,
     espacio_update: EspacioUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Actualizar un espacio por su ID
@@ -181,7 +184,8 @@ async def update_espacio(
 async def partial_update_espacio(
     id_espacio: uuid.UUID,
     espacio_update: EspacioUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Actualizar parcialmente un espacio por su ID
@@ -210,7 +214,8 @@ async def partial_update_espacio(
 @router.delete("/{id_espacio}", response_model=dict)
 async def soft_delete_espacio(
     id_espacio: uuid.UUID,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Eliminación lógica de un espacio

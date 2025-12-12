@@ -5,11 +5,16 @@ import uuid
 from ..schemas.sueldo_schema import Sueldo, SueldoBase, SueldoUpdate
 from ..service.sueldo_service import SueldoService
 from ..database import get_async_db
+from ..security import get_current_user
 
 router = APIRouter(prefix="/sueldos", tags=["Sueldos"])
 
 @router.post("/", response_model=Sueldo, status_code=status.HTTP_201_CREATED)
-async def create_sueldo(sueldo: SueldoBase, db: AsyncSession = Depends(get_async_db)):
+async def create_sueldo(
+    sueldo: SueldoBase,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     """Crear un nuevo sueldo para un usuario"""
     # Verificar si se puede crear el sueldo
     can_create, error_message = await SueldoService.can_create_sueldo(db, sueldo)
@@ -93,7 +98,8 @@ async def get_sueldo_by_id(
 async def update_sueldo(
     sueldo_id: uuid.UUID,
     sueldo_update: SueldoUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar un sueldo existente"""
     updated_sueldo = await SueldoService.update_sueldo(db, sueldo_id, sueldo_update)
@@ -105,7 +111,11 @@ async def update_sueldo(
     return updated_sueldo
 
 @router.delete("/{sueldo_id}", response_model=dict, status_code=status.HTTP_200_OK)
-async def delete_sueldo(sueldo_id: uuid.UUID, db: AsyncSession = Depends(get_async_db)):
+async def delete_sueldo(
+    sueldo_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
     success, error_message = await SueldoService.delete_sueldo(db, sueldo_id)
     if not success:
         raise HTTPException(

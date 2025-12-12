@@ -5,13 +5,15 @@ import uuid
 from ..schemas.parametro_schema import Parametro, ParametroCreate, ParametroUpdate
 from ..database import get_async_db
 from ..service.parametro_service import ParametroService
+from ..security import get_current_user
 
 router = APIRouter(prefix="/parametros", tags=["Parametros"])
 
 @router.post("/", response_model=Parametro, status_code=status.HTTP_201_CREATED)
 async def create_parametro(
     parametro: ParametroCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Crear un nuevo parámetro del sistema"""
     try:
@@ -94,7 +96,8 @@ async def get_parametro_by_id(
 async def update_parametro(
     id_parametro: uuid.UUID,
     parametro_update: ParametroUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar un parámetro por su ID"""
     try:
@@ -113,7 +116,8 @@ async def update_parametro(
 async def partial_update_parametro(
     id_parametro: uuid.UUID,
     parametro_update: ParametroUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar parcialmente un parámetro por su ID"""
     try:
@@ -131,7 +135,8 @@ async def partial_update_parametro(
 @router.delete("/{id_parametro}", status_code=status.HTTP_200_OK)
 async def delete_parametro(
     id_parametro: uuid.UUID,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Eliminación lógica de un parámetro"""
     try:

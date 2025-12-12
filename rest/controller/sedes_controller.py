@@ -5,13 +5,15 @@ import uuid
 from ..schemas.sede_schema import SedeCreate, SedeUpdate, Sede
 from ..database import get_async_db
 from ..service.sede_service import SedeService
+from ..security import get_current_user
 
 router = APIRouter(prefix="/sedes", tags=["Sedes"])
 
 @router.post("/", response_model=Sede, status_code=status.HTTP_201_CREATED)
 async def create_sede(
     sede: SedeCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Crear una nueva sede"""
     try:
@@ -82,7 +84,8 @@ async def get_sede_by_id(
 async def update_sede(
     id_sede: uuid.UUID,
     sede_update: SedeUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar una sede existente"""
     try:
@@ -101,7 +104,8 @@ async def update_sede(
 async def partial_update_sede(
     id_sede: uuid.UUID,
     sede_update: SedeUpdate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Actualizar parcialmente una sede existente"""
     try:
@@ -119,7 +123,8 @@ async def partial_update_sede(
 @router.delete("/{id_sede}", status_code=status.HTTP_200_OK)
 async def delete_sede(
     id_sede: uuid.UUID,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Eliminar lógicamente una sede"""
     try:

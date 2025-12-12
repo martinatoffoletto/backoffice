@@ -5,6 +5,7 @@ from ..service.usuario_carrera_service import UsuarioCarreraService
 from ..schemas.usuario_carrera_schema import UsuarioCarrera, UsuarioCarreraCreate
 from typing import List, Optional
 from uuid import UUID
+from ..security import get_current_user
 
 router = APIRouter(prefix="/usuarios-carreras", tags=["Usuario-Carrera"])
 
@@ -44,7 +45,8 @@ async def get_all_usuario_carreras(
 @router.post("/", response_model=UsuarioCarrera, status_code=status.HTTP_201_CREATED)
 async def create_usuario_carrera_assignment(
     assignment: UsuarioCarreraCreate,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Asignar una carrera a un usuario.
@@ -75,7 +77,8 @@ async def update_usuario_carrera(
     id_usuario: UUID,
     id_carrera_antigua: UUID,
     id_carrera_nueva: UUID = Query(..., description="Nuevo ID de carrera"),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Modificar la carrera asignada a un usuario.
@@ -106,7 +109,8 @@ async def update_usuario_carrera(
 async def delete_usuario_carrera(
     id_usuario: UUID,
     id_carrera: UUID,
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
 ):
     try:
         success, error_message = await UsuarioCarreraService.delete_usuario_carrera(db, id_usuario, id_carrera)
