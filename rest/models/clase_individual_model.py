@@ -14,9 +14,10 @@ class EstadoClase(enum.Enum):
 
 class TipoClase(enum.Enum):
     REGULAR = "regular"
-    PARCIAL = "parcial"
+    PARCIAL_1 = "parcial_1"
+    PARCIAL_2 = "parcial_2"
+    RECUPERATORIA = "recuperatoria"
     FINAL = "final"
-    TRABAJO_PRACTICO = "trabajo_practico"
 
 class ClaseIndividual(Base):
     __tablename__ = "clases_individuales"
