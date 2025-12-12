@@ -31,7 +31,8 @@ function App() {
     }
   }, []);
 
-const loginAutomatico = async () => { //TODO: ESTO HAY QUE BORRARLO DESPUES 
+  const loginAutomatico = async () => {
+    //TODO: ESTO HAY QUE BORRARLO DESPUES
     try {
       console.log(
         "🔄 Intentando obtener token desde Core API (modo testing local)..."
@@ -56,10 +57,10 @@ const loginAutomatico = async () => { //TODO: ESTO HAY QUE BORRARLO DESPUES
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen flex-col md:flex-row">
+      <div className="flex h-screen flex-col md:flex-row w-screen">
         <NavBar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
-        <main className="flex-grow bg-gray-50 overflow-auto p-6 md:p-8">
+        <main className="flex-1 w-full min-w-0 bg-gray-50 overflow-auto p-6 md:p-8">
           <Routes>
             <Route path="/" element={<Inicio />} />
             <Route path="/usuarios" element={<Usuarios />} />

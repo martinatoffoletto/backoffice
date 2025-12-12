@@ -1,16 +1,46 @@
+import { useState, useEffect } from "react";
 import LinkNavBar from "./LinkNavBar";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar.jsx";
+import { Shield } from "lucide-react";
 
 export default function NavBar({ menuOpen, setMenuOpen }) {
+  const [userName, setUserName] = useState("Admin");
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch(
+          "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api/auth/me",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user?.name) {
+            setUserName(data.user.name);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <div
       className={`
         fixed md:static top-0 left-0 z-40
-        h-full md:h-auto w-64
+        h-screen md:h-full w-64
         text-white flex flex-col justify-between shadow-md
         transform transition-transform duration-300
         ${menuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
@@ -27,7 +57,7 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         </div>
       </div>
 
-      <div className="flex flex-col flex-grow px-4 mt-6 space-y-2">
+      <div className="flex flex-col flex-grow px-4 mt-6 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
         <LinkNavBar to="/" title="Inicio" onClick={() => setMenuOpen(false)} />
         <LinkNavBar
           to="/usuarios"
@@ -77,10 +107,8 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
       </div>
 
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
-        <Avatar style={{ width: "70px", height: "70px" }}>
-          <AvatarFallback>NU</AvatarFallback>
-        </Avatar>
-        <p className="text-sm mt-2 font-medium">Roberto López</p>
+        <Shield size={70} className="text-blue-300" />
+        <p className="text-sm mt-2 font-medium text-center">{userName}</p>
       </div>
     </div>
   );
