@@ -533,6 +533,94 @@ export default function FormCurso({
             </Field>
           </div>
 
+          {/* Séptima fila - Docentes (Titular y Auxiliar) - Solo si NO es modificación */}
+          {!isModificacion && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+              {/* Titular */}
+              <Field>
+                <FieldLabel>
+                  Docente Titular <span className="text-red-500">*</span>
+                </FieldLabel>
+                <Select
+                  value={form.titular_uuid || ""}
+                  onValueChange={(value) => {
+                    setForm((prev) => ({ ...prev, titular_uuid: value }));
+                    if (camposConError.has("inscripciones_iniciales")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("inscripciones_iniciales");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    className={`w-full ${
+                      camposConError.has("inscripciones_iniciales")
+                        ? "ring-2 ring-orange-500 ring-offset-2"
+                        : ""
+                    }`}
+                  >
+                    <SelectValue placeholder="Seleccione titular" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Docentes</SelectLabel>
+                      <SelectItem value="e9d03ceb-564c-4c95-b6a8-7e851d40994b">
+                        Juan Pérez (ID: e9d03ceb...994b)
+                      </SelectItem>
+                      <SelectItem value="a1b2c3d4-564c-4c95-b6a8-111111111111">
+                        María García (ID: a1b2c3d4...1111)
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* Auxiliar */}
+              <Field>
+                <FieldLabel>
+                  Docente Auxiliar <span className="text-red-500">*</span>
+                </FieldLabel>
+                <Select
+                  value={form.auxiliar_uuid || ""}
+                  onValueChange={(value) => {
+                    setForm((prev) => ({ ...prev, auxiliar_uuid: value }));
+                    if (camposConError.has("inscripciones_iniciales")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("inscripciones_iniciales");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    className={`w-full ${
+                      camposConError.has("inscripciones_iniciales")
+                        ? "ring-2 ring-orange-500 ring-offset-2"
+                        : ""
+                    }`}
+                  >
+                    <SelectValue placeholder="Seleccione auxiliar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Docentes</SelectLabel>
+                      <SelectItem value="e9d03ceb-564c-4c95-b6a8-7e851d40114b">
+                        Carlos López (ID: e9d03ceb...114b)
+                      </SelectItem>
+                      <SelectItem value="b2c3d4e5-564c-4c95-b6a8-222222222222">
+                        Ana Rodríguez (ID: b2c3d4e5...2222)
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+          )}
+          <p className="text-sm text-gray-500 mt-1">
+            Debe seleccionar al menos un Titular o un Auxiliar
+          </p>
+
           {/* Botones */}
           <div className="flex justify-center gap-4 mt-5">
             <Button

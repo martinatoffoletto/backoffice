@@ -22,6 +22,8 @@ export default function AltaCurso() {
     cantidad_max: 0,
     cantidad_min: 0,
     estado: "activo",
+    titular_uuid: "",
+    auxiliar_uuid: "",
   });
   const [showPopUp, setShowPopUp] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -77,6 +79,12 @@ export default function AltaCurso() {
       }
     }
 
+    // Validar que haya al menos un titular o auxiliar
+    const tieneDocente = form.titular_uuid || form.auxiliar_uuid;
+    if (!tieneDocente) {
+      camposFaltantes.push("inscripciones_iniciales");
+    }
+
     // Combinar todos los campos con error
     const todosLosErrores = new Set([...camposFaltantes, ...erroresFechas]);
 
@@ -95,6 +103,7 @@ export default function AltaCurso() {
         hasta: "Fecha Hasta",
         aula: "Aula",
         turno: "Turno",
+        inscripciones_iniciales: "Docentes (Titular o Auxiliar)",
       };
 
       const mensajesError = [];
@@ -120,6 +129,21 @@ export default function AltaCurso() {
 
     try {
       // Map FormCurso fields to API fields - DTO de CursoCreateDTO
+      // Construir inscripciones_iniciales
+      const inscripciones_iniciales = [];
+      if (form.titular_uuid) {
+        inscripciones_iniciales.push({
+          user_uuid: form.titular_uuid,
+          rol: "TITULAR",
+        });
+      }
+      if (form.auxiliar_uuid) {
+        inscripciones_iniciales.push({
+          user_uuid: form.auxiliar_uuid,
+          rol: "AUXILIAR",
+        });
+      }
+
       const cursoData = {
         uuid_materia: form.uuid_materia,
         examen: form.examen,
@@ -135,6 +159,7 @@ export default function AltaCurso() {
         cantidad_max: parseInt(form.cantidad_max) || 0,
         cantidad_min: parseInt(form.cantidad_min) || 0,
         estado: form.estado,
+        inscripciones_iniciales: inscripciones_iniciales,
       };
       const nuevo_curso = await altaCurso(cursoData);
       console.log("Curso dado de alta exitosamente");
