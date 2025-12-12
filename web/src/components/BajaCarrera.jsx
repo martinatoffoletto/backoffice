@@ -1,15 +1,15 @@
 import PopUp from "../components/PopUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { useState, useEffect } from "react";
-import { bajaCarrera, carreraPorNombre, obtenerCarreras } from "@/api/carrerasApi";
+import {
+  bajaCarrera,
+  carreraPorNombre,
+  obtenerCarreras,
+} from "@/api/carrerasApi";
 
-export default function BajaCarrera() {
+export default function BajaCarrera({ carrera_inicial = null }) {
   const [value, setValue] = useState("");
   const [found, setFound] = useState(false);
   const [carreraData, setCarreraData] = useState(null);
@@ -22,11 +22,19 @@ export default function BajaCarrera() {
   const [loadingState, setLoadingState] = useState(false);
 
   useEffect(() => {
+    if (carrera_inicial) {
+      setValue(carrera_inicial.name);
+      setCarreraData(carrera_inicial);
+      setFound(true);
+    }
+  }, [carrera_inicial]);
+
+  useEffect(() => {
     const loadCarreras = async () => {
       try {
         const data = await obtenerCarreras();
         const limpias = data.filter(
-          c => c && typeof c === "object" && c.name
+          (c) => c && typeof c === "object" && c.name
         );
         setAllCarreras(limpias);
       } catch (err) {
@@ -46,7 +54,7 @@ export default function BajaCarrera() {
       return;
     }
 
-    const sugerencias = allCarreras.filter(c =>
+    const sugerencias = allCarreras.filter((c) =>
       c?.name?.toLowerCase().includes(texto.toLowerCase())
     );
 
@@ -133,9 +141,12 @@ export default function BajaCarrera() {
               {showDropdown && suggestions.length > 0 && (
                 <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
                   <CommandGroup>
-                    <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-                    {suggestions.map(carrera => (
-                      <CommandItem key={carrera.uuid}
+                    <span className="px-2 py-1 text-xs text-gray-500">
+                      Coincidencias
+                    </span>
+                    {suggestions.map((carrera) => (
+                      <CommandItem
+                        key={carrera.uuid}
                         onSelect={() => {
                           setValue(carrera.name);
                           setCarreraData(carrera);
@@ -150,17 +161,18 @@ export default function BajaCarrera() {
                 </Command>
               )}
 
-              {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 mt-2 text-center">{error}</p>
+              )}
             </div>
           </div>
         )}
 
-        {/* Carrera encontrada - Confirmación */}
         {found && carreraData && (
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-red-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-red-600 mb-4">
-                ⚠️ Confirmar Baja de Carrera
+                Confirmar Baja de Carrera
               </h2>
               <span className="block w-full h-[2px] bg-red-500 mb-4"></span>
 
@@ -229,12 +241,11 @@ export default function BajaCarrera() {
           </div>
         )}
 
-        {/* Carrera dada de baja exitosamente */}
         {deleted && (
           <div className="w-full max-w-6xl p-6">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-green-600 mb-4">
-                ✓ Carrera Dada de Baja Exitosamente
+                Carrera Dada de Baja Exitosamente
               </h2>
               <span className="block w-full h-[2px] bg-green-500 mb-4"></span>
 

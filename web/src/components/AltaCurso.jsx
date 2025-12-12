@@ -6,6 +6,14 @@ import { obtenerSedes } from "@/api/sedesApi";
 import GestionClases from "@/components/GestionClases";
 import FormCurso from "@/components/FormCurso";
 
+// Mapeo de UUIDs a nombres de docentes (mock)
+const docentesNombres = {
+  "e9d03ceb-564c-4c95-b6a8-7e851d40994b": "Juan Pérez",
+  "a1b2c3d4-564c-4c95-b6a8-111111111111": "María García",
+  "e9d03ceb-564c-4c95-b6a8-7e851d40114b": "Carlos López",
+  "b2c3d4e5-564c-4c95-b6a8-222222222222": "Ana Rodríguez",
+};
+
 export default function AltaCurso() {
   const [form, setForm] = useState({
     uuid_materia: "",
@@ -22,6 +30,8 @@ export default function AltaCurso() {
     cantidad_max: 0,
     cantidad_min: 0,
     estado: "activo",
+    titular_uuid: "",
+    auxiliar_uuid: "",
   });
   const [showPopUp, setShowPopUp] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -77,6 +87,12 @@ export default function AltaCurso() {
       }
     }
 
+    // Validar que haya al menos un titular o auxiliar
+    const tieneDocente = form.titular_uuid || form.auxiliar_uuid;
+    if (!tieneDocente) {
+      camposFaltantes.push("inscripciones_iniciales");
+    }
+
     // Combinar todos los campos con error
     const todosLosErrores = new Set([...camposFaltantes, ...erroresFechas]);
 
@@ -95,6 +111,7 @@ export default function AltaCurso() {
         hasta: "Fecha Hasta",
         aula: "Aula",
         turno: "Turno",
+        inscripciones_iniciales: "Docentes (Titular o Auxiliar)",
       };
 
       const mensajesError = [];
@@ -120,6 +137,21 @@ export default function AltaCurso() {
 
     try {
       // Map FormCurso fields to API fields - DTO de CursoCreateDTO
+      // Construir inscripciones_iniciales
+      const inscripciones_iniciales = [];
+      if (form.titular_uuid) {
+        inscripciones_iniciales.push({
+          user_uuid: form.titular_uuid,
+          rol: "TITULAR",
+        });
+      }
+      if (form.auxiliar_uuid) {
+        inscripciones_iniciales.push({
+          user_uuid: form.auxiliar_uuid,
+          rol: "AUXILIAR",
+        });
+      }
+
       const cursoData = {
         uuid_materia: form.uuid_materia,
         examen: form.examen,
@@ -135,10 +167,14 @@ export default function AltaCurso() {
         cantidad_max: parseInt(form.cantidad_max) || 0,
         cantidad_min: parseInt(form.cantidad_min) || 0,
         estado: form.estado,
+        inscripciones_iniciales: inscripciones_iniciales,
       };
       const nuevo_curso = await altaCurso(cursoData);
       console.log("Curso dado de alta exitosamente");
-      setCursoData(nuevo_curso);
+      console.log("Respuesta del backend:", nuevo_curso);
+      // El backend devuelve {success: true, data: {...}} - extraer data
+      const cursoCreado = nuevo_curso.data || nuevo_curso;
+      setCursoData(cursoCreado);
       setCompleted(true);
       setShowPopUp(true);
     } catch (err) {
@@ -236,11 +272,41 @@ export default function AltaCurso() {
       {showGestionClases && cursoData && (
         <div className="w-full max-w-4xl mt-6">
           <GestionClases
-            id_curso={cursoData.id_curso || cursoData.id}
-            fecha_inicio={cursoData.fecha_inicio}
-            fecha_fin={cursoData.fecha_fin}
-            dia={cursoData.dia}
-            turno={cursoData.turno}
+            id_curso={
+              cursoData.uuid_curso ||
+              cursoData.id_curso ||
+              cursoData.uuid ||
+              cursoData.id
+            }
+            fecha_inicio={
+              cursoData.desde || cursoData.fecha_inicio || form.desde
+            }
+            fecha_fin={cursoData.hasta || cursoData.fecha_fin || form.hasta}
+            dia={cursoData.dia || form.dia}
+            turno={cursoData.turno || form.turno}
+            materia={
+              filteredMaterias.find((m) => {
+                const uuidBuscado = cursoData.uuid_materia || form.uuid_materia;
+                return (
+                  m.uuid_materia === uuidBuscado ||
+                  m.uuid === uuidBuscado ||
+                  m.id_materia === uuidBuscado ||
+                  m.id === uuidBuscado
+                );
+              })?.nombre || "Materia no encontrada"
+            }
+            periodo={cursoData.periodo || form.periodo}
+            modalidad={cursoData.modalidad || form.modalidad}
+            titular={
+              form.titular_uuid
+                ? docentesNombres[form.titular_uuid] || form.titular_uuid
+                : null
+            }
+            auxiliar={
+              form.auxiliar_uuid
+                ? docentesNombres[form.auxiliar_uuid] || form.auxiliar_uuid
+                : null
+            }
           />
         </div>
       )}

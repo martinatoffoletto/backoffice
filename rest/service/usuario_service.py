@@ -109,11 +109,9 @@ class UsuarioService:
         Obtener información del rol, sueldo y carrera del usuario para eventos.
         Retorna diccionarios con la información necesaria.
         """
-        # Obtener rol
-        rol = getattr(usuario, "rol", None)
-        if not rol:
-            await db.refresh(usuario, attribute_names=["rol"])
-            rol = getattr(usuario, "rol", None)
+        # Obtener rol - siempre refrescar para evitar lazy loading en contexto async
+        await db.refresh(usuario, attribute_names=["rol"])
+        rol = usuario.rol
         
         rol_info = None
         if rol:

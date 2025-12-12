@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import {
   Select,
   SelectTrigger,
@@ -22,7 +18,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PopUp from "./PopUp";
-import { materiaPorNombre, obtenerMaterias, obtenerCorrelativas, agregarCorrelativa, eliminarCorrelativa } from "@/api/materiasApi";
+import {
+  materiaPorNombre,
+  obtenerMaterias,
+  obtenerCorrelativas,
+  agregarCorrelativa,
+  eliminarCorrelativa,
+} from "@/api/materiasApi";
 
 export default function GestionCorrelativas() {
   const [value, setValue] = useState("");
@@ -44,7 +46,7 @@ export default function GestionCorrelativas() {
       try {
         const data = await obtenerMaterias();
         const limpias = data.filter(
-          m => m && typeof m === "object" && m.nombre
+          (m) => m && typeof m === "object" && m.nombre
         );
         setAllMaterias(limpias);
       } catch (err) {
@@ -64,7 +66,7 @@ export default function GestionCorrelativas() {
       return;
     }
 
-    const sugerencias = allMaterias.filter(m =>
+    const sugerencias = allMaterias.filter((m) =>
       m?.nombre?.toLowerCase().includes(texto.toLowerCase())
     );
 
@@ -143,7 +145,7 @@ export default function GestionCorrelativas() {
 
     try {
       await eliminarCorrelativa(materiaOrigen.uuid, uuidCorrelativa);
-      
+
       const correlatividasData = await obtenerCorrelativas(materiaOrigen.uuid);
       setCorrelativas(correlatividasData);
     } catch (err) {
@@ -169,7 +171,9 @@ export default function GestionCorrelativas() {
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-6xl p-6">
-        <h1 className="font-bold text-center text-2xl mb-4">Gestión de Correlativas</h1>
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Gestión de Correlativas
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
         <div className="relative w-full max-w-6xl mt-8">
           <div className="flex gap-2 items-center mb-4">
@@ -194,19 +198,22 @@ export default function GestionCorrelativas() {
           {showDropdown && suggestions.length > 0 && (
             <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
               <CommandGroup>
-                <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-                {suggestions.map(materia => (
-                  <CommandItem key={materia.uuid}
+                <span className="px-2 py-1 text-xs text-gray-500">
+                  Coincidencias
+                </span>
+                {suggestions.map((materia) => (
+                  <CommandItem
+                    key={materia.uuid}
                     onSelect={() => {
                       setValue(materia.nombre);
                       setMateriaOrigen(materia);
                       setFound(true);
                       setShowDropdown(false);
                       setSelectedCorrelativa("");
-                      
+
                       obtenerCorrelativas(materia.uuid)
-                        .then(data => setCorrelativas(data))
-                        .catch(err => {
+                        .then((data) => setCorrelativas(data))
+                        .catch((err) => {
                           console.error("Error al obtener correlativas:", err);
                           setCorrelativas([]);
                         });
@@ -235,22 +242,33 @@ export default function GestionCorrelativas() {
                     <TableHeader className="bg-gray-50">
                       <TableRow>
                         <TableHead>Materia Correlativa</TableHead>
-                        <TableHead className="w-20 text-center">Acción</TableHead>
+                        <TableHead className="w-20 text-center">
+                          Acción
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {correlativas.map((corr, idx) => (
                         <TableRow key={idx} className="hover:bg-gray-100">
                           <TableCell>
-                            {materiaMap[corr.uuid_materia_correlativa] || corr.uuid_materia_correlativa}
+                            {materiaMap[corr.uuid_materia_correlativa] ||
+                              corr.uuid_materia_correlativa}
                           </TableCell>
                           <TableCell className="text-center">
                             <Button
-                              disabled={isDeleting === corr.uuid_materia_correlativa}
-                              onClick={() => handleEliminarCorrelativa(corr.uuid_materia_correlativa)}
+                              disabled={
+                                isDeleting === corr.uuid_materia_correlativa
+                              }
+                              onClick={() =>
+                                handleEliminarCorrelativa(
+                                  corr.uuid_materia_correlativa
+                                )
+                              }
                               className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm"
                             >
-                              {isDeleting === corr.uuid_materia_correlativa ? "Eliminando..." : "Eliminar"}
+                              {isDeleting === corr.uuid_materia_correlativa
+                                ? "Eliminando..."
+                                : "Eliminar"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -259,24 +277,31 @@ export default function GestionCorrelativas() {
                   </Table>
                 </div>
               ) : (
-                <p className="text-gray-500 mb-6">No hay correlativas asignadas</p>
+                <p className="text-gray-500 mb-6">
+                  No hay correlativas asignadas
+                </p>
               )}
 
               <div className="border-t pt-6">
-                <h3 className="font-semibold mb-4 text-gray-800">Agregar Nueva Correlativa</h3>
+                <h3 className="font-semibold mb-4 text-gray-800">
+                  Agregar Nueva Correlativa
+                </h3>
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
                     <label className="text-sm font-medium text-gray-700 block mb-2">
                       Seleccionar Materia
                     </label>
-                    <Select value={selectedCorrelativa} onValueChange={setSelectedCorrelativa}>
+                    <Select
+                      value={selectedCorrelativa}
+                      onValueChange={setSelectedCorrelativa}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione una materia" />
                       </SelectTrigger>
                       <SelectContent>
                         {allMaterias
-                          .filter(m => m.uuid !== materiaOrigen.uuid)
-                          .map(m => (
+                          .filter((m) => m.uuid !== materiaOrigen.uuid)
+                          .map((m) => (
                             <SelectItem key={m.uuid} value={m.uuid}>
                               {m.nombre}
                             </SelectItem>
@@ -313,7 +338,7 @@ export default function GestionCorrelativas() {
           <div className="w-full max-w-6xl p-6 mt-8">
             <div className="w-full bg-white border-2 border-green-500 p-6 rounded-xl shadow-lg">
               <h2 className="text-xl font-bold text-green-600 mb-4">
-                ✓ Correlativa Agregada Exitosamente
+                Correlativa Agregada Exitosamente
               </h2>
               <span className="block w-full h-[2px] bg-green-500 mb-4"></span>
 
@@ -333,11 +358,7 @@ export default function GestionCorrelativas() {
         )}
 
         {error && (
-          <PopUp
-            title="Error"
-            message={error}
-            onClose={() => setError(null)}
-          />
+          <PopUp title="Error" message={error} onClose={() => setError(null)} />
         )}
       </div>
     </div>

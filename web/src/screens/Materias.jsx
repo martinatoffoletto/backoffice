@@ -33,6 +33,8 @@ export default function Materias() {
     setMateriaSeleccionada(materia);
     if (accion === "modif") {
       setValue("modif");
+    } else if (accion === "baja") {
+      setValue("baja");
     } else if (accion === "gestionar") {
       setValue("gestionar");
     }
@@ -76,7 +78,9 @@ export default function Materias() {
 
       {value === "alta" && <AltaMateria />}
 
-      {value === "baja" && <BajaMateria />}
+      {value === "baja" && (
+        <BajaMateria materia_inicial={materia_seleccionada} />
+      )}
 
       {value === "modif" && (
         <ModifMateria materia_inicial={materia_seleccionada} />

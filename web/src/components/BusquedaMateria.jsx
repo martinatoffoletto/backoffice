@@ -29,7 +29,7 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 
-export default function BusquedaMateria() {
+export default function BusquedaMateria({ onMateriaSeleccionada }) {
   const [searchValue, setSearchValue] = useState("");
   const [searchType, setSearchType] = useState("nombre");
   const [materiaSeleccionada, setMateriaSeleccionada] = useState(null);
@@ -53,11 +53,33 @@ export default function BusquedaMateria() {
   };
 
   const handleEditarMateria = () => {
-    console.log("Editar:", materiaSeleccionada);
+    if (onMateriaSeleccionada) {
+      onMateriaSeleccionada(
+        {
+          uuid: materiaSeleccionada.uuid,
+          nombre: materiaSeleccionada.name,
+          description: materiaSeleccionada.description,
+          uuid_carrera: materiaSeleccionada.uuid_carrera,
+        },
+        "modif"
+      );
+    }
+    cerrarOpcionesMateria();
   };
 
   const handleEliminarMateria = () => {
-    console.log("Eliminar:", materiaSeleccionada);
+    if (onMateriaSeleccionada) {
+      onMateriaSeleccionada(
+        {
+          uuid: materiaSeleccionada.uuid,
+          nombre: materiaSeleccionada.name,
+          description: materiaSeleccionada.description,
+          uuid_carrera: materiaSeleccionada.uuid_carrera,
+        },
+        "baja"
+      );
+    }
+    cerrarOpcionesMateria();
   };
 
   const carreraDict = Object.fromEntries(
@@ -105,7 +127,7 @@ export default function BusquedaMateria() {
 
         const materiasNormalizadas = materiasApi.map((m) => ({
           uuid: m.uuid,
-          name: m.nombre || "", 
+          name: m.nombre || "",
           description: m.description || m.descripcion || "",
           uuid_carrera: m.uuid_carrera || "",
         }));
@@ -169,9 +191,15 @@ export default function BusquedaMateria() {
             <Table className="min-w-full border border-gray-200">
               <TableHeader className="bg-sky-950">
                 <TableRow>
-                  <TableHead className="text-white font-semibold px-4 py-3">Materia</TableHead>
-                  <TableHead className="text-white font-semibold px-4 py-3">Carrera</TableHead>
-                  <TableHead className="text-white font-semibold px-4 py-3">Descripción</TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Materia
+                  </TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Carrera
+                  </TableHead>
+                  <TableHead className="text-white font-semibold px-4 py-3">
+                    Descripción
+                  </TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -184,14 +212,17 @@ export default function BusquedaMateria() {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-
-                    <TableCell className="px-4 py-3 text-sm">{materia.name}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {materia.name}
+                    </TableCell>
 
                     <TableCell className="px-4 py-3 text-sm">
                       {carreraDict[materia.uuid_carrera] || "Sin carrera"}
-                    </TableCell >
+                    </TableCell>
 
-                    <TableCell className="px-4 py-3 text-sm">{materia.description}</TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {materia.description}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -239,13 +270,11 @@ export default function BusquedaMateria() {
           </div>
         )}
 
-        {!loading_state &&
-          searchValue &&
-          materiasFiltradas.length === 0 && (
-            <p className="text-center text-gray-500 text-sm mt-8">
-              No se encontraron materias con esos filtros
-            </p>
-          )}
+        {!loading_state && searchValue && materiasFiltradas.length === 0 && (
+          <p className="text-center text-gray-500 text-sm mt-8">
+            No se encontraron materias con esos filtros
+          </p>
+        )}
       </div>
       {showOpcionesMateria && materiaSeleccionada && (
         <div
@@ -254,14 +283,11 @@ export default function BusquedaMateria() {
           aria-modal="true"
         >
           <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl border border-sky-800/30 animate-fadeIn">
-            
             <h2 className="text-2xl font-bold text-sky-900 mb-4 text-center">
               Opciones de Materia
             </h2>
 
-            {/* Info */}
             <div className="rounded-xl border border-gray-200 p-4 mb-6 bg-gray-50">
-              
               <div className="mb-3">
                 <p className="text-sm text-gray-500">Nombre</p>
                 <p className="font-semibold text-gray-800">
@@ -272,7 +298,8 @@ export default function BusquedaMateria() {
               <div className="mb-3">
                 <p className="text-sm text-gray-500">Carrera</p>
                 <p className="font-semibold text-gray-800">
-                  {carreraDict[materiaSeleccionada.uuid_carrera] || "Sin carrera"}
+                  {carreraDict[materiaSeleccionada.uuid_carrera] ||
+                    "Sin carrera"}
                 </p>
               </div>
 
@@ -282,10 +309,8 @@ export default function BusquedaMateria() {
                   {materiaSeleccionada.description || "Sin descripción"}
                 </p>
               </div>
-
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col gap-3">
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -310,9 +335,8 @@ export default function BusquedaMateria() {
               </Button>
             </div>
           </div>
-      </div>
-    )}
-
+        </div>
+      )}
     </div>
   );
 }

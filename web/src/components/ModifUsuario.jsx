@@ -320,7 +320,7 @@ export default function ModifUsuario() {
                   <div className="pt-3 border-t border-red-300">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="inline-block px-3 py-1 rounded text-sm font-semibold bg-red-100 text-red-800">
-                        ⚠️ Usuario Inactivo
+                        Usuario Inactivo
                       </span>
                     </div>
                     <p className="text-sm font-medium text-gray-700 mb-3">
@@ -397,7 +397,7 @@ export default function ModifUsuario() {
           <div className="w-full bg-green-50 border-2 border-green-500 p-8 rounded-xl shadow-lg animate-fade-in">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl font-bold">✓</span>
+                <span className="text-white text-3xl font-bold">OK</span>
               </div>
             </div>
             <h2 className="text-2xl font-bold text-green-700 text-center mb-2">

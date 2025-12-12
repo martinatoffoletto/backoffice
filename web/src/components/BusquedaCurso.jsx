@@ -421,15 +421,30 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
               <Table className="min-w-full border border-gray-200">
                 <TableHeader className="bg-sky-950">
                   <TableRow>
-                    <TableHead className="text-white font-semibold px-4 py-3">Examen</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Comisión</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Modalidad</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Sede</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Aula</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Materia</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Día</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Turno</TableHead>
-                    <TableHead className="text-white font-semibold px-4 py-3">Período</TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Materia
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Comisión
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Día
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Turno
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Modalidad
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Sede
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Aula
+                    </TableHead>
+                    <TableHead className="text-white font-semibold px-4 py-3">
+                      Período
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -438,19 +453,34 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
                       <TableRow
                         key={curso.uuid || Math.random()}
                         className={`border-t cursor-pointer transition-colors hover:bg-blue-100 ${
-                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
+                          i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        }`}
                         onClick={() => handleCursoClick(curso)}
                       >
-                        <TableCell className="px-4 py-3 text-sm">{curso.materia?.nombre || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.examen || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.comision || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.modalidad || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.sede || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.aula || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.dia || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.turno || "-"}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm">{curso.periodo || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.materia?.nombre || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.comision || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.dia || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.turno || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.modalidad || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.sede || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.aula || "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          {curso.periodo || "-"}
+                        </TableCell>
                       </TableRow>
                     ))}
                 </TableBody>
@@ -468,7 +498,6 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
         />
       )}
 
-      {/* Popup de opciones para curso seleccionado */}
       {show_opciones && curso_seleccionado && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4"
@@ -476,12 +505,10 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
           aria-modal="true"
         >
           <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-2xl border border-sky-800/30 animate-fadeIn">
-            
             <h2 className="text-2xl font-bold text-sky-900 mb-4 text-center">
               Opciones del Curso
             </h2>
 
-            {/* Info del curso */}
             <div className="rounded-xl border border-gray-200 p-4 mb-6 bg-gray-50">
               <div className="mb-2">
                 <p className="text-sm text-gray-500">Materia</p>
@@ -512,27 +539,26 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
               </div>
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col gap-3">
               <Button
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleEditarCurso}
               >
-                ✏️ Editar curso
+                Editar curso
               </Button>
 
               <Button
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                 onClick={handleGestionarClases}
               >
-                📚 Gestionar clases
+                Gestionar clases
               </Button>
 
               <Button
                 className="w-full bg-red-600 hover:bg-red-700 text-white"
                 onClick={handleEliminarCurso}
               >
-                🗑 Eliminar curso
+                Eliminar curso
               </Button>
 
               <Button
@@ -546,7 +572,6 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
           </div>
         </div>
       )}
-
 
       {showPopUpConfirmacion && (
         <div className="fixed inset-0 flex items-center justify-center z-50">

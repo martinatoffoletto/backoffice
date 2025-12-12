@@ -1,20 +1,15 @@
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import PopUp from "@/components/PopUp";
-import { 
-  materiaPorNombre, 
-  modificarMateria, 
-  obtenerMaterias 
+import {
+  materiaPorNombre,
+  modificarMateria,
+  obtenerMaterias,
 } from "@/api/materiasApi";
 import FormMateria from "./FormMateria";
 import CardMateria from "./CardMateria";
-
 
 export default function ModifMateria({ materia_inicial = null }) {
   const [value, setValue] = useState("");
@@ -45,7 +40,7 @@ export default function ModifMateria({ materia_inicial = null }) {
       try {
         const data = await obtenerMaterias();
         const limpias = data.filter(
-          m => m && typeof m === "object" && m.nombre
+          (m) => m && typeof m === "object" && m.nombre
         );
         setAllMaterias(limpias);
       } catch (err) {
@@ -80,7 +75,7 @@ export default function ModifMateria({ materia_inicial = null }) {
       return;
     }
 
-    const sugerencias = allMaterias.filter(m =>
+    const sugerencias = allMaterias.filter((m) =>
       m?.nombre?.toLowerCase().includes(texto.toLowerCase())
     );
 
@@ -147,8 +142,9 @@ export default function ModifMateria({ materia_inicial = null }) {
   return (
     <div className="w-full flex flex-col items-center">
       <div className="w-full max-w-6xl p-6">
-
-        <h1 className="font-bold text-center text-2xl mb-4">Modificación de Materia</h1>
+        <h1 className="font-bold text-center text-2xl mb-4">
+          Modificación de Materia
+        </h1>
         <span className="block w-full h-[3px] bg-sky-950"></span>
 
         <div className="relative w-full max-w-6xl mt-8">
@@ -174,9 +170,12 @@ export default function ModifMateria({ materia_inicial = null }) {
           {showDropdown && suggestions.length > 0 && (
             <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
               <CommandGroup>
-                <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-                {suggestions.map(materia => (
-                  <CommandItem key={materia.uuid}
+                <span className="px-2 py-1 text-xs text-gray-500">
+                  Coincidencias
+                </span>
+                {suggestions.map((materia) => (
+                  <CommandItem
+                    key={materia.uuid}
                     onSelect={() => {
                       setValue(materia.nombre);
                       setMateriaData(materia);
@@ -227,7 +226,7 @@ export default function ModifMateria({ materia_inicial = null }) {
           <div className="w-full max-w-6xl p-6 mt-8">
             <div className="flex flex-col justify-center items-center border-2 border-green-500 p-6 rounded-lg shadow-lg gap-4 bg-white">
               <h2 className="text-xl font-bold text-green-600">
-                ✓ Materia Modificada Exitosamente
+                Materia Modificada Exitosamente
               </h2>
               <Button
                 onClick={() => {
@@ -252,11 +251,7 @@ export default function ModifMateria({ materia_inicial = null }) {
         )}
 
         {error && (
-          <PopUp
-            title="Error"
-            message={error}
-            onClose={() => setError(null)}
-          />
+          <PopUp title="Error" message={error} onClose={() => setError(null)} />
         )}
       </div>
     </div>

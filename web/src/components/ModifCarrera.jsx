@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { useState, useEffect } from "react";
 import PopUp from "@/components/PopUp";
-import { carreraPorNombre, modificarCarrera, obtenerCarreras } from "@/api/carrerasApi";
+import {
+  carreraPorNombre,
+  modificarCarrera,
+  obtenerCarreras,
+} from "@/api/carrerasApi";
 import FormCarrera from "./FormCarrera";
 
-export default function ModifCarrera() {
+export default function ModifCarrera({ carrera_inicial = null }) {
   const [nombreCarrera, setNombreCarrera] = useState("");
   const [form, setForm] = useState({
     name: "",
@@ -33,11 +33,29 @@ export default function ModifCarrera() {
   const [loadingState, setLoadingState] = useState(false);
 
   useEffect(() => {
+    if (carrera_inicial) {
+      setNombreCarrera(carrera_inicial.name);
+      setCarreraData(carrera_inicial);
+      setForm({
+        name: carrera_inicial.name || "",
+        description: carrera_inicial.description || "",
+        degree_title: carrera_inicial.degree_title || "",
+        code: carrera_inicial.code || "",
+        faculty: carrera_inicial.faculty || "",
+        modality: carrera_inicial.modality || "presencial",
+        duration_hours: carrera_inicial.duration_hours || 0,
+        duration_years: carrera_inicial.duration_years || 0,
+      });
+      setShowForm(true);
+    }
+  }, [carrera_inicial]);
+
+  useEffect(() => {
     const loadCarreras = async () => {
       try {
         const data = await obtenerCarreras();
         const limpias = data.filter(
-          c => c && typeof c === "object" && c.name
+          (c) => c && typeof c === "object" && c.name
         );
         setAllCarreras(limpias);
       } catch (err) {
@@ -57,7 +75,7 @@ export default function ModifCarrera() {
       return;
     }
 
-    const sugerencias = allCarreras.filter(c =>
+    const sugerencias = allCarreras.filter((c) =>
       c?.name?.toLowerCase().includes(texto.toLowerCase())
     );
 
@@ -163,9 +181,12 @@ export default function ModifCarrera() {
               {showDropdown && suggestions.length > 0 && (
                 <Command className="absolute left-0 right-0 bg-white border rounded-md shadow-md mt-1 z-50 min-h-fit max-h-60 overflow-y-auto">
                   <CommandGroup>
-                    <span className="px-2 py-1 text-xs text-gray-500">Coincidencias</span>
-                    {suggestions.map(carrera => (
-                      <CommandItem key={carrera.uuid}
+                    <span className="px-2 py-1 text-xs text-gray-500">
+                      Coincidencias
+                    </span>
+                    {suggestions.map((carrera) => (
+                      <CommandItem
+                        key={carrera.uuid}
                         onSelect={() => {
                           setNombreCarrera(carrera.name);
                           setCarreraData(carrera);
@@ -191,7 +212,9 @@ export default function ModifCarrera() {
                 </Command>
               )}
 
-              {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 mt-2 text-center">{error}</p>
+              )}
             </div>
           </div>
         )}
@@ -231,7 +254,7 @@ export default function ModifCarrera() {
           <div className="w-full bg-green-50 border-2 border-green-500 p-8 rounded-xl shadow-lg">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl font-bold">✓</span>
+                <span className="text-white text-3xl font-bold">OK</span>
               </div>
             </div>
             <h2 className="text-2xl font-bold text-green-700 text-center mb-2">

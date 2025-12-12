@@ -76,11 +76,26 @@ const Cursos = () => {
 
       {operacion_seleccionada === "gestionar" && curso_seleccionado && (
         <GestionClases
-          id_curso={curso_seleccionado.id_curso || curso_seleccionado.id}
-          fecha_inicio={curso_seleccionado.fecha_inicio}
-          fecha_fin={curso_seleccionado.fecha_fin}
+          id_curso={
+            curso_seleccionado.uuid ||
+            curso_seleccionado.id_curso ||
+            curso_seleccionado.id
+          }
+          fecha_inicio={
+            curso_seleccionado.desde || curso_seleccionado.fecha_inicio
+          }
+          fecha_fin={curso_seleccionado.hasta || curso_seleccionado.fecha_fin}
           dia={curso_seleccionado.dia}
           turno={curso_seleccionado.turno}
+          materia={
+            curso_seleccionado.materia?.nombre ||
+            curso_seleccionado.materia ||
+            "N/A"
+          }
+          periodo={curso_seleccionado.periodo}
+          modalidad={curso_seleccionado.modalidad}
+          titular={curso_seleccionado.titular || null}
+          auxiliar={curso_seleccionado.auxiliar || null}
         />
       )}
 
