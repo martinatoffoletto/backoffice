@@ -1,5 +1,5 @@
 import axios from "axios";
-import { refreshAccessToken } from "./authService";
+import { redirectToLogin } from "./authService";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const axiosInstance = axios.create({
@@ -20,18 +20,9 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const newToken = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
-      }
+    if (error.response?.status === 401) {
+      redirectToLogin();
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);
