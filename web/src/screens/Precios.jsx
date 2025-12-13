@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
+import Spinner from "@/components/ui/spinner";
 import PopUp from "@/components/PopUp";
 import {
   altaParametro,
@@ -286,195 +287,200 @@ export default function Precios() {
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-6xl">
-        <h1 className="font-bold text-center text-2xl mb-4">
-          Listado de Precios
-        </h1>
-        <span className="block w-full h-[3px] bg-sky-950"></span>
-
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Estado
-            </Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger id="statusFilter" className="min-w-[150px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="active">Activos</SelectItem>
-                <SelectItem value="inactive">Inactivos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Title centered at the top */}
+        <div className="w-full text-center mb-6">
+          <h1 className="font-bold text-2xl mb-2">Listado de Precios</h1>
+          <span className="block w-full h-[3px] bg-sky-950"></span>
         </div>
 
-        <div className="overflow-x-auto mt-8">
-          <Table className="min-w-full border border-gray-200 my-2">
-            <TableCaption className="text-gray-500 text-sm mt-4">
-              Valores actualizados al mes vigente
-            </TableCaption>
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead>Concepto</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!loading && filteredPrices.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500">
-                    {emptyMessage}
-                  </TableCell>
+        <div className="relative min-h-[400px]">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white">
+              <Spinner />
+            </div>
+          )}
+
+          {/* Status Filter Dropdown aligned to the right */}
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="statusFilter" className="text-sm font-semibold">
+                Estado
+              </Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Activos</SelectItem>
+                  <SelectItem value="inactive">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto mt-4">
+            <Table className="min-w-full border rounded-lg shadow-sm">
+              <TableCaption className="text-gray-500 text-sm mt-4">
+                Valores actualizados al mes vigente
+              </TableCaption>
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead>Concepto</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
-              )}
-
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Cargando precios...
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!loading &&
-                filteredPrices.map((parametro) => (
-                  <TableRow
-                    key={parametro.id_parametro || parametro.id}
-                    className="hover:bg-gray-50"
-                  >
-                    <TableCell>{parametro.nombre}</TableCell>
-                    <TableCell>{parametro.tipo || "-"}</TableCell>
-                    <TableCell>
-                      ${String(parametro.valor_numerico ?? 0)}
-                    </TableCell>
-                    <TableCell>
-                      {parametro.status !== false ? (
-                        <span className="text-green-600">Activo</span>
-                      ) : (
-                        <span className="text-red-600">Inactivo</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        {parametro.status === false ? (
-                          <div className="w-44">
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
-                              onClick={() => handleActivate(parametro)}
-                            >
-                              Activar
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="w-44 flex gap-2">
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
-                              onClick={() => handleEdit(parametro)}
-                            >
-                              Editar
-                            </Button>
-
-                            <Button
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
-                              onClick={() => requestDeletePrice(parametro)}
-                            >
-                              Desactivar
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {!loading && filteredPrices.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-gray-500"
+                    >
+                      {emptyMessage}
                     </TableCell>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
+                )}
 
-        {!showForm && (
-          <Button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-            onClick={handleAdd}
-          >
-            Agregar Nuevo Precio
-          </Button>
-        )}
+                {!loading &&
+                  filteredPrices.map((parametro) => (
+                    <TableRow
+                      key={parametro.id_parametro || parametro.id}
+                      className="hover:bg-gray-50"
+                    >
+                      <TableCell>{parametro.nombre}</TableCell>
+                      <TableCell>{parametro.tipo || "-"}</TableCell>
+                      <TableCell>
+                        ${String(parametro.valor_numerico ?? 0)}
+                      </TableCell>
+                      <TableCell>
+                        {parametro.status !== false ? (
+                          <span className="text-green-600">Activo</span>
+                        ) : (
+                          <span className="text-red-600">Inactivo</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          {parametro.status === false ? (
+                            <div className="w-44">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                                onClick={() => handleActivate(parametro)}
+                              >
+                                Activar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="w-44 flex gap-2">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                                onClick={() => handleEdit(parametro)}
+                              >
+                                Editar
+                              </Button>
 
-        {showForm && (
-          <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingParametro ? "Editar Precio" : "Agregar Nuevo Precio"}
-            </h2>
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <InputField
-                label="Concepto"
-                value={form.nombre}
-                onChange={(v) => setForm({ ...form, nombre: v })}
-                required
-              />
-              <div className="flex-1 flex flex-col">
-                <label className="text-sm font-medium mb-1">
-                  Tipo <span className="text-red-500">*</span>
-                </label>
-                <Select
-                  value={form.tipo}
-                  onValueChange={(val) => setForm({ ...form, tipo: val })}
+                              <Button
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                                onClick={() => requestDeletePrice(parametro)}
+                              >
+                                Desactivar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {!showForm && (
+            <Button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
+              onClick={handleAdd}
+            >
+              Agregar Nuevo Precio
+            </Button>
+          )}
+
+          {showForm && (
+            <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+              <h2 className="text-lg font-semibold mb-4">
+                {editingParametro ? "Editar Precio" : "Agregar Nuevo Precio"}
+              </h2>
+              <div className="flex flex-col md:flex-row gap-4 mb-4">
+                <InputField
+                  label="Concepto"
+                  value={form.nombre}
+                  onChange={(v) => setForm({ ...form, nombre: v })}
                   required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccione un tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multa">Multa</SelectItem>
-                    <SelectItem value="sancion">Sanción</SelectItem>
-                    <SelectItem value="reserva">Reserva</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
+                <div className="flex-1 flex flex-col">
+                  <label className="text-sm font-medium mb-1">
+                    Tipo <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={form.tipo}
+                    onValueChange={(val) => setForm({ ...form, tipo: val })}
+                    required
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccione un tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="multa">Multa</SelectItem>
+                      <SelectItem value="sancion">Sanción</SelectItem>
+                      <SelectItem value="reserva">Reserva</SelectItem>
+                      <SelectItem value="otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <InputField
+                  label="Precio"
+                  type="number"
+                  value={form.valor_numerico}
+                  onChange={(v) => setForm({ ...form, valor_numerico: v })}
+                  required
+                  min="0"
+                  step="0.01"
+                />
               </div>
               <InputField
-                label="Precio"
-                type="number"
-                value={form.valor_numerico}
-                onChange={(v) => setForm({ ...form, valor_numerico: v })}
-                required
-                min="0"
-                step="0.01"
+                label="Descripción"
+                value={form.valor_texto}
+                onChange={(v) => setForm({ ...form, valor_texto: v })}
+                placeholder="Descripción opcional"
               />
-            </div>
-            <InputField
-              label="Descripción"
-              value={form.valor_texto}
-              onChange={(v) => setForm({ ...form, valor_texto: v })}
-              placeholder="Descripción opcional"
-            />
 
-            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
-              <Button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
-                onClick={savePrice}
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? "Guardando..."
-                  : editingParametro
-                  ? "Actualizar"
-                  : "Guardar"}
-              </Button>
-              <Button
-                variant="outline"
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
+                <Button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
+                  onClick={savePrice}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Guardando..."
+                    : editingParametro
+                    ? "Actualizar"
+                    : "Guardar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {error && (

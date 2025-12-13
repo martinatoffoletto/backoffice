@@ -8,7 +8,6 @@ import Usuarios from "./screens/Usuarios";
 import Roles from "./screens/Roles";
 import Cursos from "./screens/Cursos";
 import Sedes from "./screens/Sedes";
-import Sede from "./screens/Sede";
 import Materias from "./screens/Materias";
 import Asignacion from "./screens/Asignacion";
 import Carreras from "./screens/Carreras";
@@ -45,7 +44,6 @@ function App() {
             <Route path="/roles" element={<Roles />} />
             <Route path="/precios" element={<Precios />} />
             <Route path="/cursos" element={<Cursos />} />
-            <Route path="/sede" element={<Sede />} />
             <Route path="/materias" element={<Materias />} />
             <Route path="/asignacion" element={<Asignacion />} />
             <Route path="/carreras" element={<Carreras />} />

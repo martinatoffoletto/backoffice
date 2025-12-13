@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import PopUp from "@/components/PopUp";
 import { altaSede, obtenerSedes, actualizarSede } from "@/api/sedesApi";
+import Spinner from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -248,159 +249,164 @@ export default function Sedes() {
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-6xl">
-        <h1 className="font-bold text-center text-2xl mb-4">Sedes</h1>
-        <span className="block w-full h-[3px] bg-sky-950"></span>
-
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Estado
-            </Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger id="statusFilter" className="min-w-[150px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="active">Activos</SelectItem>
-                <SelectItem value="inactive">Inactivos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Title centered at the top */}
+        <div className="w-full text-center mb-6">
+          <h1 className="font-bold text-2xl mb-2">Gestión de Sedes</h1>
+          <span className="block w-full h-[3px] bg-sky-950"></span>
         </div>
 
-        <div className="overflow-x-auto mt-8">
-          <Table className="min-w-full border rounded-lg shadow-sm ">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sede</TableHead>
-                <TableHead>Dirección</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!loading && filteredSedes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500">
-                    {emptyMessage}
-                  </TableCell>
+        <div className="relative min-h-[400px]">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white">
+              <Spinner />
+            </div>
+          )}
+
+          {/* Status Filter Dropdown aligned to the right */}
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="statusFilter" className="text-sm font-semibold">
+                Estado
+              </Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Activos</SelectItem>
+                  <SelectItem value="inactive">Inactivos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto mt-4">
+            <Table className="min-w-full border rounded-lg shadow-sm">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead>Sede</TableHead>
+                  <TableHead>Dirección</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
-              )}
-
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    Cargando sedes...
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!loading &&
-                filteredSedes.map((sede) => (
-                  <TableRow
-                    key={sede.id_sede || sede.id}
-                    className="hover:bg-gray-50"
-                  >
-                    <TableCell>{sede.nombre}</TableCell>
-                    <TableCell>{sede.ubicacion}</TableCell>
-                    <TableCell>
-                      {sede.status !== false ? (
-                        <span className="text-green-600">Activo</span>
-                      ) : (
-                        <span className="text-red-600">Inactivo</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        {sede.status === false ? (
-                          <div className="w-44">
-                            <Button
-                              className="bg-gray-50 border border-blue-500 text-black hover:bg-blue-500 hover:text-white font-semibold py-1 px-3 rounded w-full"
-                              onClick={() => handleActivate(sede)}
-                            >
-                              Activar
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="w-44 flex gap-2">
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
-                              onClick={() => handleEdit(sede)}
-                            >
-                              Editar
-                            </Button>
-
-                            <Button
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
-                              onClick={() => handleDelete(sede)}
-                            >
-                              Desactivar
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {!loading && filteredSedes.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-gray-500"
+                    >
+                      {emptyMessage}
                     </TableCell>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Botón Agregar Sede */}
-        {!showForm && (
-          <Button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-            onClick={handleAdd}
-          >
-            Agregar Sede
-          </Button>
-        )}
-        {showForm && (
-          <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <h2 className="font-bold text-xl mb-4">
-              {editingSede ? "Editar Sede" : "Agregar Sede"}
-            </h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <InputField
-                  label="Nombre"
-                  value={form.nombre}
-                  onChange={(v) => setForm({ ...form, nombre: v })}
-                  required
-                />
-                <InputField
-                  label="Ubicación"
-                  value={form.ubicacion}
-                  onChange={(v) => setForm({ ...form, ubicacion: v })}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
-                >
-                  {isSubmitting
-                    ? "Guardando..."
-                    : editingSede
-                    ? "Actualizar"
-                    : "Agregar"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
+                )}
+                {!loading &&
+                  filteredSedes.map((sede) => (
+                    <TableRow
+                      key={sede.id_sede || sede.id}
+                      className="hover:bg-gray-50"
+                    >
+                      <TableCell>{sede.nombre}</TableCell>
+                      <TableCell>{sede.ubicacion}</TableCell>
+                      <TableCell>
+                        {sede.status !== false ? (
+                          <span className="text-green-600">Activo</span>
+                        ) : (
+                          <span className="text-red-600">Inactivo</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          {sede.status === false ? (
+                            <div className="w-44">
+                              <Button
+                                className="bg-gray-50 border border-blue-500 text-black hover:bg-blue-500 hover:text-white font-semibold py-1 px-3 rounded w-full"
+                                onClick={() => handleActivate(sede)}
+                              >
+                                Activar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="w-44 flex gap-2">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                                onClick={() => handleEdit(sede)}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                                onClick={() => handleDelete(sede)}
+                              >
+                                Desactivar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
           </div>
-        )}
+
+          {/* Botón Agregar Sede */}
+          {!showForm && (
+            <Button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
+              onClick={handleAdd}
+            >
+              Agregar Sede
+            </Button>
+          )}
+          {showForm && (
+            <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+              <h2 className="font-bold text-xl mb-4">
+                {editingSede ? "Editar Sede" : "Agregar Sede"}
+              </h2>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <InputField
+                    label="Nombre"
+                    value={form.nombre}
+                    onChange={(v) => setForm({ ...form, nombre: v })}
+                    required
+                  />
+                  <InputField
+                    label="Ubicación"
+                    value={form.ubicacion}
+                    onChange={(v) => setForm({ ...form, ubicacion: v })}
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
+                  >
+                    {isSubmitting
+                      ? "Guardando..."
+                      : editingSede
+                      ? "Actualizar"
+                      : "Agregar"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                    onClick={handleCancel}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
         {error !== null && (
           <PopUp
             title={"Error"}
