@@ -425,12 +425,14 @@ export default function Roles() {
 
           {/* Crear Button */}
           {!showForm && (
-            <Button
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-              onClick={handleCreate}
-            >
-              Agregar Rol
-            </Button>
+            <div className="mt-6 flex justify-center">
+              <Button
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded min-w-[180px]"
+                onClick={handleCreate}
+              >
+                Agregar Rol
+              </Button>
+            </div>
           )}
 
           {/* Form for Create/Edit */}
