@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import Spinner from "@/components/ui/Spinner";
 import {
   Table,
   TableHeader,
@@ -254,311 +255,317 @@ export default function Roles() {
           <span className="block w-full h-[3px] bg-sky-950"></span>
         </div>
 
-        {/* Status Filter Dropdown aligned to the right */}
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="statusFilter" className="text-sm font-semibold">
-              Estado
-            </Label>
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => setStatusFilter(val)}
-            >
-              <SelectTrigger id="statusFilter" className="min-w-[150px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="activo">Activo</SelectItem>
-                <SelectItem value="inactivo">Inactivo</SelectItem>
-                <SelectItem value="todos">Todos</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="relative min-h-[400px]">
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white">
+              <Spinner />
+            </div>
+          )}
+
+          {/* Status Filter Dropdown aligned to the right */}
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="statusFilter" className="text-sm font-semibold">
+                Estado
+              </Label>
+              <Select
+                value={statusFilter}
+                onValueChange={(val) => setStatusFilter(val)}
+              >
+                <SelectTrigger id="statusFilter" className="min-w-[150px]">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="activo">Activo</SelectItem>
+                  <SelectItem value="inactivo">Inactivo</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
 
-        <div className="overflow-x-auto mt-4">
-          <Table className="min-w-full border rounded-lg shadow-sm ">
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead>Categoría</TableHead>
-                <TableHead>Subcategoría</TableHead>
-                <TableHead>Sueldo base</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-center">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!loading && roles.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500">
-                    No hay roles disponibles.
-                  </TableCell>
+          <div className="overflow-x-auto mt-4">
+            <Table className="min-w-full border rounded-lg shadow-sm">
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Subcategoría</TableHead>
+                  <TableHead>Sueldo base</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
-              )}
-
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Cargando roles...
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!loading &&
-                roles.map((rol, idx) => (
-                  <TableRow
-                    key={
-                      rol.id_rol ??
-                      `${rol.categoria}-${rol.subcategoria ?? "-"}-${idx}`
-                    }
-                    className="hover:bg-gray-50"
-                  >
-                    <TableCell>{rol.categoria ?? "-"}</TableCell>
-                    <TableCell>
-                      {rol.subcategoria
-                        ? String(rol.subcategoria).toUpperCase()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{formatCurrency(rol.sueldo_base)}</TableCell>
-                    <TableCell>{rol.descripcion ?? "-"}</TableCell>
-                    <TableCell>
-                      {rol.status !== false ? (
-                        <span className="text-green-600">Activo</span>
-                      ) : (
-                        <span className="text-red-600">Inactivo</span>
-                      )}
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <div className="flex gap-2 justify-center">
-                        {rol.status === false ? (
-                          <div className="w-44">
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
-                              onClick={() => {
-                                setConfirmDialog({
-                                  title: "Confirmar activación",
-                                  message: `¿Confirmás activar el rol ${
-                                    rol.categoria
-                                  }${
-                                    rol.subcategoria
-                                      ? ` - ${rol.subcategoria}`
-                                      : ""
-                                  }?`,
-                                  confirmText: "Activar",
-                                  onConfirm: async () => {
-                                    try {
-                                      const payload = {
-                                        categoria: rol.categoria,
-                                        subcategoria: rol.subcategoria
-                                          ? String(
-                                              rol.subcategoria
-                                            ).toUpperCase()
-                                          : null,
-                                        sueldo_base:
-                                          parseFloat(rol.sueldo_base) || 0,
-                                        descripcion: rol.descripcion || null,
-                                        status: true,
-                                      };
-                                      await modificarRol(rol.id_rol, payload);
-                                      await fetchRoles();
-
-                                      // Mostrar éxito en el mismo modal
-                                      setConfirmDialog({
-                                        title: "Operación exitosa",
-                                        message: "Rol activado correctamente.",
-                                        confirmText: "Aceptar",
-                                        hideCancel: true,
-                                        onConfirm: () => {
-                                          setConfirmDialog(null);
-                                        },
-                                      });
-
-                                      // Cerrar el modal automáticamente después de 1.5 segundos
-                                      setTimeout(() => {
-                                        setConfirmDialog(null);
-                                      }, 1500);
-                                    } catch (err) {
-                                      const message =
-                                        err.response?.data?.detail ||
-                                        err.message ||
-                                        "Error al activar el rol.";
-                                      setError(message);
-                                      setConfirmDialog(null);
-                                    }
-                                  },
-                                });
-                              }}
-                            >
-                              Activar
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="w-44 flex gap-2">
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
-                              onClick={() => handleEdit(rol)}
-                            >
-                              Editar
-                            </Button>
-
-                            <Button
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
-                              onClick={() => handleDelete(rol)}
-                            >
-                              Eliminar
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {!loading && roles.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-gray-500"
+                    >
+                      No hay roles disponibles.
                     </TableCell>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
+                )}
 
-        {/* Crear Button */}
-        {!showForm && (
-          <Button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-            onClick={handleCreate}
-          >
-            Agregar Rol
-          </Button>
-        )}
+                {!loading &&
+                  roles.map((rol, idx) => (
+                    <TableRow
+                      key={
+                        rol.id_rol ??
+                        `${rol.categoria}-${rol.subcategoria ?? "-"}-${idx}`
+                      }
+                      className="hover:bg-gray-50"
+                    >
+                      <TableCell>{rol.categoria ?? "-"}</TableCell>
+                      <TableCell>
+                        {rol.subcategoria
+                          ? String(rol.subcategoria).toUpperCase()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>{formatCurrency(rol.sueldo_base)}</TableCell>
+                      <TableCell>{rol.descripcion ?? "-"}</TableCell>
+                      <TableCell>
+                        {rol.status !== false ? (
+                          <span className="text-green-600">Activo</span>
+                        ) : (
+                          <span className="text-red-600">Inactivo</span>
+                        )}
+                      </TableCell>
 
-        {/* Form for Create/Edit */}
-        {showForm && (
-          <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <h2 className="font-bold text-xl mb-4">
-              {editingRol ? "Editar Rol" : "Agregar Rol"}
-            </h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                {editingRol ? (
-                  <>
-                    <Field className="flex-1">
-                      <FieldLabel>Categoría</FieldLabel>
-                      <div className="py-2">{form.categoria || "-"}</div>
-                    </Field>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          {rol.status === false ? (
+                            <div className="w-44">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-full"
+                                onClick={() => {
+                                  setConfirmDialog({
+                                    title: "Confirmar activación",
+                                    message: `¿Confirmás activar el rol ${
+                                      rol.categoria
+                                    }${
+                                      rol.subcategoria
+                                        ? ` - ${rol.subcategoria}`
+                                        : ""
+                                    }?`,
+                                    confirmText: "Activar",
+                                    onConfirm: async () => {
+                                      try {
+                                        const payload = {
+                                          categoria: rol.categoria,
+                                          subcategoria: rol.subcategoria
+                                            ? String(
+                                                rol.subcategoria
+                                              ).toUpperCase()
+                                            : null,
+                                          sueldo_base:
+                                            parseFloat(rol.sueldo_base) || 0,
+                                          descripcion: rol.descripcion || null,
+                                          status: true,
+                                        };
+                                        await modificarRol(rol.id_rol, payload);
+                                        await fetchRoles();
 
-                    {form.categoria === "ADMINISTRADOR" ? (
+                                        // Mostrar éxito en el mismo modal
+                                        setConfirmDialog({
+                                          title: "Operación exitosa",
+                                          message:
+                                            "Rol activado correctamente.",
+                                          confirmText: "Aceptar",
+                                          hideCancel: true,
+                                          onConfirm: () => {
+                                            setConfirmDialog(null);
+                                          },
+                                        });
+
+                                        // Cerrar el modal automáticamente después de 1.5 segundos
+                                        setTimeout(() => {
+                                          setConfirmDialog(null);
+                                        }, 1500);
+                                      } catch (err) {
+                                        const message =
+                                          err.response?.data?.detail ||
+                                          err.message ||
+                                          "Error al activar el rol.";
+                                        setError(message);
+                                        setConfirmDialog(null);
+                                      }
+                                    },
+                                  });
+                                }}
+                              >
+                                Activar
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="w-44 flex gap-2">
+                              <Button
+                                className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded w-1/2"
+                                onClick={() => handleEdit(rol)}
+                              >
+                                Editar
+                              </Button>
+
+                              <Button
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded border border-gray-300 w-1/2"
+                                onClick={() => handleDelete(rol)}
+                              >
+                                Eliminar
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Crear Button */}
+          {!showForm && (
+            <Button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
+              onClick={handleCreate}
+            >
+              Agregar Rol
+            </Button>
+          )}
+
+          {/* Form for Create/Edit */}
+          {showForm && (
+            <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+              <h2 className="font-bold text-xl mb-4">
+                {editingRol ? "Editar Rol" : "Agregar Rol"}
+              </h2>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {editingRol ? (
+                    <>
                       <Field className="flex-1">
-                        <FieldLabel>Subcategoría</FieldLabel>
-                        <div className="py-2">{form.subcategoria || "-"}</div>
+                        <FieldLabel>Categoría</FieldLabel>
+                        <div className="py-2">{form.categoria || "-"}</div>
                       </Field>
-                    ) : null}
-                  </>
-                ) : (
-                  <>
-                    <Field className="flex-1">
-                      <FieldLabel>
-                        Categoría <span className="text-red-500">*</span>
-                      </FieldLabel>
-                      <Select
-                        value={form.categoria}
-                        onValueChange={(val) =>
-                          setForm({
-                            ...form,
-                            categoria: val,
-                            // show subcategoria only for ADMINISTRADOR
-                            subcategoria:
-                              val === "ADMINISTRADOR" ? form.subcategoria : "",
-                          })
-                        }
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione una categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ADMINISTRADOR">
-                            ADMINISTRADOR
-                          </SelectItem>
-                          <SelectItem value="DOCENTE">DOCENTE</SelectItem>
-                          <SelectItem value="ALUMNO">ALUMNO</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
 
-                    {form.categoria === "ADMINISTRADOR" && (
+                      {form.categoria === "ADMINISTRADOR" ? (
+                        <Field className="flex-1">
+                          <FieldLabel>Subcategoría</FieldLabel>
+                          <div className="py-2">{form.subcategoria || "-"}</div>
+                        </Field>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
                       <Field className="flex-1">
-                        <FieldLabel>Subcategoría</FieldLabel>
-                        <Input
-                          type="text"
-                          value={form.subcategoria}
-                          onChange={(e) =>
+                        <FieldLabel>
+                          Categoría <span className="text-red-500">*</span>
+                        </FieldLabel>
+                        <Select
+                          value={form.categoria}
+                          onValueChange={(val) =>
                             setForm({
                               ...form,
-                              subcategoria: String(
-                                e.target.value || ""
-                              ).toUpperCase(),
+                              categoria: val,
+                              // show subcategoria only for ADMINISTRADOR
+                              subcategoria:
+                                val === "ADMINISTRADOR"
+                                  ? form.subcategoria
+                                  : "",
                             })
                           }
-                          placeholder="Subcategoría (opcional)"
-                        />
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione una categoría" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ADMINISTRADOR">
+                              ADMINISTRADOR
+                            </SelectItem>
+                            <SelectItem value="DOCENTE">DOCENTE</SelectItem>
+                            <SelectItem value="ALUMNO">ALUMNO</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </Field>
-                    )}
-                  </>
-                )}
-              </div>
 
-              <div className="flex flex-col md:flex-row gap-4">
-                <Field className="flex-1">
-                  <FieldLabel>
-                    Sueldo Base <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={form.sueldo_base}
-                    onChange={(e) =>
-                      setForm({ ...form, sueldo_base: e.target.value })
-                    }
-                    placeholder="0.00"
-                    required
-                  />
-                </Field>
+                      {form.categoria === "ADMINISTRADOR" && (
+                        <Field className="flex-1">
+                          <FieldLabel>Subcategoría</FieldLabel>
+                          <Input
+                            type="text"
+                            value={form.subcategoria}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                subcategoria: String(
+                                  e.target.value || ""
+                                ).toUpperCase(),
+                              })
+                            }
+                            placeholder="Subcategoría (opcional)"
+                          />
+                        </Field>
+                      )}
+                    </>
+                  )}
+                </div>
 
-                <Field className="flex-1">
-                  <FieldLabel>Descripción</FieldLabel>
-                  <Input
-                    type="text"
-                    value={form.descripcion}
-                    onChange={(e) =>
-                      setForm({ ...form, descripcion: e.target.value })
-                    }
-                    placeholder="Descripción (opcional)"
-                  />
-                </Field>
-              </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <Field className="flex-1">
+                    <FieldLabel>
+                      Sueldo Base <span className="text-red-500">*</span>
+                    </FieldLabel>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.sueldo_base}
+                      onChange={(e) =>
+                        setForm({ ...form, sueldo_base: e.target.value })
+                      }
+                      placeholder="0.00"
+                      required
+                    />
+                  </Field>
 
-              <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
-                >
-                  {isSubmitting
-                    ? "Guardando..."
-                    : editingRol
-                    ? "Actualizar"
-                    : "Agregar"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
+                  <Field className="flex-1">
+                    <FieldLabel>Descripción</FieldLabel>
+                    <Input
+                      type="text"
+                      value={form.descripcion}
+                      onChange={(e) =>
+                        setForm({ ...form, descripcion: e.target.value })
+                      }
+                      placeholder="Descripción (opcional)"
+                    />
+                  </Field>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
+                  >
+                    {isSubmitting
+                      ? "Guardando..."
+                      : editingRol
+                      ? "Actualizar"
+                      : "Agregar"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+                    onClick={handleCancel}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
 
         {error && (
           <PopUp
