@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import LinkNavBar from "./LinkNavBar";
-import { Shield } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 
 export default function NavBar({ menuOpen, setMenuOpen }) {
   const [userName, setUserName] = useState("Admin");
@@ -109,6 +109,16 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
       <div className="flex flex-col items-center py-6 border-t border-gray-300">
         <Shield size={70} className="text-blue-300" />
         <p className="text-sm mt-2 font-medium text-center">{userName}</p>
+        <button
+          onClick={() => {
+            window.location.href =
+              "https://core-frontend-2025-02.netlify.app/home";
+          }}
+          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+        >
+          <ArrowLeft size={16} />
+          Volver a Home
+        </button>
       </div>
     </div>
   );
