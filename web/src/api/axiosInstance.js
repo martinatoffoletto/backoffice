@@ -1,5 +1,5 @@
 import axios from "axios";
-import { refreshAccessToken } from "./authService.js";
+import { refreshAccessToken } from "./authService";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const axiosInstance = axios.create({
