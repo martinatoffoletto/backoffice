@@ -353,12 +353,14 @@ export default function Sedes() {
 
         {/* Botón Agregar Sede */}
         {!showForm && (
-          <Button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-            onClick={handleAdd}
-          >
-            Agregar Sede
-          </Button>
+          <div className="mt-6 flex justify-center">
+            <Button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded min-w-[180px]"
+              onClick={handleAdd}
+            >
+              Agregar Sede
+            </Button>
+          </div>
         )}
         {showForm && (
           <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
@@ -405,10 +407,10 @@ export default function Sedes() {
             </form>
           </div>
         )}
-        {error !== null && (
+        {error && (
           <PopUp
             title={"Error"}
-            message={error.toString()}
+            message={String(error)}
             onClose={() => setError(null)}
           />
         )}

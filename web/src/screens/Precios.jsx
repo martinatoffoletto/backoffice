@@ -397,20 +397,22 @@ export default function Precios() {
         </div>
 
         {!showForm && (
-          <Button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-            onClick={handleAdd}
-          >
-            Agregar Nuevo Precio
-          </Button>
+          <div className="mt-6 flex justify-center">
+            <Button
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded min-w-[180px]"
+              onClick={handleAdd}
+            >
+              Agregar Precio
+            </Button>
+          </div>
         )}
 
         {showForm && (
           <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <h2 className="text-lg font-semibold mb-4">
+            <h2 className="font-bold text-xl mb-4">
               {editingParametro ? "Editar Precio" : "Agregar Nuevo Precio"}
             </h2>
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <InputField
                 label="Concepto"
                 value={form.nombre}
@@ -454,7 +456,7 @@ export default function Precios() {
               placeholder="Descripción opcional"
             />
 
-            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-6">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
               <Button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-70"
                 onClick={savePrice}
@@ -477,13 +479,16 @@ export default function Precios() {
             </div>
           </div>
         )}
-      </div>
 
-      {error && (
-        <PopUp title="Error" message={error} onClose={() => setError(null)} />
-      )}
-      {confirmDialog && (
-        <ConfirmDialog
+        {error && (
+          <PopUp
+            title={"Error"}
+            message={String(error)}
+            onClose={() => setError(null)}
+          />
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
           title={confirmDialog.title}
           message={confirmDialog.message}
           confirmText={confirmDialog.confirmText}
@@ -506,8 +511,9 @@ export default function Precios() {
           }}
           onCancel={() => setConfirmDialog(null)}
           loading={Boolean(confirmDialog.loading)}
-        />
-      )}
+          />
+        )}
+      </div>
     </div>
   );
 }
