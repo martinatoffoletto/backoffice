@@ -626,30 +626,31 @@ export default function Espacios() {
           />
         )}
         {confirmDialog && (
-        <ConfirmDialog
-          title={confirmDialog.title}
-          message={confirmDialog.message}
-          confirmText={confirmDialog.confirmText}
-          hideCancel={confirmDialog.hideCancel}
-          onConfirm={async () => {
-            const currentDialog = confirmDialog;
-            if (currentDialog.hideCancel) {
-              // Si es el modal de éxito, solo ejecutar el callback
-              currentDialog.onConfirm?.();
-              return;
-            }
-            setConfirmDialog((prev) =>
-              prev ? { ...prev, loading: true } : prev
-            );
-            try {
-              await currentDialog.onConfirm?.();
-            } finally {
-            }
-          }}
-          onCancel={() => setConfirmDialog(null)}
-          loading={Boolean(confirmDialog.loading)}
-        />
-      )}
+          <ConfirmDialog
+            title={confirmDialog.title}
+            message={confirmDialog.message}
+            confirmText={confirmDialog.confirmText}
+            hideCancel={confirmDialog.hideCancel}
+            onConfirm={async () => {
+              const currentDialog = confirmDialog;
+              if (currentDialog.hideCancel) {
+                // Si es el modal de éxito, solo ejecutar el callback
+                currentDialog.onConfirm?.();
+                return;
+              }
+              setConfirmDialog((prev) =>
+                prev ? { ...prev, loading: true } : prev
+              );
+              try {
+                await currentDialog.onConfirm?.();
+              } finally {
+              }
+            }}
+            onCancel={() => setConfirmDialog(null)}
+            loading={Boolean(confirmDialog.loading)}
+          />
+        )}
+      </div>
     </div>
   );
 }
