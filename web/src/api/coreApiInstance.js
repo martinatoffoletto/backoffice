@@ -1,5 +1,5 @@
 import axios from "axios";
-import { refreshAccessToken } from "./authService";
+import { refreshAccessToken } from "./authService.js";
 
 const CORE_API_BASE_URL =
   "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api";
