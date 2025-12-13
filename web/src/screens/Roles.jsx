@@ -276,8 +276,8 @@ export default function Roles() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="activo">Activo</SelectItem>
-                  <SelectItem value="inactivo">Inactivo</SelectItem>
+                  <SelectItem value="activo">Activos</SelectItem>
+                  <SelectItem value="inactivo">Inactivos</SelectItem>
                   <SelectItem value="todos">Todos</SelectItem>
                 </SelectContent>
               </Select>
