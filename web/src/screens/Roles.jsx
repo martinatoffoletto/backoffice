@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 import {
   Table,
   TableHeader,

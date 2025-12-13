@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 import PopUp from "@/components/PopUp";
 import {
   altaEspacio,

@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import PopUp from "@/components/PopUp";
 import { altaSede, obtenerSedes, actualizarSede } from "@/api/sedesApi";
-import Spinner from "@/components/ui/Spinner";
+import Spinner from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
