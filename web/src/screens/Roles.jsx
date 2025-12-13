@@ -279,7 +279,7 @@ export default function Roles() {
         <div className="overflow-x-auto mt-4">
           <Table className="min-w-full border rounded-lg shadow-sm ">
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-gray-100">
                 <TableHead>Categoría</TableHead>
                 <TableHead>Subcategoría</TableHead>
                 <TableHead>Sueldo base</TableHead>

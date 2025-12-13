@@ -286,11 +286,13 @@ export default function Precios() {
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
       <div className="w-full max-w-6xl">
-        <h1 className="font-bold text-center text-2xl mb-4">
-          Listado de Precios
-        </h1>
-        <span className="block w-full h-[3px] bg-sky-950"></span>
+        {/* Title centered at the top */}
+        <div className="w-full text-center mb-6">
+          <h1 className="font-bold text-2xl mb-2">Listado de Precios</h1>
+          <span className="block w-full h-[3px] bg-sky-950"></span>
+        </div>
 
+        {/* Status Filter Dropdown aligned to the right */}
         <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
             <Label htmlFor="statusFilter" className="text-sm font-semibold">
@@ -309,8 +311,8 @@ export default function Precios() {
           </div>
         </div>
 
-        <div className="overflow-x-auto mt-8">
-          <Table className="min-w-full border border-gray-200 my-2">
+        <div className="overflow-x-auto mt-4">
+          <Table className="min-w-full border rounded-lg shadow-sm ">
             <TableCaption className="text-gray-500 text-sm mt-4">
               Valores actualizados al mes vigente
             </TableCaption>
