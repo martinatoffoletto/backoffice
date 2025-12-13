@@ -20,15 +20,6 @@ class CoreAuthClient:
             response.raise_for_status()
             return response.json()
     
-    async def refresh_token(self, refresh_token: str) -> Dict[str, Any]:
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.post(
-                f"{self.base_url}/api/auth/refresh",
-                json={"refreshToken": refresh_token}
-            )
-            response.raise_for_status()
-            return response.json()
-    
     async def get_me(self, access_token: str) -> Dict[str, Any]:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.get(
