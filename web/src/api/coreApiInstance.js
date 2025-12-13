@@ -25,6 +25,11 @@ coreApiInstance.interceptors.response.use(
 
     if (error.response?.status === 401) {
       window.localStorage.removeItem("token");
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      )
+        return;
       window.location.href =
         "https://core-frontend-2025-02.netlify.app/?redirectUrl=" +
         encodeURIComponent(window.location.origin);

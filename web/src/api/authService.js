@@ -6,8 +6,13 @@ const APP_URL = window.location.origin;
 
 export const redirectToLogin = () => {
   localStorage.removeItem("token");
-  const redirectUrl = encodeURIComponent(APP_URL);
-  window.location.href = `${CORE_LOGIN_URL}/?redirectUrl=${redirectUrl}`;
+  if (
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    const redirectUrl = encodeURIComponent(APP_URL);
+    window.location.href = `${CORE_LOGIN_URL}/?redirectUrl=${redirectUrl}`;
+  } 
 };
 
 export const logout = () => {
