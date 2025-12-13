@@ -8,12 +8,12 @@ import Usuarios from "./screens/Usuarios";
 import Roles from "./screens/Roles";
 import Cursos from "./screens/Cursos";
 import Sedes from "./screens/Sedes";
-import Sede from "./screens/Sede";
 import Materias from "./screens/Materias";
 import Asignacion from "./screens/Asignacion";
 import Carreras from "./screens/Carreras";
 import Cronograma from "./screens/Cronograma";
 import Espacios from "./screens/Espacios";
+import { redirectToLogin } from "./api/authService";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,16 +21,14 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jwt = params.get("JWT");
-    const refreshToken = params.get("refreshToken");
 
     if (jwt) {
       localStorage.setItem("token", jwt);
-      if (refreshToken) {
-        localStorage.setItem("refreshToken", refreshToken);
-      }
-      console.log("✅ Token obtenido de Core ");
+      // Limpiar la URL (quitar ?JWT=...)
+      window.history.replaceState({}, document.title, window.location.pathname);
+      console.log("✅ Token obtenido de Core");
     } else if (!localStorage.getItem("token")) {
-      window.location.href = "https://core-frontend-2025-02.netlify.app/";
+      redirectToLogin();
     }
   }, []);
 
@@ -46,7 +44,6 @@ function App() {
             <Route path="/roles" element={<Roles />} />
             <Route path="/precios" element={<Precios />} />
             <Route path="/cursos" element={<Cursos />} />
-            <Route path="/sede" element={<Sede />} />
             <Route path="/materias" element={<Materias />} />
             <Route path="/asignacion" element={<Asignacion />} />
             <Route path="/carreras" element={<Carreras />} />

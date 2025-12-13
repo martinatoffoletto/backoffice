@@ -1,5 +1,4 @@
 import axios from "axios";
-import { refreshAccessToken } from "./authService";
 
 const CORE_API_BASE_URL =
   "https://jtseq9puk0.execute-api.us-east-1.amazonaws.com/api";
@@ -24,16 +23,17 @@ coreApiInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const newToken = await refreshAccessToken();
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return coreApiInstance(originalRequest);
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
-      }
+    if (error.response?.status === 401) {
+      window.localStorage.removeItem("token");
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      )
+        return;
+      window.location.href =
+        "https://core-frontend-2025-02.netlify.app/?redirectUrl=" +
+        encodeURIComponent(window.location.origin);
+      return;
     }
 
     return Promise.reject(error);
