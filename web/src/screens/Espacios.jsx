@@ -470,17 +470,19 @@ export default function Espacios() {
           </div>
 
           {!showForm && (
-            <Button
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-6"
-              onClick={handleAdd}
-            >
-              Agregar Espacio
-            </Button>
+            <div className="mt-6 flex justify-center">
+              <Button
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded min-w-[180px]"
+                onClick={handleAdd}
+              >
+                Agregar Espacio
+              </Button>
+            </div>
           )}
 
           {showForm && (
             <div className="mt-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-              <h2 className="text-lg font-semibold mb-4">
+              <h2 className="font-bold text-xl mb-4">
                 {editingEspacio ? "Editar Espacio" : "Agregar Espacio"}
               </h2>
               <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -615,36 +617,40 @@ export default function Espacios() {
             </div>
           )}
         </div>
-      </div>
 
-      {error && (
-        <PopUp title="Error" message={error} onClose={() => setError(null)} />
-      )}
-      {confirmDialog && (
-        <ConfirmDialog
-          title={confirmDialog.title}
-          message={confirmDialog.message}
-          confirmText={confirmDialog.confirmText}
-          hideCancel={confirmDialog.hideCancel}
-          onConfirm={async () => {
-            const currentDialog = confirmDialog;
-            if (currentDialog.hideCancel) {
-              // Si es el modal de éxito, solo ejecutar el callback
-              currentDialog.onConfirm?.();
-              return;
-            }
-            setConfirmDialog((prev) =>
-              prev ? { ...prev, loading: true } : prev
-            );
-            try {
-              await currentDialog.onConfirm?.();
-            } finally {
-            }
-          }}
-          onCancel={() => setConfirmDialog(null)}
-          loading={Boolean(confirmDialog.loading)}
-        />
-      )}
+        {error && (
+          <PopUp
+            title={"Error"}
+            message={String(error)}
+            onClose={() => setError(null)}
+          />
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
+            title={confirmDialog.title}
+            message={confirmDialog.message}
+            confirmText={confirmDialog.confirmText}
+            hideCancel={confirmDialog.hideCancel}
+            onConfirm={async () => {
+              const currentDialog = confirmDialog;
+              if (currentDialog.hideCancel) {
+                // Si es el modal de éxito, solo ejecutar el callback
+                currentDialog.onConfirm?.();
+                return;
+              }
+              setConfirmDialog((prev) =>
+                prev ? { ...prev, loading: true } : prev
+              );
+              try {
+                await currentDialog.onConfirm?.();
+              } finally {
+              }
+            }}
+            onCancel={() => setConfirmDialog(null)}
+            loading={Boolean(confirmDialog.loading)}
+          />
+        )}
+      </div>
     </div>
   );
 }
