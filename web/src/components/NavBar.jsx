@@ -111,6 +111,8 @@ export default function NavBar({ menuOpen, setMenuOpen }) {
         <p className="text-sm mt-2 font-medium text-center">{userName}</p>
         <button
           onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
             window.location.href =
               "https://core-frontend-2025-02.netlify.app/home";
           }}
