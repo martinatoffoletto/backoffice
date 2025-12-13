@@ -26,7 +26,7 @@ export default function Sedes() {
   const [sedes, setSedes] = useState([]);
   const [editingSede, setEditingSede] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [form, setForm] = useState({
     nombre: "",
     ubicacion: "",
@@ -273,9 +273,9 @@ export default function Sedes() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Activos</SelectItem>
                   <SelectItem value="inactive">Inactivos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                 </SelectContent>
               </Select>
             </div>

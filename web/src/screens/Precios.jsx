@@ -31,7 +31,7 @@ export default function Precios() {
   const [prices, setPrices] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingParametro, setEditingParametro] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [form, setForm] = useState({
     nombre: "",
     tipo: "",
@@ -311,9 +311,9 @@ export default function Precios() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="active">Activos</SelectItem>
                   <SelectItem value="inactive">Inactivos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
