@@ -238,9 +238,9 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen items-start justify-start mt-6 py-4 sm:px-8">
+    <div className="flex flex-col w-full min-h-screen items-center justify-start mt-6 py-4 sm:px-8">
       <div className="w-full max-w-5xl">
-        <h1 className="font-bold text-start text-xl mb-4 text-black">
+        <h1 className="font-bold text-center text-xl mb-4 text-black">
           Búsqueda de Cursos
         </h1>
         <span className="block w-full h-[2px] bg-sky-950 mb-6" />
