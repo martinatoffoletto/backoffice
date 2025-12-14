@@ -115,7 +115,8 @@ class ClaseIndividualService:
             return None
         
         # No permitir cambios de estado en clases canceladas
-        if clase_actual.estado == ModelEstadoClase.CANCELADA:
+        # clase_actual.estado es un string de la BD en mayúsculas
+        if clase_actual.estado == "CANCELADA":
             raise ValueError("No se puede cambiar el estado de una clase cancelada")
         
         # No permitir marcar como dictada una clase futura
