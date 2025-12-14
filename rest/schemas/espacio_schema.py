@@ -8,6 +8,7 @@ class TipoEspacio(str, Enum):
     LABORATORIO = "LABORATORIO"
     ESPACIO_COMUN = "ESPACIO_COMUN"
     OFICINA = "OFICINA"
+    COMEDOR = "COMEDOR"
     OTROS = "OTROS"
 
 class EstadoEspacio(str, Enum):
