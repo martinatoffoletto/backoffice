@@ -1,4 +1,3 @@
-import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -19,8 +18,6 @@ from .database import init_database, close_database
 
 # Importar funciones de RabbitMQ
 from .messaging.rabbitmq import get_connection, close_connection
-from .messaging.consumer import EventConsumer
-from .messaging.handlers.proposal_handler import handle_proposal_event
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,7 +25,6 @@ async def lifespan(app: FastAPI):
     await init_database()
     
     # Startup: inicializar RabbitMQ (opcional, no falla si no está disponible)
-    consumer_task = None
     try:
         await get_connection()
         
@@ -57,14 +53,6 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ RabbitMQ no disponible (modo sin colas): {e}")
     
     yield
-    
-    # Shutdown: cancelar consumidor si está activo
-    if consumer_task and not consumer_task.done():
-        consumer_task.cancel()
-        try:
-            await consumer_task
-        except asyncio.CancelledError:
-            print("✅ Consumidor de eventos cancelado")
     
     # Shutdown: cerrar conexión a la base de datos
     await close_database()
