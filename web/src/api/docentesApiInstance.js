@@ -24,16 +24,17 @@ const docentesApiInstance = axios.create({
     "Accept": "application/json",
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Importante para enviar cookies en peticiones cross-origin
+  // withCredentials: true, // Comentar si causa problemas de CORS
 });
 
-// Interceptor para agregar el JSESSIONID de las cookies del navegador
-// TODO: Descomentar cuando sea necesario enviar el JSESSIONID
+// Interceptor para agregar el JSESSIONID hardcodeado temporalmente
+// TODO: Cambiar cuando implementen JWT
 docentesApiInstance.interceptors.request.use((config) => {
-  // const jsessionId = getCookie("JSESSIONID");
-  // if (jsessionId) {
-  //   config.headers.Cookie = `JSESSIONID=${jsessionId}`;
-  // }
+  // JSESSIONID hardcodeado temporalmente
+  const jsessionId = "B5A26B61D9D026EF00859600EE52E718";
+  if (jsessionId) {
+    config.headers.Cookie = `JSESSIONID=${jsessionId}`;
+  }
   return config;
 });
 
