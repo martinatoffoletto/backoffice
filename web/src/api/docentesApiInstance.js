@@ -22,19 +22,19 @@ const docentesApiInstance = axios.create({
   baseURL: DOCENTES_API_BASE_URL,
   headers: {
     "Accept": "application/json",
-    "Content-Type": "application/json",
+    // No incluir Content-Type para GET requests
   },
-  // withCredentials: true, // Comentar si causa problemas de CORS
+  // No usar withCredentials para endpoints públicos
 });
 
-// Interceptor para agregar el JSESSIONID hardcodeado temporalmente
-// TODO: Cambiar cuando implementen JWT
+// Interceptor para agregar el JSESSIONID cuando sea necesario
+// TODO: Descomentar cuando el endpoint requiera autenticación
 docentesApiInstance.interceptors.request.use((config) => {
-  // JSESSIONID hardcodeado temporalmente
-  const jsessionId = "B5A26B61D9D026EF00859600EE52E718";
-  if (jsessionId) {
-    config.headers.Cookie = `JSESSIONID=${jsessionId}`;
-  }
+  // Por ahora no enviamos Cookie ya que el endpoint es público
+  // const jsessionId = getCookie("JSESSIONID");
+  // if (jsessionId) {
+  //   config.headers.Cookie = `JSESSIONID=${jsessionId}`;
+  // }
   return config;
 });
 
