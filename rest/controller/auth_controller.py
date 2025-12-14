@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas.auth_schema import LoginRequest, AuthResponse, VerifyResponse
 from ..service.auth_service import AuthService
 from ..database import get_async_db
+from ..dao.usuario_dao import UsuarioDAO
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -15,14 +16,26 @@ async def login(
     Autenticar usuario por email institucional y contraseña.
     La contraseña se envía en texto plano y se compara con el hash almacenado.
     Retorna información completa del usuario + rol.
+    Si el usuario existe pero está inactivo, retorna 404 Not Found.
     """
     try:
+        # Verificar si el usuario existe (sin importar su estado)
+        usuario = await UsuarioDAO.get_by_email_institucional(db, login_request.email_institucional)
+        
+        # Si el usuario existe pero está inactivo, retornar 404
+        if usuario and not usuario.status:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuario no encontrado"
+            )
+        
+        # Intentar autenticar (esto manejará el caso de usuario no existente o credenciales incorrectas)
         auth_response = await AuthService.authenticate_user(db, login_request)
         
         if not auth_response:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Credenciales incorrectas o usuario inactivo"
+                detail="Credenciales incorrectas"
             )
         
         return auth_response
