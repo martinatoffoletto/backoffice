@@ -30,13 +30,30 @@ const docentesApiInstance = axios.create({
 // Interceptor para agregar el JSESSIONID cuando sea necesario
 // TODO: Descomentar cuando el endpoint requiera autenticación
 docentesApiInstance.interceptors.request.use((config) => {
-  // Por ahora no enviamos Cookie ya que el endpoint es público
-  // const jsessionId = getCookie("JSESSIONID");
-  // if (jsessionId) {
-  //   config.headers.Cookie = `JSESSIONID=${jsessionId}`;
-  // }
+  // Log para debug
+  console.log("Request config:", {
+    url: config.url,
+    method: config.method,
+    headers: config.headers,
+    baseURL: config.baseURL
+  });
   return config;
 });
+
+// Interceptor de respuesta para ver errores
+docentesApiInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("Error response:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      data: error.response?.data,
+      config: error.config
+    });
+    return Promise.reject(error);
+  }
+);
 
 export default docentesApiInstance;
 
