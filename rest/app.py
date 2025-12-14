@@ -27,6 +27,28 @@ async def lifespan(app: FastAPI):
     # Startup: inicializar RabbitMQ (opcional, no falla si no está disponible)
     try:
         await get_connection()
+        
+        # Iniciar consumidor de eventos de propuestas en background
+        async def start_proposal_consumer():
+            """Inicia el consumidor de eventos de propuestas"""
+            try:
+                await EventConsumer.consume(
+                    queue_name="backoffice.queue",
+                    callback=handle_proposal_event,
+                    exchange_name="proposal.event",
+                    routing_key="proposal.created",
+                    durable=True
+                )
+            except asyncio.CancelledError:
+                print("🛑 Consumidor de propuestas cancelado")
+                raise
+            except Exception as e:
+                print(f"⚠️ Error en consumidor de propuestas: {e}")
+        
+        # Ejecutar consumidor en background
+        consumer_task = asyncio.create_task(start_proposal_consumer())
+        print("✅ Consumidor de eventos de propuestas iniciado") # DEBUG
+        
     except Exception as e:
         print(f"⚠️ RabbitMQ no disponible (modo sin colas): {e}")
     
