@@ -25,6 +25,7 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import PopUp from "@/components/PopUp";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   altaClase,
@@ -90,6 +91,7 @@ export default function GestionClases({
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0); // Para forzar re-render de las cajas
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const cargarClases = useCallback(async () => {
     setLoading(true);
@@ -222,10 +224,135 @@ export default function GestionClases({
     });
   }, [fecha_inicio, fecha_fin, dia, turno, clases]);
 
+  // Función para realizar el guardado real de la clase
+  const guardarClaseReal = async () => {
+    const tituloTrimmed = form.titulo.trim();
+    // Convertir fecha a formato ISO string (YYYY-MM-DD) usando fecha local
+    const fechaClase = fechaToLocalISOString(form.fecha_clase);
+
+    // Verificar si ya existe una clase para esta fecha
+    const claseExistenteEnNuevaFecha = obtenerClasePorFecha(form.fecha_clase);
+
+    if (editingClase) {
+      // Si estamos editando una clase
+      const fechaOriginalNormalizada = normalizarFecha(
+        editingClase.fecha_clase
+      );
+      const fechaNuevaNormalizada = normalizarFecha(form.fecha_clase);
+      const fechaCambio =
+        fechaOriginalNormalizada &&
+        fechaNuevaNormalizada &&
+        fechaOriginalNormalizada.getTime() !==
+          fechaNuevaNormalizada.getTime();
+
+      if (
+        fechaCambio &&
+        claseExistenteEnNuevaFecha &&
+        claseExistenteEnNuevaFecha.id_clase !== editingClase.id_clase
+      ) {
+        // La nueva fecha ya tiene una clase diferente, actualizar esa clase y eliminar la original
+        await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
+          titulo: tituloTrimmed,
+          descripcion: form.descripcion || null,
+          fecha_clase: fechaClase,
+          tipo: form.tipo,
+          estado: form.estado,
+          observaciones: form.observaciones || null,
+        });
+        // Eliminar la clase original ya que cambió de fecha
+        await bajaClase(editingClase.id_clase);
+      } else {
+        // Actualizar la clase editada normalmente (misma fecha o fecha sin clase existente)
+        await modificarClase(editingClase.id_clase, {
+          titulo: tituloTrimmed,
+          descripcion: form.descripcion || null,
+          fecha_clase: fechaClase,
+          tipo: form.tipo,
+          estado: form.estado,
+          observaciones: form.observaciones || null,
+        });
+      }
+    } else {
+      // Si estamos creando una nueva clase
+      if (claseExistenteEnNuevaFecha) {
+        // Ya existe una clase para esta fecha, actualizarla en lugar de crear una nueva
+        await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
+          titulo: tituloTrimmed,
+          descripcion: form.descripcion || null,
+          fecha_clase: fechaClase,
+          tipo: form.tipo,
+          estado: form.estado,
+          observaciones: form.observaciones || null,
+        });
+      } else {
+        // No existe clase para esta fecha, crear una nueva
+        await altaClase({
+          id_curso: id_curso,
+          titulo: tituloTrimmed,
+          descripcion: form.descripcion || null,
+          fecha_clase: fechaClase,
+          tipo: form.tipo,
+          estado: form.estado,
+          observaciones: form.observaciones || null,
+        });
+      }
+    }
+
+    // Guardar información antes de limpiar para actualizar selectedDateBox
+    const estabaEditando = editingClase !== null;
+    const fechaOriginal = estabaEditando ? editingClase.fecha_clase : null;
+    const fechaNueva = form.fecha_clase;
+
+    // Determinar si cambió la fecha antes de limpiar
+    let fechaCambio = false;
+    let fechaNuevaParaSeleccionar = null;
+
+    if (estabaEditando && fechaOriginal && fechaNueva) {
+      const fechaOriginalNormalizada = normalizarFecha(fechaOriginal);
+      const fechaNuevaNormalizada = normalizarFecha(fechaNueva);
+      fechaCambio =
+        fechaOriginalNormalizada &&
+        fechaNuevaNormalizada &&
+        fechaOriginalNormalizada.getTime() !==
+          fechaNuevaNormalizada.getTime();
+
+      if (fechaCambio) {
+        // Preparar la fecha para seleccionar después de cargar
+        const fechaParaSeleccionar =
+          fechaNueva instanceof Date ? fechaNueva : new Date(fechaNueva);
+        fechaNuevaParaSeleccionar = normalizarFecha(fechaParaSeleccionar);
+      }
+    }
+
+    // Cargar las clases actualizadas antes de limpiar el formulario
+    await cargarClases();
+
+    // Limpiar el formulario
+    cleanForm();
+
+    // Si se cambió la fecha, actualizar selectedDateBox a la nueva fecha
+    if (fechaCambio && fechaNuevaParaSeleccionar) {
+      // Usar setTimeout para asegurar que el estado se actualice después del render
+      setTimeout(() => {
+        setSelectedDateBox(fechaNuevaParaSeleccionar.toDateString());
+        // Forzar re-render después de actualizar selectedDateBox
+        setRefreshKey((prev) => prev + 1);
+      }, 100);
+    } else {
+      // Si no cambió la fecha o no estaba editando, limpiar la selección
+      setSelectedDateBox(null);
+      // Forzar re-render de las cajas
+      setTimeout(() => {
+        setRefreshKey((prev) => prev + 1);
+      }, 100);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const tituloTrimmed = form.titulo.trim();
 
+    // Validaciones
     if (!tituloTrimmed || !form.fecha_clase) {
       setError("Por favor, completá todos los campos obligatorios.");
       return;
@@ -241,193 +368,106 @@ export default function GestionClases({
       return;
     }
 
-    try {
-      // Convertir fecha a formato ISO string (YYYY-MM-DD) usando fecha local
-      const fechaClase = fechaToLocalISOString(form.fecha_clase);
-
-      // Validar que la fecha sea válida
-      const fechaNormalizada = normalizarFecha(form.fecha_clase);
-      if (!fechaNormalizada) {
-        setError("La fecha seleccionada no es válida.");
-        return;
-      }
-
-      // Validar que solo haya una clase de cada tipo específico (parcial_1, parcial_2, recuperatorio, final)
-      const idClaseAExcluir = editingClase ? editingClase.id_clase : null;
-      if (existeClaseDeTipo(form.tipo, idClaseAExcluir)) {
-        const nombreTipo = tipoClaseLabels[form.tipo] || form.tipo;
-        setError(`Ya existe una clase de tipo "${nombreTipo}". Solo puede haber una clase de este tipo.`);
-        return;
-      }
-
-      // Solo validar que la fecha esté en diasCalendario si estamos CREANDO una nueva clase
-      // Si estamos EDITANDO una clase existente, permitir cambiar la fecha a cualquier fecha
-      if (!editingClase) {
-        // Validar que la fecha esté en los días del calendario permitidos para nuevas clases
-        const fechaEstaEnCalendario = diasCalendario.some((fechaCal) => {
-          const fechaCalNormalizada = normalizarFecha(fechaCal);
-          if (!fechaCalNormalizada || !fechaNormalizada) return false;
-          // Comparar año, mes y día directamente
-          return (
-            fechaCalNormalizada.getFullYear() ===
-              fechaNormalizada.getFullYear() &&
-            fechaCalNormalizada.getMonth() === fechaNormalizada.getMonth() &&
-            fechaCalNormalizada.getDate() === fechaNormalizada.getDate()
-          );
-        });
-
-        if (!fechaEstaEnCalendario) {
-          setError(
-            "Solo se pueden crear clases para los días programados en el calendario del curso."
-          );
-          return;
-        }
-      }
-
-      // Verificar si ya existe una clase para esta fecha
-      const claseExistenteEnNuevaFecha = obtenerClasePorFecha(form.fecha_clase);
-
-      if (editingClase) {
-        // Si estamos editando una clase
-        const fechaOriginalNormalizada = normalizarFecha(
-          editingClase.fecha_clase
-        );
-        const fechaNuevaNormalizada = normalizarFecha(form.fecha_clase);
-        const fechaCambio =
-          fechaOriginalNormalizada &&
-          fechaNuevaNormalizada &&
-          fechaOriginalNormalizada.getTime() !==
-            fechaNuevaNormalizada.getTime();
-
-        if (
-          fechaCambio &&
-          claseExistenteEnNuevaFecha &&
-          claseExistenteEnNuevaFecha.id_clase !== editingClase.id_clase
-        ) {
-          // La nueva fecha ya tiene una clase diferente, actualizar esa clase y eliminar la original
-          await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
-            titulo: tituloTrimmed,
-            descripcion: form.descripcion || null,
-            fecha_clase: fechaClase,
-            tipo: form.tipo,
-            estado: form.estado,
-            observaciones: form.observaciones || null,
-          });
-          // Eliminar la clase original ya que cambió de fecha
-          await bajaClase(editingClase.id_clase);
-        } else {
-          // Actualizar la clase editada normalmente (misma fecha o fecha sin clase existente)
-          await modificarClase(editingClase.id_clase, {
-            titulo: tituloTrimmed,
-            descripcion: form.descripcion || null,
-            fecha_clase: fechaClase,
-            tipo: form.tipo,
-            estado: form.estado,
-            observaciones: form.observaciones || null,
-          });
-        }
-      } else {
-        // Si estamos creando una nueva clase
-        if (claseExistenteEnNuevaFecha) {
-          // Ya existe una clase para esta fecha, actualizarla en lugar de crear una nueva
-          await modificarClase(claseExistenteEnNuevaFecha.id_clase, {
-            titulo: tituloTrimmed,
-            descripcion: form.descripcion || null,
-            fecha_clase: fechaClase,
-            tipo: form.tipo,
-            estado: form.estado,
-            observaciones: form.observaciones || null,
-          });
-        } else {
-          // No existe clase para esta fecha, crear una nueva
-          await altaClase({
-            id_curso: id_curso,
-            titulo: tituloTrimmed,
-            descripcion: form.descripcion || null,
-            fecha_clase: fechaClase,
-            tipo: form.tipo,
-            estado: form.estado,
-            observaciones: form.observaciones || null,
-          });
-        }
-      }
-
-      // Guardar información antes de limpiar para actualizar selectedDateBox
-      const estabaEditando = editingClase !== null;
-      const fechaOriginal = estabaEditando ? editingClase.fecha_clase : null;
-      const fechaNueva = form.fecha_clase;
-
-      // Determinar si cambió la fecha antes de limpiar
-      let fechaCambio = false;
-      let fechaNuevaParaSeleccionar = null;
-
-      if (estabaEditando && fechaOriginal && fechaNueva) {
-        const fechaOriginalNormalizada = normalizarFecha(fechaOriginal);
-        const fechaNuevaNormalizada = normalizarFecha(fechaNueva);
-        fechaCambio =
-          fechaOriginalNormalizada &&
-          fechaNuevaNormalizada &&
-          fechaOriginalNormalizada.getTime() !==
-            fechaNuevaNormalizada.getTime();
-
-        if (fechaCambio) {
-          // Preparar la fecha para seleccionar después de cargar
-          const fechaParaSeleccionar =
-            fechaNueva instanceof Date ? fechaNueva : new Date(fechaNueva);
-          fechaNuevaParaSeleccionar = normalizarFecha(fechaParaSeleccionar);
-        }
-      }
-
-      // Cargar las clases actualizadas antes de limpiar el formulario
-      await cargarClases();
-
-      // Limpiar el formulario
-      cleanForm();
-
-      // Si se cambió la fecha, actualizar selectedDateBox a la nueva fecha
-      if (fechaCambio && fechaNuevaParaSeleccionar) {
-        // Usar setTimeout para asegurar que el estado se actualice después del render
-        setTimeout(() => {
-          setSelectedDateBox(fechaNuevaParaSeleccionar.toDateString());
-          // Forzar re-render después de actualizar selectedDateBox
-          setRefreshKey((prev) => prev + 1);
-        }, 100);
-      } else {
-        // Si no cambió la fecha o no estaba editando, limpiar la selección
-        setSelectedDateBox(null);
-        // Forzar re-render de las cajas
-        setTimeout(() => {
-          setRefreshKey((prev) => prev + 1);
-        }, 100);
-      }
-    } catch (err) {
-      console.error("Error al guardar clase:", err);
-      let errorMessage = "Error al guardar la clase";
-
-      if (err.response?.status === 422) {
-        // Error de validación
-        const detail = err.response?.data?.detail;
-        if (Array.isArray(detail)) {
-          // Pydantic devuelve una lista de errores
-          errorMessage = detail
-            .map((error) => {
-              const field = error.loc?.join(".") || "campo";
-              return `${field}: ${error.msg}`;
-            })
-            .join(", ");
-        } else if (typeof detail === "string") {
-          errorMessage = detail;
-        } else {
-          errorMessage =
-            "Error de validación. Verificá que todos los campos cumplan con los requisitos.";
-        }
-      } else {
-        errorMessage =
-          err.response?.data?.detail || err.message || errorMessage;
-      }
-
-      setError(errorMessage);
+    // Validar que la fecha sea válida
+    const fechaNormalizada = normalizarFecha(form.fecha_clase);
+    if (!fechaNormalizada) {
+      setError("La fecha seleccionada no es válida.");
+      return;
     }
+
+    // Validar que solo haya una clase de cada tipo específico (parcial_1, parcial_2, recuperatorio, final)
+    const idClaseAExcluir = editingClase ? editingClase.id_clase : null;
+    if (existeClaseDeTipo(form.tipo, idClaseAExcluir)) {
+      const nombreTipo = tipoClaseLabels[form.tipo] || form.tipo;
+      setError(`Ya existe una clase de tipo "${nombreTipo}". Solo puede haber una clase de este tipo.`);
+      return;
+    }
+
+    // Solo validar que la fecha esté en diasCalendario si estamos CREANDO una nueva clase
+    // Si estamos EDITANDO una clase existente, permitir cambiar la fecha a cualquier fecha
+    if (!editingClase) {
+      // Validar que la fecha esté en los días del calendario permitidos para nuevas clases
+      const fechaEstaEnCalendario = diasCalendario.some((fechaCal) => {
+        const fechaCalNormalizada = normalizarFecha(fechaCal);
+        if (!fechaCalNormalizada || !fechaNormalizada) return false;
+        // Comparar año, mes y día directamente
+        return (
+          fechaCalNormalizada.getFullYear() ===
+            fechaNormalizada.getFullYear() &&
+          fechaCalNormalizada.getMonth() === fechaNormalizada.getMonth() &&
+          fechaCalNormalizada.getDate() === fechaNormalizada.getDate()
+        );
+      });
+
+      if (!fechaEstaEnCalendario) {
+        setError(
+          "Solo se pueden crear clases para los días programados en el calendario del curso."
+        );
+        return;
+      }
+    }
+
+    // Si todas las validaciones pasan, mostrar el popup de confirmación
+    const isEdit = Boolean(editingClase);
+    const fechaFormateada = format(form.fecha_clase, "dd/MM/yyyy");
+    const nombreTipo = tipoClaseLabels[form.tipo] || form.tipo;
+
+    setConfirmDialog({
+      title: isEdit ? "Confirmar actualización" : "Confirmar creación",
+      message: `¿Confirmás ${isEdit ? "actualizar" : "crear"} la clase "${tituloTrimmed}" (${nombreTipo}) del ${fechaFormateada}?`,
+      confirmText: isEdit ? "Actualizar" : "Guardar",
+      onConfirm: async () => {
+        try {
+          await guardarClaseReal();
+
+          // Mostrar éxito en el mismo modal
+          setConfirmDialog({
+            title: "Operación exitosa",
+            message: isEdit
+              ? "Clase actualizada correctamente."
+              : "Clase creada correctamente.",
+            confirmText: "Aceptar",
+            hideCancel: true,
+            onConfirm: () => {
+              setConfirmDialog(null);
+            },
+          });
+
+          // Cerrar el modal automáticamente después de 1.5 segundos
+          setTimeout(() => {
+            setConfirmDialog(null);
+          }, 1500);
+        } catch (err) {
+          console.error("Error al guardar clase:", err);
+          let errorMessage = "Error al guardar la clase";
+
+          if (err.response?.status === 422) {
+            // Error de validación
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) {
+              // Pydantic devuelve una lista de errores
+              errorMessage = detail
+                .map((error) => {
+                  const field = error.loc?.join(".") || "campo";
+                  return `${field}: ${error.msg}`;
+                })
+                .join(", ");
+            } else if (typeof detail === "string") {
+              errorMessage = detail;
+            } else {
+              errorMessage =
+                "Error de validación. Verificá que todos los campos cumplan con los requisitos.";
+            }
+          } else {
+            errorMessage =
+              err.response?.data?.detail || err.message || errorMessage;
+          }
+
+          setError(errorMessage);
+          setConfirmDialog(null);
+        }
+      },
+    });
   };
 
   const handleEdit = (clase) => {
@@ -563,7 +603,7 @@ export default function GestionClases({
   };
 
   // Función para verificar si ya existe una clase de un tipo específico
-  // Excluye la clase que se está editando (si existe)
+  // Excluye la clase que se está editando (si existe) y las clases canceladas
   const existeClaseDeTipo = (tipo, excluirIdClase = null) => {
     // Solo validar estos tipos específicos
     const tiposUnicos = ["parcial_1", "parcial_2", "recuperatorio", "final"];
@@ -576,11 +616,13 @@ export default function GestionClases({
     // Asegurar que clases sea un array antes de usar .find()
     if (!Array.isArray(clases) || clases.length === 0) return false;
 
-    // Buscar si existe una clase del mismo tipo, excluyendo la que se está editando
+    // Buscar si existe una clase del mismo tipo, excluyendo la que se está editando y las canceladas
     const claseExistente = clases.find((c) => {
       if (!c) return false;
       // Si estamos editando, excluir la clase actual
       if (excluirIdClase && c.id_clase === excluirIdClase) return false;
+      // Excluir clases canceladas (se puede tener otra clase del mismo tipo si la anterior está cancelada)
+      if (c.estado === "cancelada") return false;
       // Verificar que el tipo coincida
       return c.tipo === tipo;
     });
@@ -996,6 +1038,34 @@ export default function GestionClases({
 
       {error && (
         <PopUp title="Error" message={error} onClose={() => setError(null)} />
+      )}
+
+      {/* Popup de confirmación para guardar/actualizar clase */}
+      {confirmDialog && (
+        <ConfirmDialog
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText}
+          hideCancel={confirmDialog.hideCancel}
+          onConfirm={async () => {
+            const currentDialog = confirmDialog;
+            if (currentDialog.hideCancel) {
+              // Si es el modal de éxito, solo ejecutar el callback
+              currentDialog.onConfirm?.();
+              return;
+            }
+            setConfirmDialog((prev) =>
+              prev ? { ...prev, loading: true } : prev
+            );
+            try {
+              await currentDialog.onConfirm?.();
+            } finally {
+              // No cerrar aquí, el onConfirm interno lo maneja
+            }
+          }}
+          onCancel={() => setConfirmDialog(null)}
+          loading={Boolean(confirmDialog.loading)}
+        />
       )}
 
       {/* Popup de confirmación para cancelar clase */}
