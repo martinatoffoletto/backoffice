@@ -28,14 +28,31 @@ class EventConsumer:
         try:
             channel = await get_channel()
             
-            # Declarar exchange si se especifica
+            # Obtener exchange existente si se especifica (sin declararlo)
             exchange = None
             if exchange_name:
-                exchange = await channel.declare_exchange(
-                    exchange_name,
-                    type="topic",
-                    durable=True
-                )
+                try:
+                    # Intentar obtener el exchange existente (no requiere permisos de configure)
+                    exchange = await channel.get_exchange(exchange_name)
+                    print(f"✅ Exchange obtenido: {exchange_name}")
+                except Exception as get_error:
+                    # Si no existe, intentar declararlo (solo si tenemos permisos)
+                    try:
+                        exchange = await channel.declare_exchange(
+                            exchange_name,
+                            type="topic",
+                            durable=True
+                        )
+                        print(f"✅ Exchange declarado: {exchange_name}")
+                    except Exception as declare_error:
+                        # Si falla por permisos, el exchange probablemente ya existe
+                        error_msg = str(declare_error)
+                        if "ACCESS_REFUSED" in error_msg or "configure access" in error_msg.lower():
+                            print(f"⚠️ Sin permisos para declarar exchange '{exchange_name}', asumiendo que existe...")
+                            # Intentar obtenerlo de nuevo
+                            exchange = await channel.get_exchange(exchange_name)
+                        else:
+                            raise declare_error
             
             # Declarar cola
             queue = await channel.declare_queue(queue_name, durable=durable)
@@ -61,7 +78,7 @@ class EventConsumer:
                             print(f"❌ Error procesando mensaje: {e}")
                             # Rechazar mensaje y no requeue si hay error
                             await message.nack(requeue=False)
-                            
+            
         except Exception as e:
             print(f"❌ Error configurando consumidor: {e}")
             raise
