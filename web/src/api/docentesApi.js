@@ -268,13 +268,32 @@ export const eliminarDisponibilidadDocente = async (
 };
 
 /**
+ * Mapea los datos de propuestas del API al formato esperado por el componente
+ * @param {Array} propuestas - Array de propuestas del API
+ * @returns {Array} Array de propuestas mapeadas
+ */
+const mapearPropuestas = (propuestas) => {
+  return propuestas.map((propuesta) => ({
+    propuesta_id: propuesta.proposalId,
+    uuid_docente: propuesta.teacherId,
+    profesor: propuesta.teacherId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
+    uuid_materia: propuesta.subjectId,
+    materia: propuesta.subjectName || propuesta.subjectId,
+    dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
+    estado: "pendiente", // Todas las propuestas del endpoint son pendientes
+    createdAt: propuesta.createdAt,
+  }));
+};
+
+/**
  * Obtiene las propuestas pendientes del módulo de docentes
- * @returns {Promise<Array>} Lista de propuestas pendientes
+ * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas al formato del componente
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
     const response = await docentesApiInstance.get("/public/proposals/pending");
-    return response.data;
+    // Mapear los datos del API al formato esperado por el componente
+    return mapearPropuestas(response.data);
   } catch (error) {
     console.error("Error al obtener propuestas pendientes:", error);
     throw error;
