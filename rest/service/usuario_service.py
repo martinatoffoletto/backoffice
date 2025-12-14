@@ -322,7 +322,10 @@ class UsuarioService:
         if usuario_update.contraseña:
             usuario_update.contraseña = UsuarioService._hash_password(usuario_update.contraseña)
         
-        if usuario_update.status is True and not existing_user.status:
+        # Detectar si se está activando el usuario (de inactivo a activo)
+        is_activating = usuario_update.status is True and not existing_user.status
+        
+        if is_activating:
             sueldo_inactivo = await SueldoDAO.get_sueldo_by_usuario(db, user_id, False)
             if sueldo_inactivo:
                 await SueldoDAO.reactivate(db, user_id)
@@ -341,7 +344,51 @@ class UsuarioService:
         user_for_event = updated_user if updated_user else existing_user
         event_data = await UsuarioService._get_user_event_data(db, user_for_event)
         
-        # Publicar evento user.updated (emittedAt se genera en build_event)
+        # Si se está activando el usuario, publicar solo evento user.created
+        if is_activating:
+            created_event = build_event(
+                event_type="user.created",
+                payload={
+                    "user_id": str(user_id),
+                    "nombre": updated_user.nombre if hasattr(updated_user, 'nombre') else existing_user.nombre,
+                    "apellido": updated_user.apellido if hasattr(updated_user, 'apellido') else existing_user.apellido,
+                    "legajo": updated_user.legajo if hasattr(updated_user, 'legajo') else existing_user.legajo,
+                    "dni": updated_user.dni if hasattr(updated_user, 'dni') else existing_user.dni,
+                    "email_institucional": updated_user.email_institucional if hasattr(updated_user, 'email_institucional') else existing_user.email_institucional,
+                    "email_personal": updated_user.email_personal if hasattr(updated_user, 'email_personal') else existing_user.email_personal,
+                    "telefono_personal": updated_user.telefono_personal if hasattr(updated_user, 'telefono_personal') else existing_user.telefono_personal,
+                    "fecha_alta": (updated_user.fecha_alta.isoformat() if hasattr(updated_user, 'fecha_alta') and updated_user.fecha_alta else (existing_user.fecha_alta.isoformat() if existing_user.fecha_alta else None)),
+                    "id_rol": str(updated_user.id_rol) if hasattr(updated_user, 'id_rol') else str(existing_user.id_rol),
+                    "status": updated_user.status if hasattr(updated_user, 'status') else existing_user.status,
+                    "rol": event_data["rol"],
+                    "sueldo": event_data["sueldo"],
+                    "carrera": event_data["carrera"]
+                },
+                occurred_at=occurred_at
+            )
+            
+            published_created = await EventProducer.publish(
+                message=created_event,
+                exchange_name="user.event",
+                routing_key="user.created"
+            )
+            
+            if published_created:
+                logger.info(
+                    f"✅ Evento user.created publicado correctamente al activar usuario: "
+                    f"user_id={user_id}, legajo={existing_user.legajo}, "
+                    f"eventId={created_event.get('eventId')}"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ No se pudo publicar evento user.created al activar usuario: "
+                    f"user_id={user_id}, legajo={existing_user.legajo}, "
+                    f"eventId={created_event.get('eventId')}"
+                )
+            
+            return updated_user, "User updated successfully"
+        
+        # Si no se está activando, publicar evento user.updated normalmente
         event = build_event(
             event_type="user.updated",
             payload={
