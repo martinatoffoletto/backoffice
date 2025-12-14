@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
         
         # Ejecutar consumidor en background
         consumer_task = asyncio.create_task(start_proposal_consumer())
-        print("✅ Consumidor de eventos de propuestas iniciado")
+        print("✅ Consumidor de eventos de propuestas iniciado") # DEBUG
         
     except Exception as e:
         print(f"⚠️ RabbitMQ no disponible (modo sin colas): {e}")
