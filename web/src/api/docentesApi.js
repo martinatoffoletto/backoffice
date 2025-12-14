@@ -1,8 +1,5 @@
 import axiosInstance from "./axiosInstance";
-
-// URL base del módulo de docentes
-const DOCENTES_BASE_URL =
-  "https://modulodocentefinal-production.up.railway.app";
+import docentesApiInstance from "./docentesApiInstance";
 
 // Mock data de docentes disponibles
 const mockDocentesDisponibles = {
@@ -151,7 +148,7 @@ const mockDocentesDisponibles = {
 export const obtenerDisponibilidadDocentes = async (uuid_materia, dia) => {
   try {
     // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await axiosInstance.get("/docentes/disponibilidad", {
+    // const response = await docentesApiInstance.get("/docentes/disponibilidad", {
     //   params: { uuid_materia, dia },
     // });
     // return response.data;
@@ -197,7 +194,7 @@ export const actualizarEstadoDisponibilidad = async (
     }
 
     // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await axiosInstance.patch(`/docentes/disponibilidad/${uuid_docente}`, {
+    // const response = await docentesApiInstance.patch(`/docentes/disponibilidad/${uuid_docente}`, {
     //   uuid_materia,
     //   dia,
     //   estado,
@@ -242,7 +239,7 @@ export const eliminarDisponibilidadDocente = async (
 ) => {
   try {
     // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await axiosInstance.delete(`/docentes/disponibilidad/${uuid_docente}`, {
+    // const response = await docentesApiInstance.delete(`/docentes/disponibilidad/${uuid_docente}`, {
     //   params: { uuid_materia, dia },
     // });
     // return response.data;
@@ -266,6 +263,20 @@ export const eliminarDisponibilidadDocente = async (
     };
   } catch (error) {
     console.error("Error al eliminar disponibilidad del docente:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obtiene las propuestas pendientes del módulo de docentes
+ * @returns {Promise<Array>} Lista de propuestas pendientes
+ */
+export const obtenerPropuestasPendientes = async () => {
+  try {
+    const response = await docentesApiInstance.get("/public/proposals/pending");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener propuestas pendientes:", error);
     throw error;
   }
 };

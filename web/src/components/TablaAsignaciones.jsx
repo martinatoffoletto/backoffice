@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,51 +10,69 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { actualizarEstadoDisponibilidad } from "@/api/docentesApi";
+import { actualizarEstadoDisponibilidad, obtenerPropuestasPendientes } from "@/api/docentesApi";
 
-const mockPropuestas = [
-  {
-    propuesta_id: "prop-001",
-    uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-    profesor: "Juan Pérez",
-    uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-    materia: "Cálculo II",
-    dia: "LUNES",
-    estado: "pendiente",
-  },
-  {
-    propuesta_id: "prop-002",
-    uuid_docente: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-    profesor: "María García",
-    uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-    materia: "Programación I",
-    dia: "MARTES",
-    estado: "aceptado",
-  },
-  {
-    propuesta_id: "prop-003",
-    uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-    profesor: "Carlos López",
-    uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-    materia: "Cálculo I",
-    dia: "MIERCOLES",
-    estado: "rechazado",
-  },
-  {
-    propuesta_id: "prop-004",
-    uuid_docente: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-    profesor: "Ana Rodríguez",
-    uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-    materia: "Ciencia de Datos",
-    dia: "JUEVES",
-    estado: "pendiente",
-  },
-];
+// const mockPropuestas = [
+//   {
+//     propuesta_id: "prop-001",
+//     uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
+//     profesor: "Juan Pérez",
+//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
+//     materia: "Cálculo II",
+//     dia: "LUNES",
+//     estado: "pendiente",
+//   },
+//   {
+//     propuesta_id: "prop-002",
+//     uuid_docente: "a1b2c3d4-564c-4c95-b6a8-111111111111",
+//     profesor: "María García",
+//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
+//     materia: "Programación I",
+//     dia: "MARTES",
+//     estado: "aceptado",
+//   },
+//   {
+//     propuesta_id: "prop-003",
+//     uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
+//     profesor: "Carlos López",
+//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
+//     materia: "Cálculo I",
+//     dia: "MIERCOLES",
+//     estado: "rechazado",
+//   },
+//   {
+//     propuesta_id: "prop-004",
+//     uuid_docente: "b2c3d4e5-564c-4c95-b6a8-222222222222",
+//     profesor: "Ana Rodríguez",
+//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
+//     materia: "Ciencia de Datos",
+//     dia: "JUEVES",
+//     estado: "pendiente",
+//   },
+// ];
 
 export default function TablaAsignaciones() {
   const [estado, setEstado] = useState("pendientes");
-  const [propuestas, setPropuestas] = useState(mockPropuestas);
+  const [propuestas, setPropuestas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    const cargarPropuestas = async () => {
+      try {
+        setLoadingData(true);
+        const datos = await obtenerPropuestasPendientes();
+        setPropuestas(datos);
+      } catch (error) {
+        console.error("Error al cargar propuestas:", error);
+        // En caso de error, mantener array vacío
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    cargarPropuestas();
+  }, []);
 
   const filtrarPendientes = () =>
     propuestas.filter((p) => p.estado === "pendiente");
@@ -89,6 +107,16 @@ export default function TablaAsignaciones() {
       setLoading(false);
     }
   };
+
+  if (loadingData) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-2xl">
+        <CardContent className="py-6">
+          <p className="text-center text-gray-500">Cargando propuestas...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-2xl">
