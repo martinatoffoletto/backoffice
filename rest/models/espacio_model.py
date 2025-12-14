@@ -10,6 +10,7 @@ class TipoEspacio(enum.Enum):
     LABORATORIO = "LABORATORIO"
     ESPACIO_COMUN = "ESPACIO_COMUN"
     OFICINA = "OFICINA"
+    COMEDOR = "COMEDOR"
     OTROS = "OTROS"
 
 class EstadoEspacio(enum.Enum):

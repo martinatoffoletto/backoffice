@@ -18,7 +18,7 @@ import { useState, useEffect } from "react";
 import { modificarEspacio, espacioPorId, obtenerTiposEspacios } from "@/api/espaciosApi";
 import { obtenerSedes } from "@/api/sedesApi";
 
-const DEFAULT_TIPOS = ["aula", "laboratorio", "espacio_comun", "oficina"];
+const DEFAULT_TIPOS = ["aula", "laboratorio", "espacio_comun", "oficina", "comedor"];
 
 export default function ModifEspacio() {
   const [form, setForm] = useState({

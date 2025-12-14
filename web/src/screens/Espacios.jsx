@@ -39,6 +39,7 @@ const TIPOS = [
   { label: "Laboratorio", value: "LABORATORIO" },
   { label: "Espacio común", value: "ESPACIO_COMUN" },
   { label: "Oficina", value: "OFICINA" },
+  { label: "Comedor", value: "COMEDOR" },
   { label: "Otros", value: "OTROS" },
 ];
 
