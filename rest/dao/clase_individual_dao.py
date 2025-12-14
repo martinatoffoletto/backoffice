@@ -138,11 +138,21 @@ class ClaseIndividualDAO:
         """Actualizar una clase individual"""
         update_data = clase_update.model_dump(exclude_unset=True)
         
-        # Convertir strings de enum a instancias de enum si es necesario
-        if 'tipo' in update_data and isinstance(update_data['tipo'], str):
-            update_data['tipo'] = TipoClase(update_data['tipo'])
-        if 'estado' in update_data and isinstance(update_data['estado'], str):
-            update_data['estado'] = EstadoClase(update_data['estado'])
+        # Convertir enums a strings en mayúsculas para guardar en BD (igual que en create)
+        if 'tipo' in update_data:
+            valor = update_data['tipo']
+            if isinstance(valor, str):
+                update_data['tipo'] = valor.upper()
+            else:
+                # Si es un enum, obtener su valor y convertirlo a mayúsculas
+                update_data['tipo'] = valor.value.upper() if hasattr(valor, 'value') else str(valor).upper()
+        if 'estado' in update_data:
+            valor = update_data['estado']
+            if isinstance(valor, str):
+                update_data['estado'] = valor.upper()
+            else:
+                # Si es un enum, obtener su valor y convertirlo a mayúsculas
+                update_data['estado'] = valor.value.upper() if hasattr(valor, 'value') else str(valor).upper()
         
         if update_data:
             query = update(ClaseIndividual).where(ClaseIndividual.id_clase == id_clase).values(**update_data)
@@ -183,13 +193,15 @@ class ClaseIndividualDAO:
         }
         
         for row in rows:
-            if row.estado == EstadoClase.PROGRAMADA:
+            # row.estado es un string de la BD en mayúsculas, comparar directamente
+            estado_str = row.estado.upper() if isinstance(row.estado, str) else str(row.estado).upper()
+            if estado_str == "PROGRAMADA":
                 estadisticas['clases_programadas'] = row.count
-            elif row.estado == EstadoClase.DICTADA:
+            elif estado_str == "DICTADA":
                 estadisticas['clases_dictadas'] = row.count
-            elif row.estado == EstadoClase.REPROGRAMADA:
+            elif estado_str == "REPROGRAMADA":
                 estadisticas['clases_reprogramadas'] = row.count
-            elif row.estado == EstadoClase.CANCELADA:
+            elif estado_str == "CANCELADA":
                 estadisticas['clases_canceladas'] = row.count
         
         return estadisticas
@@ -229,22 +241,23 @@ class ClaseIndividualDAO:
                 return []
         
         elif param_lower == "tipo":
-            try:
-                # Convertir el valor del string al enum TipoClase
-                tipo_enum = TipoClase(value.lower())
-                query = select(ClaseIndividual).where(
-                    and_(
-                        ClaseIndividual.tipo == tipo_enum,
-                        ClaseIndividual.status == True
-                    )
-                )
-                query = query.order_by(ClaseIndividual.fecha_clase.desc())
-                query = query.offset(skip).limit(limit)
-                result = await db.execute(query)
-                return result.scalars().all()
-            except ValueError:
-                # Si el valor no es válido para el enum, retornar lista vacía
+            # Convertir el valor a mayúsculas para comparar con los valores almacenados en BD
+            # Los tipos válidos son: REGULAR, PARCIAL_1, PARCIAL_2, RECUPERATORIO, FINAL
+            tipo_upper = value.upper()
+            validos_tipos = ["REGULAR", "PARCIAL_1", "PARCIAL_2", "RECUPERATORIO", "FINAL"]
+            if tipo_upper not in validos_tipos:
                 return []
+            
+            query = select(ClaseIndividual).where(
+                and_(
+                    ClaseIndividual.tipo == tipo_upper,
+                    ClaseIndividual.status == True
+                )
+            )
+            query = query.order_by(ClaseIndividual.fecha_clase.desc())
+            query = query.offset(skip).limit(limit)
+            result = await db.execute(query)
+            return result.scalars().all()
         
         elif param_lower == "status":
             try:
