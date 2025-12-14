@@ -19,6 +19,8 @@ from .database import init_database, close_database
 
 # Importar funciones de RabbitMQ
 from .messaging.rabbitmq import get_connection, close_connection
+from .messaging.consumer import EventConsumer
+from .messaging.handlers.proposal_handler import handle_proposal_event
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
