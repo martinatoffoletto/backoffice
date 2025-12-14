@@ -252,6 +252,14 @@ export default function GestionClases({
         return;
       }
 
+      // Validar que solo haya una clase de cada tipo específico (parcial_1, parcial_2, recuperatorio, final)
+      const idClaseAExcluir = editingClase ? editingClase.id_clase : null;
+      if (existeClaseDeTipo(form.tipo, idClaseAExcluir)) {
+        const nombreTipo = tipoClaseLabels[form.tipo] || form.tipo;
+        setError(`Ya existe una clase de tipo "${nombreTipo}". Solo puede haber una clase de este tipo.`);
+        return;
+      }
+
       // Solo validar que la fecha esté en diasCalendario si estamos CREANDO una nueva clase
       // Si estamos EDITANDO una clase existente, permitir cambiar la fecha a cualquier fecha
       if (!editingClase) {
@@ -554,6 +562,32 @@ export default function GestionClases({
     return claseEncontrada;
   };
 
+  // Función para verificar si ya existe una clase de un tipo específico
+  // Excluye la clase que se está editando (si existe)
+  const existeClaseDeTipo = (tipo, excluirIdClase = null) => {
+    // Solo validar estos tipos específicos
+    const tiposUnicos = ["parcial_1", "parcial_2", "recuperatorio", "final"];
+    
+    // Si el tipo no está en la lista de tipos únicos, no validar
+    if (!tiposUnicos.includes(tipo)) {
+      return false;
+    }
+
+    // Asegurar que clases sea un array antes de usar .find()
+    if (!Array.isArray(clases) || clases.length === 0) return false;
+
+    // Buscar si existe una clase del mismo tipo, excluyendo la que se está editando
+    const claseExistente = clases.find((c) => {
+      if (!c) return false;
+      // Si estamos editando, excluir la clase actual
+      if (excluirIdClase && c.id_clase === excluirIdClase) return false;
+      // Verificar que el tipo coincida
+      return c.tipo === tipo;
+    });
+
+    return claseExistente !== undefined;
+  };
+
   // Función helper para formatear fecha para mostrar
   const formatearFechaParaMostrar = (fecha) => {
     if (!fecha) return "-";
@@ -594,9 +628,9 @@ export default function GestionClases({
   };
 
   return (
-    <div className="flex flex-col w-full items-start justify-start mt-6 py-4">
+    <div className="flex flex-col w-full items-center justify-start mt-6 py-4">
       <div className="w-full max-w-4xl">
-        <h1 className="font-bold text-start text-xl mb-4 text-black">
+        <h1 className="font-bold text-center text-xl mb-4 text-black">
           Gestión de Clases del Curso
         </h1>
         <span className="block w-full h-[2px] bg-sky-950 mb-4"></span>
@@ -791,12 +825,30 @@ export default function GestionClases({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="regular">Regular</SelectItem>
-                        <SelectItem value="parcial_1">Parcial 1</SelectItem>
-                        <SelectItem value="parcial_2">Parcial 2</SelectItem>
-                        <SelectItem value="recuperatorio">
+                        <SelectItem 
+                          value="parcial_1" 
+                          disabled={existeClaseDeTipo("parcial_1", editingClase?.id_clase)}
+                        >
+                          Parcial 1
+                        </SelectItem>
+                        <SelectItem 
+                          value="parcial_2" 
+                          disabled={existeClaseDeTipo("parcial_2", editingClase?.id_clase)}
+                        >
+                          Parcial 2
+                        </SelectItem>
+                        <SelectItem 
+                          value="recuperatorio"
+                          disabled={existeClaseDeTipo("recuperatorio", editingClase?.id_clase)}
+                        >
                           Recuperatorio
                         </SelectItem>
-                        <SelectItem value="final">Final</SelectItem>
+                        <SelectItem 
+                          value="final"
+                          disabled={existeClaseDeTipo("final", editingClase?.id_clase)}
+                        >
+                          Final
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
