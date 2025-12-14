@@ -28,11 +28,12 @@ const docentesApiInstance = axios.create({
 });
 
 // Interceptor para agregar el JSESSIONID de las cookies del navegador
+// TODO: Descomentar cuando sea necesario enviar el JSESSIONID
 docentesApiInstance.interceptors.request.use((config) => {
-  const jsessionId = getCookie("JSESSIONID");
-  if (jsessionId) {
-    config.headers.Cookie = `JSESSIONID=${jsessionId}`;
-  }
+  // const jsessionId = getCookie("JSESSIONID");
+  // if (jsessionId) {
+  //   config.headers.Cookie = `JSESSIONID=${jsessionId}`;
+  // }
   return config;
 });
 
