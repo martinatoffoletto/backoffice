@@ -275,19 +275,36 @@ export const eliminarDisponibilidadDocente = async (
 const mapearPropuestas = (propuestas) => {
   return propuestas.map((propuesta) => ({
     propuesta_id: propuesta.proposalId,
-    uuid_docente: propuesta.teacherId,
-    profesor: propuesta.teacherId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
+    uuid_docente: propuesta.docenteId,
+    profesor: propuesta.docenteId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
     uuid_materia: propuesta.subjectId,
-    materia: propuesta.subjectName || propuesta.subjectId,
+    materia: propuesta.subjectId, // El API no proporciona subjectName
     dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
-    estado: "pendiente", // Todas las propuestas del endpoint son pendientes
+    estado: mapearEstado(propuesta.status),
     createdAt: propuesta.createdAt,
+    decidedAt: propuesta.decidedAt,
+    active: propuesta.active,
   }));
 };
 
 /**
- * Obtiene las propuestas pendientes del módulo de docentes usando fetch
- * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas al formato del componente
+ * Mapea el estado de la propuesta del formato del API al formato del componente
+ * @param {string} status - Estado en el API (PENDIENTE, APROBADA, RECHAZADA)
+ * @returns {string} Estado mapeado (pendiente, aceptado, rechazado)
+ */
+const mapearEstado = (status) => {
+  const estados = {
+    'PENDIENTE': 'pendiente',
+    'APROBADA': 'aceptado',
+    'RECHAZADA': 'rechazado'
+  };
+  return estados[status] || 'pendiente';
+};
+
+/**
+ * Obtiene todas las propuestas del módulo de docentes (pendientes, aprobadas y rechazadas)
+ * usando el endpoint de administración con autenticación
+ * @returns {Promise<Array>} Lista de propuestas mapeadas al formato del componente
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
@@ -295,14 +312,18 @@ export const obtenerPropuestasPendientes = async () => {
       import.meta.env.VITE_DOCENTES_API_URL ||
       "https://modulodocentefinal-production.up.railway.app";
     
+    const ADMIN_KEY = 
+      import.meta.env.VITE_DOCENTES_ADMIN_KEY || 
+      "kimbakimbakimba";
+    
     const response = await fetch(
-      `${DOCENTES_API_BASE_URL}/public/proposals/pending`,
+      `${DOCENTES_API_BASE_URL}/admin/proposals`,
       {
         method: "GET",
         headers: {
           "Accept": "application/json",
+          "X-Admin-Key": ADMIN_KEY,
         },
-        // No incluir credentials para evitar problemas
       }
     );
 
@@ -314,7 +335,7 @@ export const obtenerPropuestasPendientes = async () => {
     // Mapear los datos del API al formato esperado por el componente
     return mapearPropuestas(data);
   } catch (error) {
-    console.error("Error al obtener propuestas pendientes:", error);
+    console.error("Error al obtener propuestas:", error);
     throw error;
   }
 };
