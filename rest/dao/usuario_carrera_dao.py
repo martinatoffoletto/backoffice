@@ -1,4 +1,4 @@
-﻿from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_, update
 from ..models.usuario_carrera_model import UsuarioCarrera
@@ -24,16 +24,37 @@ class UsuarioCarreraDAO:
     @staticmethod
     async def get_carrera_by_usuario(db: AsyncSession, id_usuario: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[UsuarioCarrera]:
         """Obtener la carrera única de un usuario."""
+        print(f"[get_carrera_by_usuario] 🔍 Buscando carrera para usuario: id={id_usuario}, status_filter={status_filter}")
         query = select(UsuarioCarrera).where(UsuarioCarrera.id_usuario == id_usuario)
         
         if status_filter is not None:
             query = query.where(UsuarioCarrera.status == status_filter)
+            print(f"[get_carrera_by_usuario] 📋 Filtro de status aplicado: {status_filter}")
         else:
             # Por defecto solo mostrar activas
             query = query.where(UsuarioCarrera.status == True)
+            print(f"[get_carrera_by_usuario] 📋 Filtro de status por defecto: True (solo activas)")
         
+        print(f"[get_carrera_by_usuario] 🔍 Ejecutando query...")
         result = await db.execute(query)
-        return result.scalar_one_or_none()
+        carrera = result.scalar_one_or_none()
+        
+        if carrera:
+            print(f"[get_carrera_by_usuario] ✅ Carrera encontrada: id_carrera={carrera.id_carrera}, status={carrera.status}")
+        else:
+            print(f"[get_carrera_by_usuario] ❌ No se encontró carrera para usuario: id={id_usuario}")
+            # Hacer una consulta sin filtro de status para ver si existe alguna carrera
+            query_sin_filtro = select(UsuarioCarrera).where(UsuarioCarrera.id_usuario == id_usuario)
+            result_sin_filtro = await db.execute(query_sin_filtro)
+            todas_las_carreras = result_sin_filtro.scalars().all()
+            if todas_las_carreras:
+                print(f"[get_carrera_by_usuario] ⚠️ Usuario tiene {len(todas_las_carreras)} carrera(s) pero no cumplen el filtro:")
+                for c in todas_las_carreras:
+                    print(f"[get_carrera_by_usuario]   - id_carrera={c.id_carrera}, status={c.status}")
+            else:
+                print(f"[get_carrera_by_usuario] ❌ Usuario NO tiene ninguna carrera en la tabla usuario_carreras")
+        
+        return carrera
     
     @staticmethod
     async def get_usuarios_by_carrera(db: AsyncSession, id_carrera: uuid.UUID, status_filter: Optional[bool] = None) -> List[UsuarioCarrera]:
