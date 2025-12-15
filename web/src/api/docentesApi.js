@@ -286,14 +286,33 @@ const mapearPropuestas = (propuestas) => {
 };
 
 /**
- * Obtiene las propuestas pendientes del módulo de docentes
+ * Obtiene las propuestas pendientes del módulo de docentes usando fetch
  * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas al formato del componente
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
-    const response = await docentesApiInstance.get("/public/proposals/pending");
+    const DOCENTES_API_BASE_URL =
+      import.meta.env.VITE_DOCENTES_API_URL ||
+      "https://modulodocentefinal-production.up.railway.app";
+    
+    const response = await fetch(
+      `${DOCENTES_API_BASE_URL}/public/proposals/pending`,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+        },
+        // No incluir credentials para evitar problemas
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
     // Mapear los datos del API al formato esperado por el componente
-    return mapearPropuestas(response.data);
+    return mapearPropuestas(data);
   } catch (error) {
     console.error("Error al obtener propuestas pendientes:", error);
     throw error;
