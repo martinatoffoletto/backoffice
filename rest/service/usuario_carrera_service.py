@@ -5,12 +5,21 @@ from ..dao.sueldo_dao import SueldoDAO
 from ..schemas.usuario_carrera_schema import UsuarioCarrera as UsuarioCarreraSchema, UsuarioCarreraCreate
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime, timezone
+from ..messaging.producer import EventProducer
+from ..messaging.event_builder import build_event
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UsuarioCarreraService:
     
     @staticmethod
     async def create_assignment(db: AsyncSession, usuario_carrera: UsuarioCarreraCreate) -> Optional[UsuarioCarreraSchema]:
-
+        """
+        Asignar una carrera a un usuario alumno.
+        Publica el evento user.created después de la asignación exitosa.
+        """
         usuario = await UsuarioDAO.get_by_id(db, usuario_carrera.id_usuario)
         if not usuario or not usuario.status:
             return None
@@ -26,7 +35,60 @@ class UsuarioCarreraService:
         if sueldo:
             raise ValueError("El usuario no puede tener carrera y sueldo simultáneamente")
         
+        # Crear la asignación (esto hace commit en la BD)
         db_relacion = await UsuarioCarreraDAO.create(db, usuario_carrera)
+        
+        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
+        occurred_at = datetime.now(timezone.utc)
+        
+        # Refrescar el usuario para obtener los datos más recientes
+        await db.refresh(usuario)
+        
+        # Obtener información del rol, sueldo y carrera para el evento
+        from .usuario_service import UsuarioService
+        event_data = await UsuarioService._get_user_event_data(db, usuario)
+        
+        # Publicar evento user.created con toda la información completa
+        event = build_event(
+            event_type="user.created",
+            payload={
+                "user_id": str(usuario.id_usuario),
+                "nombre": usuario.nombre,
+                "apellido": usuario.apellido,
+                "legajo": usuario.legajo,
+                "dni": usuario.dni,
+                "email_institucional": usuario.email_institucional,
+                "email_personal": usuario.email_personal,
+                "telefono_personal": usuario.telefono_personal,
+                "fecha_alta": usuario.fecha_alta.isoformat() if usuario.fecha_alta else None,
+                "id_rol": str(usuario.id_rol),
+                "status": usuario.status,
+                "rol": event_data["rol"],
+                "sueldo": event_data["sueldo"],
+                "carrera": event_data["carrera"]
+            },
+            occurred_at=occurred_at
+        )
+        
+        published = await EventProducer.publish(
+            message=event,
+            exchange_name="user.event",
+            routing_key="user.created"
+        )
+        
+        if published:
+            logger.info(
+                f"✅ Evento user.created publicado correctamente para usuario ALUMNO: "
+                f"user_id={usuario.id_usuario}, legajo={usuario.legajo}, "
+                f"id_carrera={db_relacion.id_carrera}, eventId={event.get('eventId')}"
+            )
+        else:
+            logger.warning(
+                f"⚠️ No se pudo publicar evento user.created para usuario ALUMNO: "
+                f"user_id={usuario.id_usuario}, legajo={usuario.legajo}, "
+                f"id_carrera={db_relacion.id_carrera}, eventId={event.get('eventId')}"
+            )
+        
         return UsuarioCarreraSchema(
             id_usuario=db_relacion.id_usuario,
             id_carrera=db_relacion.id_carrera,
