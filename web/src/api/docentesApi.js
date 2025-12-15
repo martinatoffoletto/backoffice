@@ -303,37 +303,16 @@ const mapearEstado = (status) => {
 
 /**
  * Obtiene todas las propuestas del módulo de docentes (pendientes, aprobadas y rechazadas)
- * usando el endpoint de administración con autenticación
+ * usando el endpoint de administración con autenticación JWT
  * @returns {Promise<Array>} Lista de propuestas mapeadas al formato del componente
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
-    const DOCENTES_API_BASE_URL =
-      import.meta.env.VITE_DOCENTES_API_URL ||
-      "https://modulodocentefinal-production.up.railway.app";
+    // Usar docentesApiInstance que automáticamente incluye el token JWT
+    const response = await docentesApiInstance.get("/admin/proposals");
     
-    const ADMIN_KEY = 
-      import.meta.env.VITE_DOCENTES_ADMIN_KEY || 
-      "kimbakimbakimba";
-    
-    const response = await fetch(
-      `${DOCENTES_API_BASE_URL}/admin/proposals`,
-      {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "X-Admin-Key": ADMIN_KEY,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
     // Mapear los datos del API al formato esperado por el componente
-    return mapearPropuestas(data);
+    return mapearPropuestas(response.data);
   } catch (error) {
     console.error("Error al obtener propuestas:", error);
     throw error;

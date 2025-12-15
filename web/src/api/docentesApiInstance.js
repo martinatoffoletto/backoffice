@@ -1,19 +1,5 @@
 import axios from "axios";
 
-/**
- * Obtener el valor de una cookie por su nombre
- * @param {string} name - Nombre de la cookie
- * @returns {string|null} - Valor de la cookie o null si no existe
- */
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop().split(';').shift();
-  }
-  return null;
-};
-
 const DOCENTES_API_BASE_URL =
   import.meta.env.VITE_DOCENTES_API_URL ||
   "https://modulodocentefinal-production.up.railway.app";
@@ -25,15 +11,24 @@ const docentesApiInstance = axios.create({
   },
 });
 
+// Interceptor para agregar el token JWT en cada request
 docentesApiInstance.interceptors.request.use((config) => {
-  // Por ahora no agregamos nada, igual que Core
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
+// Interceptor para manejar errores de autenticación
 docentesApiInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Manejo de errores similar a Core
+    if (error.response?.status === 401) {
+      console.warn("⚠️ Error de autenticación con módulo de docentes (401)");
+      // Opcionalmente redirigir al login si es necesario
+      // redirectToLogin();
+    }
     return Promise.reject(error);
   }
 );
