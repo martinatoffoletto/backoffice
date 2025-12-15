@@ -21,36 +21,19 @@ const DOCENTES_API_BASE_URL =
 const docentesApiInstance = axios.create({
   baseURL: DOCENTES_API_BASE_URL,
   headers: {
-    "Accept": "application/json",
-    // No incluir Content-Type para GET requests
+    "Content-Type": "application/json",
   },
-  // No usar withCredentials para endpoints públicos
 });
 
-// Interceptor para agregar el JSESSIONID cuando sea necesario
-// TODO: Descomentar cuando el endpoint requiera autenticación
 docentesApiInstance.interceptors.request.use((config) => {
-  // Log para debug
-  console.log("Request config:", {
-    url: config.url,
-    method: config.method,
-    headers: config.headers,
-    baseURL: config.baseURL
-  });
+  // Por ahora no agregamos nada, igual que Core
   return config;
 });
 
-// Interceptor de respuesta para ver errores
 docentesApiInstance.interceptors.response.use(
   (response) => response,
-  (error) => {
-    console.error("Error response:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      headers: error.response?.headers,
-      data: error.response?.data,
-      config: error.config
-    });
+  async (error) => {
+    // Manejo de errores similar a Core
     return Promise.reject(error);
   }
 );
