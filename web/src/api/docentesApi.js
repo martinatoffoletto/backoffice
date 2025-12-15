@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import docentesApiInstance from "./docentesApiInstance";
+import { obtenerUsuarioPorId } from "./usuariosApi";
 
 // Mock data de docentes disponibles
 const mockDocentesDisponibles = {
@@ -269,34 +270,56 @@ export const eliminarDisponibilidadDocente = async (
 
 /**
  * Mapea los datos de propuestas del API al formato esperado por el componente
+ * y enriquece con información del usuario (nombre y apellido del profesor)
  * @param {Array} propuestas - Array de propuestas del API
- * @returns {Array} Array de propuestas mapeadas
+ * @returns {Promise<Array>} Array de propuestas mapeadas y enriquecidas
  */
-const mapearPropuestas = (propuestas) => {
-  return propuestas.map((propuesta) => ({
-    propuesta_id: propuesta.proposalId,
-    uuid_docente: propuesta.teacherId,
-    profesor: propuesta.teacherId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
-    uuid_materia: propuesta.subjectId,
-    materia: propuesta.subjectName || propuesta.subjectId,
-    dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
-    estado: "pendiente", // Todas las propuestas de este endpoint son pendientes
-    createdAt: propuesta.createdAt,
-  }));
+const mapearPropuestas = async (propuestas) => {
+  const propuestasEnriquecidas = await Promise.all(
+    propuestas.map(async (propuesta) => {
+      let nombreProfesor = propuesta.teacherId; // Default: mostrar ID
+      
+      try {
+        // Intentar obtener el usuario por ID
+        const usuario = await obtenerUsuarioPorId(propuesta.teacherId);
+        if (usuario && usuario.nombre && usuario.apellido) {
+          nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+        }
+      } catch (error) {
+        // Si falla, seguir con el ID como fallback
+        console.warn(`No se pudo obtener datos del usuario ${propuesta.teacherId}:`, error.message);
+      }
+      
+      return {
+        propuesta_id: propuesta.proposalId,
+        uuid_docente: propuesta.teacherId,
+        profesor: nombreProfesor, // Nombre completo o ID como fallback
+        uuid_materia: propuesta.subjectId,
+        materia: propuesta.subjectName || propuesta.subjectId,
+        dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
+        estado: "pendiente", // Todas las propuestas de este endpoint son pendientes
+        createdAt: propuesta.createdAt,
+      };
+    })
+  );
+  
+  return propuestasEnriquecidas;
 };
 
 /**
  * Obtiene las propuestas pendientes del módulo de docentes
- * usando autenticación JWT (Bearer token)
- * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas al formato del componente
+ * usando autenticación JWT (Bearer token) y las enriquece con datos de usuarios
+ * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas y enriquecidas
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
     // Usar docentesApiInstance que automáticamente incluye el token JWT
     const response = await docentesApiInstance.get("/public/proposals/pending");
     
-    // Mapear los datos del API al formato esperado por el componente
-    return mapearPropuestas(response.data);
+    // Mapear y enriquecer los datos con información de usuarios (async)
+    const propuestasEnriquecidas = await mapearPropuestas(response.data);
+    
+    return propuestasEnriquecidas;
   } catch (error) {
     console.error("Error al obtener propuestas pendientes:", error);
     throw error;
