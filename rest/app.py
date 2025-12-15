@@ -78,6 +78,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://backoffice-production-ui.up.railway.app", 
         "https://backoffice-production-df78.up.railway.app"
+        "https://modulodocentefinal-production.up.railway.app"
         
     ],
     allow_credentials=True,
