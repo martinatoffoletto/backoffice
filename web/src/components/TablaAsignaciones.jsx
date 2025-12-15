@@ -11,6 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { actualizarEstadoDisponibilidad, obtenerPropuestasPendientes } from "@/api/docentesApi";
+import { usePropuestasPolling } from "@/hooks/usePropuestasPolling";
+import { useToast, ToastContainer } from "@/components/ui/toast";
+import { RefreshCwIcon } from "lucide-react";
 
 // const mockPropuestas = [
 //   {
@@ -57,22 +60,62 @@ export default function TablaAsignaciones() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    const cargarPropuestas = async () => {
-      try {
-        setLoadingData(true);
-        const datos = await obtenerPropuestasPendientes();
-        setPropuestas(datos);
-      } catch (error) {
-        console.error("Error al cargar propuestas:", error);
-        // En caso de error, mantener array vacío
-      } finally {
-        setLoadingData(false);
-      }
-    };
+  // Hook de notificaciones toast
+  const { toasts, showToast, hideToast, info } = useToast();
 
+  // Hook de polling para detectar nuevas propuestas
+  const { 
+    has_new_proposals, 
+    new_proposals_count, 
+    resetNewProposals 
+  } = usePropuestasPolling(propuestas.length, true);
+
+  // Cargar propuestas inicialmente
+  useEffect(() => {
     cargarPropuestas();
   }, []);
+
+  // Mostrar notificación cuando se detecten nuevas propuestas
+  useEffect(() => {
+    if (has_new_proposals && new_proposals_count > 0) {
+      info(
+        new_proposals_count === 1 
+          ? '¡Nueva propuesta disponible!' 
+          : `¡${new_proposals_count} nuevas propuestas!`,
+        'Haz clic en Actualizar para verlas',
+        {
+          label: 'Actualizar',
+          onClick: handleRefresh
+        }
+      );
+    }
+  }, [has_new_proposals, new_proposals_count]);
+
+  const cargarPropuestas = async () => {
+    try {
+      setLoadingData(true);
+      const datos = await obtenerPropuestasPendientes();
+      setPropuestas(datos);
+    } catch (error) {
+      console.error("Error al cargar propuestas:", error);
+      // En caso de error, mantener array vacío
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      const datos = await obtenerPropuestasPendientes();
+      setPropuestas(datos);
+      resetNewProposals(); // Resetear indicador de nuevas propuestas
+    } catch (error) {
+      console.error("Error al actualizar propuestas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtrarPendientes = () =>
     propuestas.filter((p) => p.estado === "pendiente");
@@ -119,34 +162,73 @@ export default function TablaAsignaciones() {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-2xl">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold">
-          Solicitudes de Asignación
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={estado} onValueChange={setEstado} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="pendientes">Pendientes</TabsTrigger>
-            <TabsTrigger value="completados">Completados</TabsTrigger>
-          </TabsList>
+    <>
+      {/* Contenedor de notificaciones toast */}
+      <ToastContainer toasts={toasts} onClose={hideToast} />
+      
+      <Card className="w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-2xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-bold">
+              Solicitudes de Asignación
+            </CardTitle>
+            
+            {/* Botón Actualizar con badge de nuevas propuestas */}
+            <Button 
+              onClick={handleRefresh} 
+              disabled={loading || loadingData}
+              className="relative"
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCwIcon className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Actualizar
+              {has_new_proposals && new_proposals_count > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse font-semibold">
+                  {new_proposals_count}
+                </span>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <Tabs value={estado} onValueChange={setEstado} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="pendientes">
+                Pendientes
+                {filtrarPendientes().length > 0 && (
+                  <span className="ml-2 bg-sky-900 text-white text-xs rounded-full px-2 py-0.5">
+                    {filtrarPendientes().length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="completados">
+                Completados
+                {filtrarCompletados().length > 0 && (
+                  <span className="ml-2 bg-gray-500 text-white text-xs rounded-full px-2 py-0.5">
+                    {filtrarCompletados().length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="pendientes">
-            <TablaDatos
-              datos={filtrarPendientes()}
-              handleAccion={handleAccion}
-              mostrarAcciones
-              loading={loading}
-            />
-          </TabsContent>
+            <TabsContent value="pendientes">
+              <TablaDatos
+                datos={filtrarPendientes()}
+                handleAccion={handleAccion}
+                mostrarAcciones
+                loading={loading}
+              />
+            </TabsContent>
 
-          <TabsContent value="completados">
-            <TablaDatos datos={filtrarCompletados()} />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            <TabsContent value="completados">
+              <TablaDatos datos={filtrarCompletados()} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
