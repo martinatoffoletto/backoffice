@@ -275,46 +275,30 @@ export const eliminarDisponibilidadDocente = async (
 const mapearPropuestas = (propuestas) => {
   return propuestas.map((propuesta) => ({
     propuesta_id: propuesta.proposalId,
-    uuid_docente: propuesta.docenteId,
-    profesor: propuesta.docenteId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
+    uuid_docente: propuesta.teacherId,
+    profesor: propuesta.teacherId, // TODO: Obtener nombre del profesor cuando esté disponible el endpoint
     uuid_materia: propuesta.subjectId,
-    materia: propuesta.subjectId, // El API no proporciona subjectName
+    materia: propuesta.subjectName || propuesta.subjectId,
     dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
-    estado: mapearEstado(propuesta.status),
+    estado: "pendiente", // Todas las propuestas de este endpoint son pendientes
     createdAt: propuesta.createdAt,
-    decidedAt: propuesta.decidedAt,
-    active: propuesta.active,
   }));
 };
 
 /**
- * Mapea el estado de la propuesta del formato del API al formato del componente
- * @param {string} status - Estado en el API (PENDIENTE, APROBADA, RECHAZADA)
- * @returns {string} Estado mapeado (pendiente, aceptado, rechazado)
- */
-const mapearEstado = (status) => {
-  const estados = {
-    'PENDIENTE': 'pendiente',
-    'APROBADA': 'aceptado',
-    'RECHAZADA': 'rechazado'
-  };
-  return estados[status] || 'pendiente';
-};
-
-/**
- * Obtiene todas las propuestas del módulo de docentes (pendientes, aprobadas y rechazadas)
- * usando el endpoint de administración con autenticación JWT
- * @returns {Promise<Array>} Lista de propuestas mapeadas al formato del componente
+ * Obtiene las propuestas pendientes del módulo de docentes
+ * usando autenticación JWT (Bearer token)
+ * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas al formato del componente
  */
 export const obtenerPropuestasPendientes = async () => {
   try {
     // Usar docentesApiInstance que automáticamente incluye el token JWT
-    const response = await docentesApiInstance.get("/admin/proposals");
+    const response = await docentesApiInstance.get("/public/proposals/pending");
     
     // Mapear los datos del API al formato esperado por el componente
     return mapearPropuestas(response.data);
   } catch (error) {
-    console.error("Error al obtener propuestas:", error);
+    console.error("Error al obtener propuestas pendientes:", error);
     throw error;
   }
 };
