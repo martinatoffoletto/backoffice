@@ -1,4 +1,4 @@
-﻿from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..dao.usuario_carrera_dao import UsuarioCarreraDAO
 from ..dao.usuario_dao import UsuarioDAO
 from ..dao.sueldo_dao import SueldoDAO

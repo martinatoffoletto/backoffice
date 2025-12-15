@@ -194,10 +194,31 @@ class UsuarioService:
         # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
         occurred_at = datetime.now(timezone.utc)
         
+        # IMPORTANTE: Hacer flush para asegurar que cualquier cambio reciente (como asignación de carrera)
+        # esté visible antes de buscar los datos para el evento
+        await db.flush()
+        
+        # Refrescar el usuario para asegurar que tenemos los datos más actualizados
+        await db.refresh(created_user)
+        
         # Obtener información del rol, sueldo y carrera
+        # IMPORTANTE: Buscar la carrera justo antes de publicar el evento, por si se asignó después de crear el usuario
         print(f"[create_user] 🔍 Obteniendo datos del evento para usuario: id={created_user.id_usuario}, legajo={created_user.legajo}")
         event_data = await UsuarioService._get_user_event_data(db, created_user)
         print(f"[create_user] 📊 Event data obtenido: carrera={event_data.get('carrera')}, sueldo={event_data.get('sueldo')}")
+        
+        # Búsqueda explícita adicional de carrera justo antes de construir el evento
+        # para asegurarnos de tener los datos más recientes
+        if not event_data.get('carrera') and not event_data.get('sueldo'):
+            print(f"[create_user] 🔍 Búsqueda adicional de carrera antes de publicar evento...")
+            carrera_adicional = await UsuarioCarreraDAO.get_carrera_by_usuario(db, created_user.id_usuario)
+            if carrera_adicional:
+                print(f"[create_user] ✅ Carrera encontrada en búsqueda adicional: id_carrera={carrera_adicional.id_carrera}")
+                event_data["carrera"] = {
+                    "id_carrera": str(carrera_adicional.id_carrera),
+                    "status": carrera_adicional.status
+                }
+                print(f"[create_user] 📊 Event data actualizado con carrera: {event_data.get('carrera')}")
         
         # Preparar respuesta
         user_dict = {
