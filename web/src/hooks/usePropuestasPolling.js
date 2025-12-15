@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { obtenerPropuestasPendientes } from '@/api/docentesApi';
+import { obtenerPropuestasPendientesLigero } from '@/api/docentesApi';
 
 /**
  * Hook personalizado para hacer polling al endpoint de propuestas
@@ -28,7 +28,8 @@ export const usePropuestasPolling = (current_count, is_active = true) => {
   const INITIAL_DELAY = 5000; // 5 segundos para el primer check
 
   /**
-   * Verifica si hay nuevas propuestas consultando el endpoint
+   * Verifica si hay nuevas propuestas consultando el endpoint (versión LIGERA)
+   * Solo verifica la cantidad, NO enriquece los datos
    */
   const checkForNewProposals = async () => {
     if (!is_active || !is_visible_ref.current) {
@@ -37,7 +38,8 @@ export const usePropuestasPolling = (current_count, is_active = true) => {
     
     try {
       setIsPolling(true);
-      const data = await obtenerPropuestasPendientes();
+      // Usar versión LIGERA que no enriquece (solo cuenta)
+      const data = await obtenerPropuestasPendientesLigero();
       const new_count = data.length;
       
       setLastCheck(new Date());
