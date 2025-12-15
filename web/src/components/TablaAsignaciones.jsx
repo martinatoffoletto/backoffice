@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { actualizarEstadoDisponibilidad, obtenerPropuestasPendientes } from "@/api/docentesApi";
+import { actualizarEstadoPropuesta, obtenerPropuestasPendientes } from "@/api/docentesApi";
 import { usePropuestasPolling } from "@/hooks/usePropuestasPolling";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { RefreshCwIcon } from "lucide-react";
@@ -61,7 +61,7 @@ export default function TablaAsignaciones() {
   const [loadingData, setLoadingData] = useState(true);
 
   // Hook de notificaciones toast
-  const { toasts, showToast, hideToast, info } = useToast();
+  const { toasts, showToast, hideToast, info, success, error } = useToast();
 
   // Hook de polling para detectar nuevas propuestas
   const { 
@@ -125,16 +125,15 @@ export default function TablaAsignaciones() {
 
   const handleAccion = async (propuesta, accion) => {
     const nuevoEstado = accion === "aprobar" ? "aceptado" : "rechazado";
+    const accionTexto = accion === "aprobar" ? "aprobada" : "rechazada";
 
     try {
       setLoading(true);
-      await actualizarEstadoDisponibilidad(
-        propuesta.uuid_docente,
-        propuesta.uuid_materia,
-        propuesta.dia,
-        nuevoEstado
-      );
+      
+      // Actualizar propuesta en el módulo de docentes
+      await actualizarEstadoPropuesta(propuesta.propuesta_id, accion);
 
+      // Actualizar estado local
       setPropuestas((prev) =>
         prev.map((p) =>
           p.propuesta_id === propuesta.propuesta_id
@@ -143,9 +142,21 @@ export default function TablaAsignaciones() {
         )
       );
 
-      console.log(`Propuesta ${propuesta.propuesta_id} ${nuevoEstado}`);
-    } catch (error) {
-      console.error("Error al actualizar la asignación:", error);
+      // Mostrar notificación de éxito
+      success(
+        `Propuesta ${accionTexto}`,
+        `La propuesta de ${propuesta.profesor} para ${propuesta.materia} fue ${accionTexto} correctamente`
+      );
+
+      console.log(`✅ Propuesta ${propuesta.propuesta_id} ${nuevoEstado}`);
+    } catch (err) {
+      console.error("❌ Error al actualizar la propuesta:", err);
+      
+      // Mostrar notificación de error
+      error(
+        'Error al procesar propuesta',
+        `No se pudo ${accion} la propuesta. Por favor, intenta nuevamente.`
+      );
     } finally {
       setLoading(false);
     }

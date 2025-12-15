@@ -372,3 +372,44 @@ export const obtenerPropuestasPendientes = async () => {
     throw error;
   }
 };
+
+/**
+ * Actualiza el estado de una propuesta (aprobar o rechazar)
+ * @param {string} propuesta_id - UUID de la propuesta a actualizar
+ * @param {string} decision - Decision a tomar: "aprobar" o "rechazar"
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+export const actualizarEstadoPropuesta = async (propuesta_id, decision) => {
+  try {
+    // Validar decisión
+    if (!["aprobar", "rechazar"].includes(decision)) {
+      throw new Error("Decisión inválida. Debe ser 'aprobar' o 'rechazar'");
+    }
+    
+    // Mapear decisión a formato del API
+    const decision_api = decision === "aprobar" ? "APROBADO" : "RECHAZADO";
+    const comment = decision === "aprobar" 
+      ? "Propuesta aprobada" 
+      : "Propuesta rechazada";
+    
+    // Hacer PUT con JWT automático
+    const response = await docentesApiInstance.put(
+      `/teachers/me/proposals/${propuesta_id}`,
+      {
+        comment: comment,
+        decision: decision_api
+      }
+    );
+    
+    console.log(`✅ Propuesta ${propuesta_id} ${decision_api}`);
+    
+    return {
+      success: true,
+      decision: decision_api,
+      data: response.data
+    };
+  } catch (error) {
+    console.error(`❌ Error al actualizar propuesta ${propuesta_id}:`, error);
+    throw error;
+  }
+};
