@@ -6,6 +6,12 @@ from ..schemas.sueldo_schema import SueldoBase, SueldoUpdate, Sueldo as SueldoSc
 from ..models.sueldo_model import Sueldo
 from typing import List, Optional, Tuple
 import uuid
+from datetime import datetime, timezone
+from ..messaging.producer import EventProducer
+from ..messaging.event_builder import build_event
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SueldoService:
     
@@ -31,12 +37,74 @@ class SueldoService:
     
     @staticmethod
     async def create_sueldo(db: AsyncSession, sueldo: SueldoBase) -> Optional[Sueldo]:
-        """Crear un nuevo sueldo para un usuario"""
+        """
+        Crear un nuevo sueldo para un usuario no-alumno.
+        Publica el evento user.created después de la asignación exitosa.
+        """
         can_create, _ = await SueldoService.can_create_sueldo(db, sueldo)
         if not can_create:
             return None
         
-        return await SueldoDAO.create(db, sueldo)
+        # Crear el sueldo (esto hace commit en la BD)
+        created_sueldo = await SueldoDAO.create(db, sueldo)
+        
+        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
+        occurred_at = datetime.now(timezone.utc)
+        
+        # Obtener el usuario para el evento
+        usuario = await UsuarioDAO.get_by_id(db, sueldo.id_usuario)
+        if not usuario:
+            return created_sueldo
+        
+        # Refrescar el usuario para obtener los datos más recientes
+        await db.refresh(usuario)
+        
+        # Obtener información del rol, sueldo y carrera para el evento
+        from .usuario_service import UsuarioService
+        event_data = await UsuarioService._get_user_event_data(db, usuario)
+        
+        # Publicar evento user.created con toda la información completa
+        event = build_event(
+            event_type="user.created",
+            payload={
+                "user_id": str(usuario.id_usuario),
+                "nombre": usuario.nombre,
+                "apellido": usuario.apellido,
+                "legajo": usuario.legajo,
+                "dni": usuario.dni,
+                "email_institucional": usuario.email_institucional,
+                "email_personal": usuario.email_personal,
+                "telefono_personal": usuario.telefono_personal,
+                "fecha_alta": usuario.fecha_alta.isoformat() if usuario.fecha_alta else None,
+                "id_rol": str(usuario.id_rol),
+                "status": usuario.status,
+                "rol": event_data["rol"],
+                "sueldo": event_data["sueldo"],
+                "carrera": event_data["carrera"]
+            },
+            occurred_at=occurred_at
+        )
+        
+        published = await EventProducer.publish(
+            message=event,
+            exchange_name="user.event",
+            routing_key="user.created"
+        )
+        
+        if published:
+            logger.info(
+                f"✅ Evento user.created publicado correctamente para usuario NO-ALUMNO: "
+                f"user_id={usuario.id_usuario}, legajo={usuario.legajo}, "
+                f"id_sueldo={created_sueldo.id_sueldo}, eventId={event.get('eventId')}"
+            )
+        else:
+            logger.warning(
+                f"⚠️ No se pudo publicar evento user.created para usuario NO-ALUMNO: "
+                f"user_id={usuario.id_usuario}, legajo={usuario.legajo}, "
+                f"id_sueldo={created_sueldo.id_sueldo}, eventId={event.get('eventId')}"
+            )
+        
+        return created_sueldo
     
     @staticmethod
     async def get_sueldo_by_id(db: AsyncSession, sueldo_id: uuid.UUID, status_filter: Optional[bool] = None) -> Optional[Sueldo]:

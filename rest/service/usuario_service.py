@@ -109,8 +109,6 @@ class UsuarioService:
         Obtener información del rol, sueldo y carrera del usuario para eventos.
         Retorna diccionarios con la información necesaria.
         """
-        print(f"[_get_user_event_data] 🔍 Iniciando búsqueda para usuario: id={usuario.id_usuario}, legajo={usuario.legajo}")
-        
         # Obtener rol - siempre refrescar para evitar lazy loading en contexto async
         await db.refresh(usuario, attribute_names=["rol"])
         rol = usuario.rol
@@ -125,19 +123,14 @@ class UsuarioService:
                 "sueldo_base": float(rol.sueldo_base),
                 "status": rol.status
             }
-            print(f"[_get_user_event_data] ✅ Rol encontrado: categoria={rol.categoria}, id_rol={rol.id_rol}")
-        else:
-            print(f"[_get_user_event_data] ⚠️ No se encontró rol para usuario: id={usuario.id_usuario}")
         
         # Obtener sueldo o carrera
         sueldo_info = None
         carrera_info = None
         
-        print(f"[_get_user_event_data] 🔍 Buscando sueldo activo para usuario: id={usuario.id_usuario}")
         sueldo = await SueldoDAO.get_sueldo_by_usuario(db, usuario.id_usuario)
         
         if sueldo:
-            print(f"[_get_user_event_data] ✅ Sueldo encontrado: id_sueldo={sueldo.id_sueldo}, status={sueldo.status}")
             sueldo_info = {
                 "id_sueldo": str(sueldo.id_sueldo),
                 "cbu": sueldo.cbu,
@@ -145,43 +138,28 @@ class UsuarioService:
                 "observaciones": sueldo.observaciones,
                 "status": sueldo.status
             }
-            print(f"[_get_user_event_data] 📊 No se buscará carrera porque el usuario tiene sueldo activo")
         else:
-            print(f"[_get_user_event_data] ❌ No se encontró sueldo activo, buscando carrera para usuario: id={usuario.id_usuario}")
             carrera = await UsuarioCarreraDAO.get_carrera_by_usuario(db, usuario.id_usuario)
             
             if carrera:
-                print(f"[_get_user_event_data] ✅ Carrera encontrada: id_carrera={carrera.id_carrera}, status={carrera.status}")
                 carrera_info = {
                     "id_carrera": str(carrera.id_carrera),
                     "status": carrera.status
                 }
-            else:
-                print(f"[_get_user_event_data] ⚠️ No se encontró carrera activa para usuario: id={usuario.id_usuario}, legajo={usuario.legajo}")
-                # Buscar también carreras inactivas para debugging
-                carrera_inactiva = await UsuarioCarreraDAO.get_carrera_by_usuario(db, usuario.id_usuario, status_filter=False)
-                if carrera_inactiva:
-                    print(f"[_get_user_event_data] ⚠️ Usuario tiene carrera INACTIVA: id_carrera={carrera_inactiva.id_carrera}, status={carrera_inactiva.status}")
-                else:
-                    print(f"[_get_user_event_data] ❌ Usuario NO tiene carrera (ni activa ni inactiva)")
         
-        resultado = {
+        return {
             "rol": rol_info,
             "sueldo": sueldo_info,
             "carrera": carrera_info
         }
-        
-        print(f"[_get_user_event_data] 📤 Resultado final para usuario {usuario.id_usuario}: "
-              f"rol={'✅' if rol_info else '❌'}, "
-              f"sueldo={'✅' if sueldo_info else '❌'}, "
-              f"carrera={'✅' if carrera_info else '❌'}")
-        print(f"[_get_user_event_data] 📤 Carrera info detallada: {carrera_info}")
-        
-        return resultado
     
     @staticmethod
     async def create_user(db: AsyncSession, usuario: UsuarioCreate) -> Tuple[Optional[Dict[str, Any]], str]:
-        """Crear un nuevo usuario con validaciones completas"""
+        """
+        Crear un nuevo usuario con validaciones completas.
+        Nota: El evento user.created se publicará cuando se asigne la carrera/sueldo,
+        no en este método.
+        """
         # Generar datos únicos
         email_institucional = await UsuarioService._generate_unique_email(db, usuario.nombre, usuario.apellido)
         legajo = await UsuarioService._generate_unique_legajo(db)
@@ -190,35 +168,6 @@ class UsuarioService:
         
         # Crear usuario (esto hace commit en la BD)
         created_user = await UsuarioDAO.create(db, usuario, hashed_password, legajo, email_institucional)
-        
-        # Capturar occurredAt justo después del commit (cuando ocurrió el cambio real)
-        occurred_at = datetime.now(timezone.utc)
-        
-        # IMPORTANTE: Hacer flush para asegurar que cualquier cambio reciente (como asignación de carrera)
-        # esté visible antes de buscar los datos para el evento
-        await db.flush()
-        
-        # Refrescar el usuario para asegurar que tenemos los datos más actualizados
-        await db.refresh(created_user)
-        
-        # Obtener información del rol, sueldo y carrera
-        # IMPORTANTE: Buscar la carrera justo antes de publicar el evento, por si se asignó después de crear el usuario
-        print(f"[create_user] 🔍 Obteniendo datos del evento para usuario: id={created_user.id_usuario}, legajo={created_user.legajo}")
-        event_data = await UsuarioService._get_user_event_data(db, created_user)
-        print(f"[create_user] 📊 Event data obtenido: carrera={event_data.get('carrera')}, sueldo={event_data.get('sueldo')}")
-        
-        # Búsqueda explícita adicional de carrera justo antes de construir el evento
-        # para asegurarnos de tener los datos más recientes
-        if not event_data.get('carrera') and not event_data.get('sueldo'):
-            print(f"[create_user] 🔍 Búsqueda adicional de carrera antes de publicar evento...")
-            carrera_adicional = await UsuarioCarreraDAO.get_carrera_by_usuario(db, created_user.id_usuario)
-            if carrera_adicional:
-                print(f"[create_user] ✅ Carrera encontrada en búsqueda adicional: id_carrera={carrera_adicional.id_carrera}")
-                event_data["carrera"] = {
-                    "id_carrera": str(carrera_adicional.id_carrera),
-                    "status": carrera_adicional.status
-                }
-                print(f"[create_user] 📊 Event data actualizado con carrera: {event_data.get('carrera')}")
         
         # Preparar respuesta
         user_dict = {
@@ -234,49 +183,6 @@ class UsuarioService:
             "id_rol": str(created_user.id_rol),
             "status": created_user.status
         }
-        
-        # Publicar evento user.created (emittedAt se genera en build_event)
-        print(f"[create_user] 📤 Preparando evento user.created con carrera={event_data.get('carrera')}")
-        event = build_event(
-            event_type="user.created",
-            payload={
-                "user_id": str(created_user.id_usuario),
-                "nombre": created_user.nombre,
-                "apellido": created_user.apellido,
-                "legajo": created_user.legajo,
-                "dni": created_user.dni,
-                "email_institucional": created_user.email_institucional,
-                "email_personal": created_user.email_personal,
-                "telefono_personal": created_user.telefono_personal,
-                "fecha_alta": created_user.fecha_alta.isoformat() if created_user.fecha_alta else None,
-                "id_rol": str(created_user.id_rol),
-                "status": created_user.status,
-                "rol": event_data["rol"],
-                "sueldo": event_data["sueldo"],
-                "carrera": event_data["carrera"]
-            },
-            occurred_at=occurred_at
-        )
-        print(f"[create_user] 📤 Evento construido. Payload carrera: {event.get('payload', {}).get('carrera')}")
-        
-        published = await EventProducer.publish(
-            message=event,
-            exchange_name="user.event",
-            routing_key="user.created"
-        )
-        
-        if published:
-            logger.info(
-                f"✅ Evento user.created publicado correctamente para usuario: "
-                f"user_id={created_user.id_usuario}, legajo={created_user.legajo}, "
-                f"eventId={event.get('eventId')}"
-            )
-        else:
-            logger.warning(
-                f"⚠️ No se pudo publicar evento user.created para usuario: "
-                f"user_id={created_user.id_usuario}, legajo={created_user.legajo}, "
-                f"eventId={event.get('eventId')}"
-            )
         
         return user_dict, password
     
@@ -395,13 +301,10 @@ class UsuarioService:
         # Obtener información del rol, sueldo y carrera del usuario actualizado
         # Usar updated_user si está disponible, sino existing_user
         user_for_event = updated_user if updated_user else existing_user
-        print(f"[update_user] 🔍 Obteniendo datos del evento para usuario: id={user_id}, legajo={existing_user.legajo}")
         event_data = await UsuarioService._get_user_event_data(db, user_for_event)
-        print(f"[update_user] 📊 Event data obtenido: carrera={event_data.get('carrera')}, sueldo={event_data.get('sueldo')}")
         
         # Si se está activando el usuario, publicar solo evento user.created
         if is_activating:
-            print(f"[update_user] 📤 Preparando evento user.created (activación) con carrera={event_data.get('carrera')}")
             created_event = build_event(
                 event_type="user.created",
                 payload={
@@ -442,11 +345,9 @@ class UsuarioService:
                     f"eventId={created_event.get('eventId')}"
                 )
             
-            print(f"[update_user] 📤 Evento user.created publicado. Payload carrera: {created_event.get('payload', {}).get('carrera')}")
             return updated_user, "User updated successfully"
         
         # Si no se está activando, publicar evento user.updated normalmente
-        print(f"[update_user] 📤 Preparando evento user.updated con carrera={event_data.get('carrera')}")
         event = build_event(
             event_type="user.updated",
             payload={
@@ -467,7 +368,6 @@ class UsuarioService:
             },
             occurred_at=occurred_at
         )
-        print(f"[update_user] 📤 Evento user.updated construido. Payload carrera: {event.get('payload', {}).get('carrera')}")
         
         published = await EventProducer.publish(
             message=event,
@@ -506,9 +406,7 @@ class UsuarioService:
 
         # Obtener información del rol, sueldo y carrera antes de eliminar
         # Nota: obtenemos esta info antes de eliminar porque después el usuario ya no existe
-        print(f"[delete_user] 🔍 Obteniendo datos del evento para usuario: id={user_id}, legajo={usuario.legajo}")
         event_data = await UsuarioService._get_user_event_data(db, usuario)
-        print(f"[delete_user] 📊 Event data obtenido: carrera={event_data.get('carrera')}, sueldo={event_data.get('sueldo')}")
 
         # Eliminar usuario (esto hace commit en la BD)
         deleted = await UsuarioDAO.delete(db, user_id)
@@ -518,7 +416,6 @@ class UsuarioService:
         
         # Publicar evento user.deleted solo si se eliminó correctamente (emittedAt se genera en build_event)
         if deleted:
-            print(f"[delete_user] 📤 Preparando evento user.deleted con carrera={event_data.get('carrera')}")
             event = build_event(
                 event_type="user.deleted",
                 payload={
@@ -535,7 +432,6 @@ class UsuarioService:
                 },
                 occurred_at=occurred_at
             )
-            print(f"[delete_user] 📤 Evento user.deleted construido. Payload carrera: {event.get('payload', {}).get('carrera')}")
             
             published = await EventProducer.publish(
                 message=event,
