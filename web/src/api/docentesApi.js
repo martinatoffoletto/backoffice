@@ -1,6 +1,7 @@
 import axiosInstance from "./axiosInstance";
 import docentesApiInstance from "./docentesApiInstance";
 import { obtenerUsuarioPorId } from "./usuariosApi";
+import { materiaPorId } from "./materiasApi";
 
 // Mock data de docentes disponibles
 const mockDocentesDisponibles = {
@@ -270,24 +271,54 @@ export const eliminarDisponibilidadDocente = async (
 
 /**
  * Mapea los datos de propuestas del API al formato esperado por el componente
- * y enriquece con información del usuario (nombre y apellido del profesor)
+ * SIN enriquecer (para polling ligero)
+ * @param {Array} propuestas - Array de propuestas del API
+ * @returns {Array} Array de propuestas mapeadas sin enriquecer
+ */
+const mapearPropuestasSinEnriquecer = (propuestas) => {
+  return propuestas.map((propuesta) => ({
+    propuesta_id: propuesta.proposalId,
+    uuid_docente: propuesta.teacherId,
+    profesor: propuesta.teacherId, // Solo ID
+    uuid_materia: propuesta.subjectId,
+    materia: propuesta.subjectId, // Solo ID
+    dia: null,
+    estado: "pendiente",
+    createdAt: propuesta.createdAt,
+  }));
+};
+
+/**
+ * Mapea los datos de propuestas del API al formato esperado por el componente
+ * y enriquece con información del usuario (nombre y apellido del profesor) y materia
  * @param {Array} propuestas - Array de propuestas del API
  * @returns {Promise<Array>} Array de propuestas mapeadas y enriquecidas
  */
-const mapearPropuestas = async (propuestas) => {
+const mapearPropuestasEnriquecidas = async (propuestas) => {
   const propuestasEnriquecidas = await Promise.all(
     propuestas.map(async (propuesta) => {
       let nombreProfesor = propuesta.teacherId; // Default: mostrar ID
+      let nombreMateria = propuesta.subjectId; // Default: mostrar ID
       
-      try {
-        // Intentar obtener el usuario por ID
-        const usuario = await obtenerUsuarioPorId(propuesta.teacherId);
-        if (usuario && usuario.nombre && usuario.apellido) {
-          nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
-        }
-      } catch (error) {
-        // Si falla, seguir con el ID como fallback
-        console.warn(`No se pudo obtener datos del usuario ${propuesta.teacherId}:`, error.message);
+      // Enriquecer profesor (en paralelo con materia)
+      const [usuario, materia] = await Promise.all([
+        obtenerUsuarioPorId(propuesta.teacherId).catch((error) => {
+          console.warn(`No se pudo obtener usuario ${propuesta.teacherId}:`, error.message);
+          return null;
+        }),
+        materiaPorId(propuesta.subjectId).catch((error) => {
+          console.warn(`No se pudo obtener materia ${propuesta.subjectId}:`, error.message);
+          return null;
+        })
+      ]);
+      
+      // Asignar nombres si se encontraron
+      if (usuario && usuario.nombre && usuario.apellido) {
+        nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
+      }
+      
+      if (materia && materia.name_materia) {
+        nombreMateria = materia.name_materia;
       }
       
       return {
@@ -295,8 +326,8 @@ const mapearPropuestas = async (propuestas) => {
         uuid_docente: propuesta.teacherId,
         profesor: nombreProfesor, // Nombre completo o ID como fallback
         uuid_materia: propuesta.subjectId,
-        materia: propuesta.subjectName || propuesta.subjectId,
-        dia: null, // El API no proporciona el día, se puede agregar cuando esté disponible
+        materia: nombreMateria, // Nombre de materia o ID como fallback
+        dia: null, // El API no proporciona el día
         estado: "pendiente", // Todas las propuestas de este endpoint son pendientes
         createdAt: propuesta.createdAt,
       };
@@ -307,8 +338,24 @@ const mapearPropuestas = async (propuestas) => {
 };
 
 /**
+ * Obtiene las propuestas pendientes del módulo de docentes SIN enriquecer
+ * (ligero, solo para polling y verificar cantidad)
+ * @returns {Promise<Array>} Lista de propuestas pendientes sin enriquecer
+ */
+export const obtenerPropuestasPendientesLigero = async () => {
+  try {
+    const response = await docentesApiInstance.get("/public/proposals/pending");
+    // Mapeo simple sin enriquecimiento (rápido)
+    return mapearPropuestasSinEnriquecer(response.data);
+  } catch (error) {
+    console.error("Error al obtener propuestas pendientes (ligero):", error);
+    throw error;
+  }
+};
+
+/**
  * Obtiene las propuestas pendientes del módulo de docentes
- * usando autenticación JWT (Bearer token) y las enriquece con datos de usuarios
+ * usando autenticación JWT (Bearer token) y las enriquece con datos de usuarios y materias
  * @returns {Promise<Array>} Lista de propuestas pendientes mapeadas y enriquecidas
  */
 export const obtenerPropuestasPendientes = async () => {
@@ -316,8 +363,8 @@ export const obtenerPropuestasPendientes = async () => {
     // Usar docentesApiInstance que automáticamente incluye el token JWT
     const response = await docentesApiInstance.get("/public/proposals/pending");
     
-    // Mapear y enriquecer los datos con información de usuarios (async)
-    const propuestasEnriquecidas = await mapearPropuestas(response.data);
+    // Mapear y enriquecer los datos con información de usuarios Y materias (async)
+    const propuestasEnriquecidas = await mapearPropuestasEnriquecidas(response.data);
     
     return propuestasEnriquecidas;
   } catch (error) {

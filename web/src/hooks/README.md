@@ -2,11 +2,13 @@
 
 ## `usePropuestasPolling`
 
-Hook personalizado para detectar nuevas propuestas mediante polling al endpoint externo.
+Hook personalizado para detectar nuevas propuestas mediante polling **ligero** al endpoint externo.
 
 ### 📋 Descripción
 
-Este hook realiza consultas periódicas (polling) al endpoint de propuestas pendientes y detecta automáticamente cuando llegan nuevas propuestas, comparando la cantidad actual con la anterior.
+Este hook realiza consultas periódicas (polling) **sin enriquecer datos** al endpoint de propuestas pendientes y detecta automáticamente cuando llegan nuevas propuestas, comparando solo la cantidad actual con la anterior.
+
+**⚡ Optimización:** El polling usa `obtenerPropuestasPendientesLigero()` que NO hace requests adicionales de usuarios/materias, solo verifica si hay nuevas propuestas.
 
 ### 🎯 Características
 
@@ -78,12 +80,15 @@ const INITIAL_DELAY = 5000;      // 5 segundos para el primer check
 
 ### 🎯 Flujo de Trabajo
 
-1. El componente se monta con N propuestas
-2. Después de 5 segundos → Primer check
-3. Cada 30 segundos → Check recurrente
-4. Si detecta más propuestas → `has_new_proposals = true`
+1. El componente se monta con N propuestas (enriquecidas)
+2. Después de 5 segundos → Primer check **ligero** (solo cantidad)
+3. Cada 30 segundos → Check **ligero** recurrente (solo cantidad)
+4. Si detecta más propuestas → `has_new_proposals = true` + Notificación
 5. Usuario hace clic en "Actualizar"
-6. Componente llama a `resetNewProposals()` → `has_new_proposals = false`
+6. Componente llama a `obtenerPropuestasPendientes()` (CON enriquecimiento)
+7. Componente llama a `resetNewProposals()` → `has_new_proposals = false`
+
+**Importante:** El enriquecimiento (fetch de usuarios + materias) solo ocurre al actualizar manualmente, NO en el polling.
 
 ### ⚠️ Importante
 
