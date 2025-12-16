@@ -281,7 +281,6 @@ function TablaDatos({
             <TableCell>{p.profesor || p.uuid_docente}</TableCell>
             <TableCell>{p.materia}</TableCell>
             <TableCell>{p.carrera || "-"}</TableCell>
-            <TableCell>{p.dia || "-"}</TableCell>
             <TableCell className="capitalize">{p.estado}</TableCell>
             {mostrarAcciones && (
               <TableCell className="text-right space-x-2">
