@@ -20,10 +20,10 @@ export const obtenerDocentesDisponibles = async ({
   try {
     const params = { subjectId };
     
-    if (dayOfWeek) params.dayOfWeek = dayOfWeek;
-    if (modality) params.modality = modality;
-    if (shift) params.shift = shift;
-    if (campuses) params.campuses = campuses; 
+    if (dayOfWeek) params.dayOfWeek = dayOfWeek.toLowerCase();
+    if (modality) params.modality = modality.toLowerCase();
+    if (shift) params.shift = shift.toLowerCase();
+    if (campuses) params.campuses = campuses.toLowerCase(); 
 
     console.log("Parámetros para obtener docentes disponibles:", params)
 
