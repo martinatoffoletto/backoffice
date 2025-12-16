@@ -78,8 +78,15 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://backoffice-production-ui.up.railway.app", 
         "https://backoffice-production-df78.up.railway.app",
-        "https://proyecto-react-shadcn.vercel.app"
-        
+        "https://proyecto-react-shadcn.vercel.app",
+        "https://core-frontend-2025-02.netlify.app",
+        "http://uade-store.vercel.app",
+        "https://campus-connect-da-ii.up.railway.app",
+        "https://campus-connect-front-docentes.vercel.app",
+        "https://desap2-eventos-front.onrender.com",
+        "https://proyecto-react-shadcn.vercel.app",
+        "https://student-portal-front-production.up.railway.app",
+        "https://biblioteca-uade.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos (GET, POST, PUT, DELETE, etc.)
