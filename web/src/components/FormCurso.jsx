@@ -272,7 +272,7 @@ export default function FormCurso({
                       <SelectLabel>Sedes</SelectLabel>
                       {filteredSedesList.length > 0 ? (
                         filteredSedesList.map((sede) => (
-                          <SelectItem key={sede.uuid} value={sede.uuid}>
+                          <SelectItem key={sede.id_sede} value={sede.id_sede}>
                             {sede.nombre}
                           </SelectItem>
                         ))
