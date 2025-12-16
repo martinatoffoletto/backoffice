@@ -143,9 +143,13 @@ export default function TablaAsignaciones() {
       );
 
       // Mostrar notificación de éxito
+      const mensajeDetalle = propuesta.carrera 
+        ? `${propuesta.profesor} - ${propuesta.materia} (${propuesta.carrera})`
+        : `${propuesta.profesor} - ${propuesta.materia}`;
+      
       success(
         `Propuesta ${accionTexto}`,
-        `La propuesta de ${propuesta.profesor} para ${propuesta.materia} fue ${accionTexto} correctamente`
+        `La propuesta de ${mensajeDetalle} fue ${accionTexto} correctamente`
       );
 
       console.log(`✅ Propuesta ${propuesta.propuesta_id} ${nuevoEstado}`);
@@ -260,6 +264,7 @@ function TablaDatos({
           <TableHead>Propuesta ID</TableHead>
           <TableHead>Profesor</TableHead>
           <TableHead>Materia</TableHead>
+          <TableHead>Carrera</TableHead>
           <TableHead>Día</TableHead>
           <TableHead>Estado</TableHead>
           {mostrarAcciones && (
@@ -275,6 +280,7 @@ function TablaDatos({
             </TableCell>
             <TableCell>{p.profesor || p.uuid_docente}</TableCell>
             <TableCell>{p.materia}</TableCell>
+            <TableCell>{p.carrera || "-"}</TableCell>
             <TableCell>{p.dia || "-"}</TableCell>
             <TableCell className="capitalize">{p.estado}</TableCell>
             {mostrarAcciones && (

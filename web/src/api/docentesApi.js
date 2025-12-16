@@ -2,6 +2,7 @@ import axiosInstance from "./axiosInstance";
 import docentesApiInstance from "./docentesApiInstance";
 import { obtenerUsuarioPorId } from "./usuariosApi";
 import { materiaPorId } from "./materiasApi";
+import { carreraPorId } from "./carrerasApi";
 
 // Mock data de docentes disponibles
 const mockDocentesDisponibles = {
@@ -282,6 +283,8 @@ const mapearPropuestasSinEnriquecer = (propuestas) => {
     profesor: propuesta.teacherId, // Solo ID
     uuid_materia: propuesta.subjectId,
     materia: propuesta.subjectId, // Solo ID
+    uuid_carrera: null, // No se enriquece en polling ligero
+    carrera: null, // No se enriquece en polling ligero
     dia: null,
     estado: "pendiente",
     createdAt: propuesta.createdAt,
@@ -290,7 +293,7 @@ const mapearPropuestasSinEnriquecer = (propuestas) => {
 
 /**
  * Mapea los datos de propuestas del API al formato esperado por el componente
- * y enriquece con información del usuario (nombre y apellido del profesor) y materia
+ * y enriquece con información del usuario (nombre y apellido del profesor), materia y carrera
  * @param {Array} propuestas - Array de propuestas del API
  * @returns {Promise<Array>} Array de propuestas mapeadas y enriquecidas
  */
@@ -299,8 +302,10 @@ const mapearPropuestasEnriquecidas = async (propuestas) => {
     propuestas.map(async (propuesta) => {
       let nombreProfesor = propuesta.teacherId; // Default: mostrar ID
       let nombreMateria = propuesta.subjectId; // Default: mostrar ID
+      let nombreCarrera = null; // Default: sin carrera
+      let uuidCarrera = null; // Default: sin UUID de carrera
       
-      // Enriquecer profesor (en paralelo con materia)
+      // Enriquecer profesor y materia en paralelo
       const [usuario, materia] = await Promise.all([
         obtenerUsuarioPorId(propuesta.teacherId).catch((error) => {
           console.warn(`No se pudo obtener usuario ${propuesta.teacherId}:`, error.message);
@@ -321,12 +326,26 @@ const mapearPropuestasEnriquecidas = async (propuestas) => {
         nombreMateria = materia.name_materia;
       }
       
+      // Si la materia tiene carrera asociada, obtener el nombre de la carrera
+      if (materia && materia.uuid_carrera) {
+        uuidCarrera = materia.uuid_carrera;
+        
+        try {
+          const carreraData = await carreraPorId(materia.uuid_carrera);
+          nombreCarrera = carreraData.name || carreraData.data?.name || null;
+        } catch (error) {
+          console.warn(`No se pudo obtener carrera ${materia.uuid_carrera}:`, error.message);
+        }
+      }
+      
       return {
         propuesta_id: propuesta.proposalId,
         uuid_docente: propuesta.teacherId,
         profesor: nombreProfesor, // Nombre completo o ID como fallback
         uuid_materia: propuesta.subjectId,
         materia: nombreMateria, // Nombre de materia o ID como fallback
+        uuid_carrera: uuidCarrera, // UUID de la carrera (puede ser null)
+        carrera: nombreCarrera, // Nombre de carrera o null
         dia: null, // El API no proporciona el día
         estado: "pendiente", // Todas las propuestas de este endpoint son pendientes
         createdAt: propuesta.createdAt,
