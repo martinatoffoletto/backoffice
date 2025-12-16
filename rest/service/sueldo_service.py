@@ -5,6 +5,7 @@ from ..dao.usuario_carrera_dao import UsuarioCarreraDAO
 from ..schemas.sueldo_schema import SueldoBase, SueldoUpdate, Sueldo as SueldoSchema
 from ..models.sueldo_model import Sueldo
 from typing import List, Optional, Tuple
+from decimal import Decimal
 import uuid
 from datetime import datetime, timezone
 from ..messaging.producer import EventProducer
@@ -161,3 +162,48 @@ class SueldoService:
             sueldos = [sueldo for sueldo in sueldos if sueldo]
         
         return sueldos
+    
+    @staticmethod
+    async def pagar_sueldos_docentes(db: AsyncSession) -> dict:
+        """Pagar sueldos a todos los docentes activos y emitir evento"""
+        sueldos = await SueldoDAO.get_active_docentes_with_sueldo(db)
+        
+        total_pagado = Decimal(0)
+        cantidad_docentes = 0
+        
+        for sueldo in sueldos:
+            sueldo_base = sueldo.usuario.rol.sueldo_base or Decimal(0)
+            monto = sueldo_base + sueldo.sueldo_adicional
+            total_pagado += monto
+            cantidad_docentes += 1
+        
+        event = build_event(
+            event_type="salary.paid",
+            payload={
+                "total_pagado": float(total_pagado)
+            }
+        )
+        
+        published = await EventProducer.publish(
+            message=event,
+            exchange_name="salary.event",
+            routing_key="salary.paid"
+        )
+        
+        if published:
+            logger.info(
+                f"✅ Evento salary.paid publicado correctamente: "
+                f"cantidad_docentes={cantidad_docentes}, total_pagado={total_pagado}, "
+                f"eventId={event.get('eventId')}"
+            )
+        else:
+            logger.warning(
+                f"⚠️ No se pudo publicar evento salary.paid: "
+                f"cantidad_docentes={cantidad_docentes}, total_pagado={total_pagado}, "
+                f"eventId={event.get('eventId')}"
+            )
+        
+        return {
+            "cantidad_docentes": cantidad_docentes,
+            "total_pagado": float(total_pagado)
+        }
