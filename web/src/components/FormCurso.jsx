@@ -99,7 +99,7 @@ export default function FormCurso({
         setLoadingSedes(true);
         const response = await obtenerSedes();
 
-        const limpias = sedesArray.filter(
+        const limpias = response.filter(
           (s) => s && typeof s === "object" && s.nombre
         );
 
