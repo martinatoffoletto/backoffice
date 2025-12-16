@@ -1,145 +1,6 @@
-import axiosInstance from "./axiosInstance";
 import docentesApiInstance from "./docentesApiInstance";
 import { obtenerUsuarioPorId } from "./usuariosApi";
 import { materiaPorId } from "./materiasApi";
-
-// Mock data de docentes disponibles
-const mockDocentesDisponibles = {
-  // uuid_materia -> dia -> lista de docentes
-  "4e581607-2aab-4db0-9874-214f039866d6": {
-    LUNES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-        nombre: "Juan",
-        apellido: "Pérez",
-        estado: "pendiente",
-      },
-      {
-        uuid: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-        nombre: "María",
-        apellido: "García",
-        estado: "pendiente",
-      },
-    ],
-    MARTES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-        nombre: "Carlos",
-        apellido: "López",
-        estado: "pendiente",
-      },
-      {
-        uuid: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-        nombre: "Ana",
-        apellido: "Rodríguez",
-        estado: "pendiente",
-      },
-    ],
-    MIERCOLES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-        nombre: "Juan",
-        apellido: "Pérez",
-        estado: "pendiente",
-      },
-      {
-        uuid: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-        nombre: "Ana",
-        apellido: "Rodríguez",
-        estado: "pendiente",
-      },
-    ],
-    JUEVES: [
-      {
-        uuid: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-        nombre: "María",
-        apellido: "García",
-        estado: "pendiente",
-      },
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-        nombre: "Carlos",
-        apellido: "López",
-        estado: "pendiente",
-      },
-    ],
-    VIERNES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-        nombre: "Juan",
-        apellido: "Pérez",
-        estado: "pendiente",
-      },
-      {
-        uuid: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-        nombre: "María",
-        apellido: "García",
-        estado: "pendiente",
-      },
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-        nombre: "Carlos",
-        apellido: "López",
-        estado: "pendiente",
-      },
-    ],
-  },
-  // Materia por defecto para cualquier otra materia
-  default: {
-    LUNES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-        nombre: "Juan",
-        apellido: "Pérez",
-        estado: "pendiente",
-      },
-      {
-        uuid: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-        nombre: "María",
-        apellido: "García",
-        estado: "pendiente",
-      },
-    ],
-    MARTES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-        nombre: "Carlos",
-        apellido: "López",
-        estado: "pendiente",
-      },
-      {
-        uuid: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-        nombre: "Ana",
-        apellido: "Rodríguez",
-        estado: "pendiente",
-      },
-    ],
-    MIERCOLES: [
-      {
-        uuid: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-        nombre: "Juan",
-        apellido: "Pérez",
-        estado: "pendiente",
-      },
-    ],
-    JUEVES: [
-      {
-        uuid: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-        nombre: "María",
-        apellido: "García",
-        estado: "pendiente",
-      },
-    ],
-    VIERNES: [
-      {
-        uuid: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-        nombre: "Ana",
-        apellido: "Rodríguez",
-        estado: "pendiente",
-      },
-    ],
-  },
-};
 
 /**
  * ALTA CURSOS
@@ -157,13 +18,14 @@ export const obtenerDocentesDisponibles = async ({
 }) => {
   try {
     const params = { subjectId };
-
     
     if (dayOfWeek) params.dayOfWeek = dayOfWeek;
     if (modality) params.modality = modality;
     if (shift) params.shift = shift;
     if (campuses) params.campuses = campuses; 
+
     console.log("Parámetros para obtener docentes disponibles:", params)
+
     const response = await docentesApiInstance.get(
       "/admin/teachers/available",
       { params }
@@ -178,39 +40,6 @@ export const obtenerDocentesDisponibles = async ({
 };
 
 
-/**
- * ASIGNACION MATERIAS POR SOLICITUD- usar el de marcos
- * Aprueba o rechaza una propuesta de disponibilidad
- * ⚠️ Una vez tomada la decisión, no puede modificarse
- */
-export const actualizarDisponibilidad = async ({
-  proposalId,
-  teacherId,
-  rolDocente,
-  decision
-}) => {
-  try {
-    if (!["APROBADA", "RECHAZADA"].includes(decision)) {
-      throw new Error("Decisión inválida");
-    }
-
-    const response = await docentesApiInstance.put(
-      `/teachers/me/proposals/${proposalId}`,
-      { decision },
-      {
-        headers: {
-          "X-Teacher-Id": teacherId,
-          "X-Teacher-Roles": rolDocente
-        }
-      }
-    );
-    console.log(`Disponibilidad ${decision} para propuesta ${proposalId}: `, response.data)
-    return response.data;
-  } catch (error) {
-    console.error("Error al actualizar disponibilidad:", error);
-    throw error;
-  }
-};
 
 /*
   *Asigna la disponibilidad de un docente para todas las materias y días según su configuración
