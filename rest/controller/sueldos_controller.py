@@ -38,6 +38,15 @@ async def create_sueldo(
         )
     return created_sueldo
 
+@router.post("/pagar", status_code=status.HTTP_200_OK)
+async def pagar_sueldos_docentes(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Pagar sueldos a todos los docentes activos"""
+    resultado = await SueldoService.pagar_sueldos_docentes(db)
+    return resultado
+
 @router.get("/", response_model=List[Sueldo], response_model_exclude_none=True)
 async def get_all_sueldos(
     skip: int = Query(0, ge=0),

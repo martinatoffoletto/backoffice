@@ -1,7 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import and_, update
+from sqlalchemy.orm import selectinload
 from ..models.sueldo_model import Sueldo
+from ..models.usuario_model import Usuario
+from ..models.rol_model import Rol
 from ..schemas.sueldo_schema import SueldoBase, SueldoUpdate
 from typing import List, Optional
 import uuid
@@ -133,3 +136,18 @@ class SueldoDAO:
                 return []
         
         return []
+    
+    @staticmethod
+    async def get_active_docentes_with_sueldo(db: AsyncSession) -> List[Sueldo]:
+        """Obtener todos los sueldos activos de docentes activos"""
+        query = select(Sueldo).join(Usuario).join(Rol).options(
+            selectinload(Sueldo.usuario).selectinload(Usuario.rol)
+        ).where(
+            and_(
+                Sueldo.status == True,
+                Usuario.status == True,
+                Rol.categoria == "DOCENTE"
+            )
+        )
+        result = await db.execute(query)
+        return result.scalars().all()
