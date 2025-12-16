@@ -176,8 +176,7 @@ export default function AltaCurso() {
       // El backend devuelve {success: true, data: {...}} - extraer data
       const cursoCreado = nuevo_curso.data || nuevo_curso;
 
-      const res= await asignarDisponibilidadDocente(form.titular_uuid);
-      console.log("Disponibilidad del docente asignada: ", res);
+
       setCursoData(cursoCreado);
       setCompleted(true);
       setShowPopUp(true);
