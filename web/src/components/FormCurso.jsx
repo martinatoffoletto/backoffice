@@ -114,11 +114,12 @@ export default function FormCurso({
 
   useEffect(() => {
     const fetchDocentes = async () => {
-      if (materia && dia && turno && sede && modalidad) {  
+      const { uuid_materia, dia, turno, sede, modalidad } = form;
+      if (uuid_materia && dia && turno && sede && modalidad) {
         try {
           setLoadingDocentes(true);
           const data = await obtenerDocentesDisponibles({
-            subjectId: materia,
+            subjectId: uuid_materia,
             dayOfWeek: dia,
             modality: modalidad,
             shift: turno,
@@ -135,9 +136,9 @@ export default function FormCurso({
         setDocentesDisponibles([]);
       }
     };
-
     fetchDocentes();
-  }, [materia, dia, turno, sede, modalidad]);
+  }, [form.uuid_materia, form.dia, form.turno, form.sede, form.modalidad]);
+
 
 
   const handleMateriaSearch = (texto) => {
