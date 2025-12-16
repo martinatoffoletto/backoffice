@@ -97,10 +97,13 @@ export default function FormCurso({
     const fetchSedes = async () => {
       try {
         setLoadingSedes(true);
-        const data = await obtenerSedes();
-        const limpias = data.filter(
+        const response = await obtenerSedes();
+        const sedesArray = Array.isArray(response) ? response : response.data;
+
+        const limpias = sedesArray.filter(
           (s) => s && typeof s === "object" && s.nombre && s.uuid
         );
+
         setSedes(limpias);
       } catch (error) {
         console.error("Error al cargar sedes:", error);
