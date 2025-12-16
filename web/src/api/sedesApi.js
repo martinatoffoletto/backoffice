@@ -49,6 +49,7 @@ export const obtenerSedes = async (skip = 0, limit = 100, status_filter = null) 
       params.status_filter = status_filter;
     }
     const response = await axiosInstance.get("/sedes/", { params });
+    console.log("Sedes obtenidas: ", response.data);
     return response.data;
   } catch (error) {
     console.error("Error al obtener sedes:", error);
