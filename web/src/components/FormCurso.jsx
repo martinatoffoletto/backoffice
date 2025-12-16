@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { buscarEspacios } from "@/api/espaciosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
-import { obtenerDisponibilidadDocentes } from "@/api/docentesApi";
+import {  obtenerDocentesDisponibles } from "@/api/docentesApi";
 
 export default function FormCurso({
   form,
@@ -43,6 +43,12 @@ export default function FormCurso({
 
   const [docentesDisponibles, setDocentesDisponibles] = useState([]);
   const [loadingDocentes, setLoadingDocentes] = useState(false);
+
+  const [materia, setMateria] = useState(null);
+  const [dia, setDia] = useState(null);
+  const [turno, setTurno] = useState(null);
+  const [sede, setSede]=useState(null);
+  const [modalidad, setModalidad]=useState(null);
 
   const filteredMateriasList = materias.filter((materia) =>
     materia.nombre?.toLowerCase().includes(materiaSearch.toLowerCase().trim())
@@ -107,29 +113,32 @@ export default function FormCurso({
   }, []);
 
   useEffect(() => {
-    const fetchDocentesDisponibles = async () => {
-      if (!form.uuid_materia || !form.dia) {
+    const fetchDocentes = async () => {
+      if (materia && dia && turno && sede && modalidad) {  
+        try {
+          setLoadingDocentes(true);
+          const data = await obtenerDocentesDisponibles({
+            subjectId: materia,
+            dayOfWeek: dia,
+            modality: modalidad,
+            shift: turno,
+            campuses: sede,
+          });
+          setDocentesDisponibles(data);
+        } catch (error) {
+          console.error("Error obteniendo docentes:", error);
+          setDocentesDisponibles([]);
+        } finally {
+          setLoadingDocentes(false);
+        }
+      } else {
         setDocentesDisponibles([]);
-        return;
-      }
-
-      try {
-        setLoadingDocentes(true);
-        const docentes = await obtenerDisponibilidadDocentes(
-          form.uuid_materia,
-          form.dia
-        );
-        setDocentesDisponibles(docentes || []);
-      } catch (error) {
-        console.error("Error al cargar docentes disponibles:", error);
-        setDocentesDisponibles([]);
-      } finally {
-        setLoadingDocentes(false);
       }
     };
 
-    fetchDocentesDisponibles();
-  }, [form.uuid_materia, form.dia]);
+    fetchDocentes();
+  }, [materia, dia, turno, sede, modalidad]);
+
 
   const handleMateriaSearch = (texto) => {
     setMateriaSearch(texto);
@@ -156,6 +165,7 @@ export default function FormCurso({
                 <Select
                   value={form.uuid_materia || ""}
                   onValueChange={(value) => {
+                    setMateria(value);
                     setForm((prev) => ({ ...prev, uuid_materia: value }));
                     if (camposConError.has("uuid_materia")) {
                       const nuevosErrores = new Set(camposConError);
@@ -223,6 +233,7 @@ export default function FormCurso({
                 <Select
                   value={form.sede || ""}
                   onValueChange={(value) => {
+                    setSede(value);
                     setForm((prev) => ({ ...prev, sede: value }));
                     if (camposConError.has("sede")) {
                       const nuevosErrores = new Set(camposConError);
@@ -311,8 +322,10 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.modalidad}
-                onValueChange={(value) =>
+                onValueChange={(value) =>{
+                  setModalidad(value);
                   setForm((prev) => ({ ...prev, modalidad: value }))
+                }
                 }
               >
                 <SelectTrigger>
@@ -337,8 +350,10 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.dia}
-                onValueChange={(value) =>
+                onValueChange={(value) =>{
+                  setDia(value);
                   setForm((prev) => ({ ...prev, dia: value }))
+                }
                 }
               >
                 <SelectTrigger>
@@ -440,8 +455,10 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.turno}
-                onValueChange={(value) =>
+                onValueChange={(value) =>{
+                  setTurno(value);
                   setForm((prev) => ({ ...prev, turno: value }))
+                }
                 }
               >
                 <SelectTrigger>
@@ -566,7 +583,8 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
-                  disabled={!form.uuid_materia || !form.dia || loadingDocentes}
+                  disabled={!materia || !dia || !turno || !sede || !modalidad || loadingDocentes}
+
                 >
                   <SelectTrigger
                     className={`w-full ${
@@ -619,7 +637,8 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
-                  disabled={!form.uuid_materia || !form.dia || loadingDocentes}
+                  disabled={!materia || !dia || !turno || !sede || !modalidad || loadingDocentes}
+
                 >
                   <SelectTrigger
                     className={`w-full ${
