@@ -98,10 +98,9 @@ export default function FormCurso({
       try {
         setLoadingSedes(true);
         const response = await obtenerSedes();
-        const sedesArray = Array.isArray(response) ? response : response.data;
 
         const limpias = sedesArray.filter(
-          (s) => s && typeof s === "object" && s.nombre && s.uuid
+          (s) => s && typeof s === "object" && s.nombre
         );
 
         setSedes(limpias);
@@ -273,7 +272,7 @@ export default function FormCurso({
                       <SelectLabel>Sedes</SelectLabel>
                       {filteredSedesList.length > 0 ? (
                         filteredSedesList.map((sede) => (
-                          <SelectItem key={sede.nombre} value={sede.uuid}>
+                          <SelectItem key={sede.nombre} value={sede.nombre}>
                             {sede.nombre}
                           </SelectItem>
                         ))
