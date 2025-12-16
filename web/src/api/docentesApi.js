@@ -164,7 +164,7 @@ export const obtenerDocentesDisponibles = async ({
     if (modality) params.modality = modality;
     if (shift) params.shift = shift;
     if (campuses) params.campuses = campuses; 
-
+    console.log("Parámetros para obtener docentes disponibles:", params)
     const response = await docentesApiInstance.get(
       "/admin/teachers/available",
       { params }
