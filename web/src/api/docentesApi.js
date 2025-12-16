@@ -32,8 +32,19 @@ export const obtenerDocentesDisponibles = async ({
       { params }
     );
 
-    console.log(`Docentes obtenidos para ${subjectId}:`, response.data);
-    return response.data;
+    const fullResponse=await Promise.all(
+      response.data.map(async(docente)=>{
+        const usuario=await obtenerUsuarioPorId(docente.teacherId);
+        return{
+          ...docente,
+          nombre:usuario?.nombre || "Nombre no disponible",
+          apellido:usuario?.apellido || "Apellido no disponible"
+        }
+      })
+    )
+
+    console.log(`Docentes obtenidos para ${subjectId}:`, fullResponse);
+    return fullResponse;
   } catch (error) {
     console.error("Error obteniendo docentes disponibles:", error);
     throw error;

@@ -615,7 +615,7 @@ export default function FormCurso({
                         </SelectItem>
                       ) : (
                         docentesDisponibles.map((docente) => (
-                          <SelectItem key={docente.uuid} value={docente.uuid}>
+                          <SelectItem key={docente.teacherId} value={docente.teacherId}>
                             {docente.nombre} {docente.apellido}
                           </SelectItem>
                         ))
