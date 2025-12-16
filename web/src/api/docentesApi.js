@@ -323,19 +323,22 @@ const mapearPropuestasEnriquecidas = async (propuestas) => {
       }
       
       // Extraer datos de la materia
-      if (materia) {
+      // La respuesta puede venir como { success: true, data: {...} } o directamente {...}
+      const materiaData = materia?.data || materia;
+      
+      if (materiaData) {
         // El nombre de la materia puede estar en diferentes campos
-        nombreMateria = materia.nombre || materia.name_materia || materia.name || propuesta.subjectId;
+        nombreMateria = materiaData.nombre || materiaData.name_materia || materiaData.name || propuesta.subjectId;
         
         // La carrera YA VIENE INCLUIDA en la respuesta de materia
-        if (materia.carrera) {
-          uuidCarrera = materia.carrera.uuid || materia.uuid_carrera;
-          nombreCarrera = materia.carrera.name || materia.carrera.nombre || null;
+        if (materiaData.carrera) {
+          uuidCarrera = materiaData.carrera.uuid || materiaData.uuid_carrera;
+          nombreCarrera = materiaData.carrera.name || materiaData.carrera.nombre || null;
           
-          console.log(`✅ Carrera encontrada: ${nombreCarrera}`);
-        } else if (materia.uuid_carrera) {
+          console.log(`✅ Carrera encontrada: ${nombreCarrera} para materia ${nombreMateria}`);
+        } else if (materiaData.uuid_carrera) {
           // Si no viene el objeto carrera completo, guardar el UUID
-          uuidCarrera = materia.uuid_carrera;
+          uuidCarrera = materiaData.uuid_carrera;
           console.warn(`⚠️ Materia tiene uuid_carrera pero no el objeto carrera completo`);
         }
       }
