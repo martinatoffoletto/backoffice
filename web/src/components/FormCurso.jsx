@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { buscarEspacios } from "@/api/espaciosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
-import { obtenerSedes } from "@/api/sedesApi";
+import { buscarSedes, obtenerSedes } from "@/api/sedesApi";
 import {  obtenerDocentesDisponibles } from "@/api/docentesApi";
 
 export default function FormCurso({
@@ -118,7 +118,7 @@ export default function FormCurso({
     const fetchDocentes = async () => {
       const { uuid_materia, dia, turno, sede, modalidad } = form;
       if (uuid_materia && dia && turno && sede && modalidad) {
-        try {
+        try {          
           setLoadingDocentes(true);
           const data = await obtenerDocentesDisponibles({
             subjectId: uuid_materia,
@@ -272,7 +272,7 @@ export default function FormCurso({
                       <SelectLabel>Sedes</SelectLabel>
                       {filteredSedesList.length > 0 ? (
                         filteredSedesList.map((sede) => (
-                          <SelectItem key={sede.nombre} value={sede.nombre}>
+                          <SelectItem key={sede.uuid} value={sede.uuid}>
                             {sede.nombre}
                           </SelectItem>
                         ))
