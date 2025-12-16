@@ -142,90 +142,94 @@ const mockDocentesDisponibles = {
 };
 
 /**
+ * ALTA CURSOS
  * Obtiene la lista de docentes disponibles para una materia y día específicos
  * @param {string} uuid_materia - UUID de la materia
  * @param {string} dia - Día de la semana (LUNES, MARTES, MIERCOLES, JUEVES, VIERNES)
  * @returns {Promise<Array>} Lista de docentes disponibles con uuid, nombre, apellido y estado
  */
-export const obtenerDisponibilidadDocentes = async (uuid_materia, dia) => {
+export const obtenerDocentesDisponibles = async ({
+  subjectId,
+  dayOfWeek,
+  modality,
+  shift,
+  campuses
+}) => {
   try {
-    // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await docentesApiInstance.get("/docentes/disponibilidad", {
-    //   params: { uuid_materia, dia },
-    // });
-    // return response.data;
+    const params = { subjectId };
 
-    // Mock response
-    console.log(
-      `[MOCK] Obteniendo disponibilidad docentes - Materia: ${uuid_materia}, Día: ${dia}`
+    
+    if (dayOfWeek) params.dayOfWeek = dayOfWeek;
+    if (modality) params.modality = modality;
+    if (shift) params.shift = shift;
+    if (campuses) params.campuses = campuses; 
+
+    const response = await docentesApiInstance.get(
+      "/admin/teachers/available",
+      { params }
     );
 
-    const materiaData =
-      mockDocentesDisponibles[uuid_materia] || mockDocentesDisponibles.default;
-    const diaUpper = dia?.toUpperCase() || "LUNES";
-    const docentes = materiaData[diaUpper] || [];
-
-    // Simular delay de red
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    return docentes;
+    console.log(`Docentes obtenidos para ${subjectId}:`, response.data);
+    return response.data;
   } catch (error) {
-    console.error("Error al obtener disponibilidad de docentes:", error);
+    console.error("Error obteniendo docentes disponibles:", error);
     throw error;
   }
 };
+
 
 /**
- * Actualiza el estado de disponibilidad de un docente (aceptado/rechazado)
- * @param {string} uuid_docente - UUID del docente
- * @param {string} uuid_materia - UUID de la materia
- * @param {string} dia - Día de la semana
- * @param {string} estado - Nuevo estado ("aceptado" o "rechazado")
- * @returns {Promise<Object>} Resultado de la operación
+ * ASIGNACION MATERIAS POR SOLICITUD- usar el de marcos
+ * Aprueba o rechaza una propuesta de disponibilidad
+ * ⚠️ Una vez tomada la decisión, no puede modificarse
  */
-export const actualizarEstadoDisponibilidad = async (
-  uuid_docente,
-  uuid_materia,
-  dia,
-  estado
-) => {
+export const actualizarDisponibilidad = async ({
+  proposalId,
+  teacherId,
+  rolDocente,
+  decision
+}) => {
   try {
-    // Validar estado
-    if (!["aceptado", "rechazado"].includes(estado)) {
-      throw new Error("Estado inválido. Debe ser 'aceptado' o 'rechazado'");
+    if (!["APROBADA", "RECHAZADA"].includes(decision)) {
+      throw new Error("Decisión inválida");
     }
 
-    // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await docentesApiInstance.patch(`/docentes/disponibilidad/${uuid_docente}`, {
-    //   uuid_materia,
-    //   dia,
-    //   estado,
-    // });
-    // return response.data;
-
-    // Mock response
-    console.log(
-      `[MOCK] Actualizando estado disponibilidad - Docente: ${uuid_docente}, Estado: ${estado}`
+    const response = await docentesApiInstance.put(
+      `/teachers/me/proposals/${proposalId}`,
+      { decision },
+      {
+        headers: {
+          "X-Teacher-Id": teacherId,
+          "X-Teacher-Roles": rolDocente
+        }
+      }
     );
-
-    // Simular delay de red
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    return {
-      success: true,
-      message: `Estado actualizado a '${estado}' correctamente`,
-      data: {
-        uuid_docente,
-        uuid_materia,
-        dia,
-        estado,
-      },
-    };
+    console.log(`Disponibilidad ${decision} para propuesta ${proposalId}: `, response.data)
+    return response.data;
   } catch (error) {
-    console.error("Error al actualizar estado de disponibilidad:", error);
+    console.error("Error al actualizar disponibilidad:", error);
     throw error;
   }
 };
+
+/*
+  *Asigna la disponibilidad de un docente para todas las materias y días según su configuración
+  *@param{string}teacherId - ID del docente
+  *@returns{Promise<Object>} Resultado de la operación
+*/
+export const asignarDisponibilidadDocente = async (teacherId) => {
+  try {
+    const response = await docentesApiInstance.post(
+      `/admin/teachers/availability/${teacherId}/assign`
+    );
+    console.log(`Disponibilidad asignada para docente ${teacherId}: `, response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error asignando disponibilidad:", error);
+    throw error;
+  }
+};
+
 
 /**
  * Elimina la disponibilidad de un docente para una materia y día específicos
@@ -234,40 +238,29 @@ export const actualizarEstadoDisponibilidad = async (
  * @param {string} dia - Día de la semana
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const eliminarDisponibilidadDocente = async (
-  uuid_docente,
-  uuid_materia,
-  dia
-) => {
-  try {
-    // TODO: Descomentar cuando el endpoint esté disponible
-    // const response = await docentesApiInstance.delete(`/docentes/disponibilidad/${uuid_docente}`, {
-    //   params: { uuid_materia, dia },
-    // });
-    // return response.data;
+// export const eliminarDisponibilidadDocente = async (
+//   uuid_docente,
+//   uuid_materia,
+//   dia
+// ) => {
+//   try {
+//     const response = await docentesApiInstance.delete(
+//       `/teachers/${uuid_docente}/availability`,
+//       {
+//         params: {
+//           subjectId: uuid_materia,
+//           day: dia
+//         }
+//       }
+//     );
 
-    // Mock response
-    console.log(
-      `[MOCK] Eliminando disponibilidad - Docente: ${uuid_docente}, Materia: ${uuid_materia}, Día: ${dia}`
-    );
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error al eliminar disponibilidad:", error);
+//     throw error;
+//   }
+// };
 
-    // Simular delay de red
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    return {
-      success: true,
-      message: "Disponibilidad eliminada correctamente",
-      data: {
-        uuid_docente,
-        uuid_materia,
-        dia,
-      },
-    };
-  } catch (error) {
-    console.error("Error al eliminar disponibilidad del docente:", error);
-    throw error;
-  }
-};
 
 /**
  * Mapea los datos de propuestas del API al formato esperado por el componente
