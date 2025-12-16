@@ -265,7 +265,6 @@ function TablaDatos({
           <TableHead>Profesor</TableHead>
           <TableHead>Materia</TableHead>
           <TableHead>Carrera</TableHead>
-          <TableHead>Día</TableHead>
           <TableHead>Estado</TableHead>
           {mostrarAcciones && (
             <TableHead className="text-right">Acción</TableHead>
