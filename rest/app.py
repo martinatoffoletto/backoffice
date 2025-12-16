@@ -77,7 +77,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
         "https://backoffice-production-ui.up.railway.app", 
-        "https://backoffice-production-df78.up.railway.app"
+        "https://backoffice-production-df78.up.railway.app",
+        "https://proyecto-react-shadcn.vercel.app"
         
     ],
     allow_credentials=True,
