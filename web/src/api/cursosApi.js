@@ -1,5 +1,4 @@
 import coreApiInstance from "./coreApiInstance";
-import { obtenerUsuarioPorId } from "./usuariosApi";
 
 // eslint-disable-next-line no-unused-vars
 export const altaCurso = async (cursoData) => {
@@ -98,8 +97,9 @@ export const obtenerCursos = async () => {
 /**
  * Obtiene las inscripciones de un curso (estudiantes y profesores)
  * Endpoint: GET /api/inscripciones?uuid_curso={uuid}
+ * La respuesta ya incluye el objeto user completo en cada inscripción
  * @param {string} uuid_curso - UUID del curso
- * @returns {Promise<Array>} Lista de inscripciones con user_uuid y rol
+ * @returns {Promise<Array>} Lista de inscripciones con user incluido
  */
 export const obtenerInscripcionesPorCurso = async (uuid_curso) => {
   try {
@@ -111,7 +111,8 @@ export const obtenerInscripcionesPorCurso = async (uuid_curso) => {
         accept: "application/json",
       },
     });
-    return response.data || [];
+    // La respuesta viene como { success, data: [...], page, limit, count, totalCount, totalPages }
+    return response.data?.data || [];
   } catch (error) {
     console.error("Error al obtener inscripciones del curso:", error);
     // Retornar array vacío si falla
@@ -120,8 +121,8 @@ export const obtenerInscripcionesPorCurso = async (uuid_curso) => {
 };
 
 /**
- * Obtiene un curso con sus docentes enriquecidos (similar a obtenerPropuestasPendientes)
- * Filtra las inscripciones para obtener solo TITULAR y AUXILIAR, y enriquece con datos de usuario
+ * Obtiene un curso con sus docentes enriquecidos
+ * Las inscripciones ya incluyen el objeto user completo, no necesitamos llamadas adicionales
  * @param {string} uuid_curso - UUID del curso
  * @returns {Promise<Object>} Curso con docentes_enriquecidos
  */
@@ -138,40 +139,35 @@ export const cursoPorIdConDocentes = async (uuid_curso) => {
     const curso = curso_response.data;
 
     // 2. Filtrar solo profesores (TITULAR y AUXILIAR)
+    // Cada inscripción ya incluye el objeto user completo
     const titular_inscripcion = inscripciones.find((i) => i.rol === "TITULAR");
     const auxiliar_inscripcion = inscripciones.find((i) => i.rol === "AUXILIAR");
 
-    // 3. Enriquecer con datos de usuarios (en paralelo)
-    const [titular_usuario, auxiliar_usuario] = await Promise.all([
-      titular_inscripcion
-        ? obtenerUsuarioPorId(titular_inscripcion.user_uuid).catch(() => null)
-        : Promise.resolve(null),
-      auxiliar_inscripcion
-        ? obtenerUsuarioPorId(auxiliar_inscripcion.user_uuid).catch(() => null)
-        : Promise.resolve(null),
-    ]);
-
-    // 4. Construir objetos de docentes enriquecidos
+    // 3. Construir objetos de docentes con los datos que ya vienen en la inscripción
     const docentes_enriquecidos = {
-      titular: titular_usuario
+      titular: titular_inscripcion?.user
         ? {
             user_uuid: titular_inscripcion.user_uuid,
-            nombre: titular_usuario.nombre,
-            apellido: titular_usuario.apellido,
-            nombre_completo: `${titular_usuario.nombre} ${titular_usuario.apellido}`,
+            nombre: titular_inscripcion.user.nombre,
+            apellido: titular_inscripcion.user.apellido,
+            nombre_completo: `${titular_inscripcion.user.nombre} ${titular_inscripcion.user.apellido}`,
+            email: titular_inscripcion.user.email,
+            legajo: titular_inscripcion.user.legajo,
           }
         : null,
-      auxiliar: auxiliar_usuario
+      auxiliar: auxiliar_inscripcion?.user
         ? {
             user_uuid: auxiliar_inscripcion.user_uuid,
-            nombre: auxiliar_usuario.nombre,
-            apellido: auxiliar_usuario.apellido,
-            nombre_completo: `${auxiliar_usuario.nombre} ${auxiliar_usuario.apellido}`,
+            nombre: auxiliar_inscripcion.user.nombre,
+            apellido: auxiliar_inscripcion.user.apellido,
+            nombre_completo: `${auxiliar_inscripcion.user.nombre} ${auxiliar_inscripcion.user.apellido}`,
+            email: auxiliar_inscripcion.user.email,
+            legajo: auxiliar_inscripcion.user.legajo,
           }
         : null,
     };
 
-    // 5. Retornar curso con docentes enriquecidos
+    // 4. Retornar curso con docentes enriquecidos
     return {
       ...curso,
       docentes_enriquecidos,
