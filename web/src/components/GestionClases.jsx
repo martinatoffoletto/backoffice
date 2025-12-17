@@ -124,7 +124,8 @@ export default function GestionClases({
   // Calcular sábado aleatorio SOLO UNA VEZ para cursos de noche
   // Si ya existe una clase en un sábado, usar ese sábado en lugar de generar uno nuevo
   useEffect(() => {
-    if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && !sabadoIntegrador) {
+    // ⚠️ IMPORTANTE: Solo ejecutar DESPUÉS de cargar las clases (cuando loading = false)
+    if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && !sabadoIntegrador && !loading) {
       const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
       const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
 
@@ -162,7 +163,7 @@ export default function GestionClases({
         }
       }
     }
-  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador, clases]); // ✅ Ahora SÍ depende de clases!
+  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador, clases, loading]); // ✅ Depende también de loading!
 
   // Función helper para normalizar fechas (solo año, mes, día)
   // Debe estar antes de diasCalendario porque se usa dentro del useMemo
