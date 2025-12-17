@@ -103,6 +103,32 @@ export const asignarDisponibilidadDocente = async (blockId) => {
 };
 
 /**
+ * Libera/desbloquea un bloque de disponibilidad específico de un docente
+ * @param {string} blockId - UUID del bloque de disponibilidad
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+export const liberarDisponibilidadDocente = async (blockId) => {
+  try {
+    if (!blockId) {
+      throw new Error("blockId es requerido para liberar disponibilidad");
+    }
+
+    const response = await docentesApiInstance.patch(
+      `/admin/teachers/availability/${blockId}/unassign`
+    );
+    
+    console.log(
+      `✅ Bloque de disponibilidad ${blockId} liberado:`,
+      response.data
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error liberando bloque de disponibilidad ${blockId}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Elimina la disponibilidad de un docente para una materia y día específicos
  * @param {string} uuid_docente - UUID del docente
  * @param {string} uuid_materia - UUID de la materia

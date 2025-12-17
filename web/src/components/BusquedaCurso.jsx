@@ -20,11 +20,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import PopUp from "@/components/PopUp";
-import { obtenerCursos } from "@/api/cursosApi";
+import { obtenerCursos, obtenerInscripcionesPorCurso } from "@/api/cursosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
 import { obtenerSedes } from "@/api/sedesApi";
 import { bajaCurso } from "@/api/cursosApi";
 import { buscarCurso } from "@/api/cursosApi";
+import { obtenerDocentesDisponibles, liberarDisponibilidadDocente } from "@/api/docentesApi";
 
 const estadoInicialFiltros = {
   uuid_materia: "",
@@ -218,12 +219,93 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
 
   const handleBaja = async () => {
     try {
+      console.log("🗑️ Iniciando eliminación de curso:", curso_seleccionado.uuid);
+      
+      // 1. Obtener inscripciones del curso para saber quiénes son los docentes
+      const inscripciones = await obtenerInscripcionesPorCurso(curso_seleccionado.uuid);
+      console.log("📋 Inscripciones obtenidas:", inscripciones);
+      
+      // 2. Filtrar titular y auxiliar
+      const titular = inscripciones.find((i) => i.rol === "TITULAR");
+      const auxiliar = inscripciones.find((i) => i.rol === "AUXILIAR");
+      
+      console.log("👨‍🏫 Titular:", titular ? titular.user_uuid : "N/A");
+      console.log("👨‍🏫 Auxiliar:", auxiliar ? auxiliar.user_uuid : "N/A");
+      
+      // 3. Consultar docentes disponibles con los mismos parámetros del curso
+      if (titular || auxiliar) {
+        try {
+          const docentes_disponibles = await obtenerDocentesDisponibles(
+            curso_seleccionado.dia,
+            curso_seleccionado.turno,
+            curso_seleccionado.modalidad,
+            curso_seleccionado.sede
+          );
+          
+          console.log("📚 Docentes disponibles obtenidos:", docentes_disponibles.length);
+          
+          // 4. Buscar los blockId de los docentes asignados
+          const block_ids_a_liberar = [];
+          
+          if (titular) {
+            const docente_titular = docentes_disponibles.find(
+              (d) => d.teacherId === titular.user_uuid
+            );
+            if (docente_titular && docente_titular.blockId) {
+              block_ids_a_liberar.push(docente_titular.blockId);
+              console.log("🔓 blockId titular encontrado:", docente_titular.blockId);
+            } else {
+              console.warn("⚠️ No se encontró blockId para el titular");
+            }
+          }
+          
+          if (auxiliar) {
+            const docente_auxiliar = docentes_disponibles.find(
+              (d) => d.teacherId === auxiliar.user_uuid
+            );
+            if (docente_auxiliar && docente_auxiliar.blockId) {
+              block_ids_a_liberar.push(docente_auxiliar.blockId);
+              console.log("🔓 blockId auxiliar encontrado:", docente_auxiliar.blockId);
+            } else {
+              console.warn("⚠️ No se encontró blockId para el auxiliar");
+            }
+          }
+          
+          // 5. Liberar disponibilidad de los docentes
+          if (block_ids_a_liberar.length > 0) {
+            console.log("🔓 Liberando disponibilidad de docentes...");
+            
+            const resultados_liberacion = await Promise.allSettled(
+              block_ids_a_liberar.map((blockId) => liberarDisponibilidadDocente(blockId))
+            );
+            
+            // Log de resultados
+            resultados_liberacion.forEach((resultado, index) => {
+              if (resultado.status === "fulfilled") {
+                console.log(`✅ Bloque ${block_ids_a_liberar[index]} liberado exitosamente`);
+              } else {
+                console.warn(`⚠️ Error al liberar ${block_ids_a_liberar[index]}:`, resultado.reason);
+              }
+            });
+          }
+        } catch (error) {
+          // Si falla la liberación, registramos el error pero continuamos con la eliminación del curso
+          console.warn("⚠️ Error al liberar disponibilidad de docentes:", error);
+          console.log("⚠️ Continuando con la eliminación del curso...");
+        }
+      }
+      
+      // 6. Eliminar el curso
       await bajaCurso(curso_seleccionado.uuid);
-      console.log("Curso dado de baja exitosamente");
+      console.log("✅ Curso dado de baja exitosamente");
       setShowPopUpConfirmacion(false);
+      
+      // Recargar resultados para reflejar el cambio
+      handleBuscarCursos();
+      
     } catch (err) {
       setShowPopUpConfirmacion(false);
-      console.log("Error al dar de baja curso:", err.message);
+      console.log("❌ Error al dar de baja curso:", err.message);
       setErrorState(
         err.response?.data?.detail ||
           err.message ||
