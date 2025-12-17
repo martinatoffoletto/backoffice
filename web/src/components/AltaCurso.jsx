@@ -94,6 +94,11 @@ export default function AltaCurso() {
       camposFaltantes.push("inscripciones_iniciales");
     }
 
+    // Validar que titular y auxiliar no sean el mismo
+    if (form.titular_uuid && form.auxiliar_uuid && form.titular_uuid === form.auxiliar_uuid) {
+      camposFaltantes.push("docentes_duplicados");
+    }
+
     // Combinar todos los campos con error
     const todosLosErrores = new Set([...camposFaltantes, ...erroresFechas]);
 
@@ -113,6 +118,7 @@ export default function AltaCurso() {
         aula: "Aula",
         turno: "Turno",
         inscripciones_iniciales: "Docentes (Titular o Auxiliar)",
+        docentes_duplicados: "Docentes duplicados (titular y auxiliar no pueden ser el mismo)",
       };
 
       const mensajesError = [];
