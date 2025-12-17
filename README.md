@@ -1,81 +1,137 @@
 # BackOffice Platform
 
-Aplicación full-stack para la gestión académica que combina un backend FastAPI asíncrono con un frontend React/Tailwind. La API expone servicios para usuarios, roles, sedes, espacios, parámetros, sueldos y clases individuales.
+Plataforma full-stack para la gestión académica, con backend FastAPI asíncrono y frontend React + Vite + Tailwind. Permite administrar usuarios, roles, sedes, aulas, parámetros, sueldos, carreras y clases individuales.
 
-## Tech stack
+---
 
-- FastAPI 0.115+ con SQLAlchemy async y Pydantic
-- PostgreSQL (principal) con modo mock para desarrollo sin base de datos
-- React 19, Vite 7 y Tailwind CSS 4
-- Axios con interceptor de autenticación
+## ¿Qué hace este proyecto?
+
+BackOffice Platform centraliza la gestión académica de una institución:
+
+- Permite CRUD de usuarios, roles, sedes y espacios físicos (aulas, laboratorios, etc).
+- Administra parámetros globales, sueldos y la relación usuarios-carreras.
+- Gestiona clases individuales y reservas.
+- Incluye autenticación JWT y control de acceso por roles.
+- El frontend ofrece formularios dinámicos, validaciones y búsqueda avanzada.
+
+---
 
 ## Estructura del repositorio
 
 ```
 backoffice/
-├─ rest/                   API FastAPI
-│  ├─ controller/          Capas de endpoints
-│  ├─ service/             Reglas de negocio
-│  ├─ dao/                 Acceso a datos con SQLAlchemy async
-│  ├─ models/              Declaraciones ORM
-│  ├─ schemas/             Esquemas Pydantic
-│  ├─ app.py               Punto de entrada FastAPI
-│  └─ database.py          Inicialización y pooling de base de datos
-├─ web/                    Frontend React
-│  ├─ src/api/             Clientes Axios hacia la API
-│  ├─ src/components/      UI reutilizable y formularios CRUD
-│  └─ vite.config.js       Configuración de Vite
-├─ requirements.txt        Dependencias del backend
+├─ rest/                   # Backend FastAPI (API REST)
+│  ├─ controller/          # Endpoints y rutas
+│  ├─ service/             # Lógica de negocio
+│  ├─ dao/                 # Acceso a datos (SQLAlchemy async)
+│  ├─ models/              # Modelos ORM
+│  ├─ schemas/             # Esquemas Pydantic
+│  ├─ app.py               # Punto de entrada FastAPI
+│  └─ database.py          # Configuración y pooling de base de datos
+├─ web/                    # Frontend React + Vite
+│  ├─ src/api/             # Clientes Axios hacia la API
+│  ├─ src/components/      # Componentes y formularios reutilizables
+│  └─ vite.config.js       # Configuración de Vite
+├─ requirements.txt        # Dependencias del backend
 ├─ README.md
-└─ .env                    Variables del backend
+└─ .env                    # Variables de entorno backend
 ```
+
+---
 
 ## Requisitos
 
-- Python 3.11 o superior
-- Node.js 20 o superior y npm 10+
-- PostgreSQL 14+ (opcional en local; se puede trabajar en modo mock)
+- Python 3.11+
+- Node.js 20+ y npm 10+
+- PostgreSQL 14+ (opcional en local; modo mock disponible)
 
-## Puesta en marcha
+---
 
-### 1. Backend (FastAPI)
+## Archivos `.env` requeridos
 
-```cmd
-cd backoffice
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
+### Backend (`.env` en la raíz)
 
-Configura el archivo `.env` (se incluye uno de ejemplo) con al menos:
+Ejemplo:
 
-```
+```env
 ENVIRONMENT=development
 HOSTED_DATABASE_URL=postgresql://usuario:pass@host:puerto/base
 DATABASE_URL=postgresql://usuario:pass@localhost:5432/backoffice_db
+RABBITMQ_URL=amqp://guest:guest@localhost:5672/
 ```
 
-Para desarrollo puedes dejar `HOSTED_DATABASE_URL` vacío y apuntar `DATABASE_URL` a tu instancia local. Si ninguna conexión es válida, la API opera en modo mock y no realiza escrituras reales.
+Puedes dejar `HOSTED_DATABASE_URL` vacío y usar solo `DATABASE_URL` para desarrollo local. Si ninguna conexión es válida, la API opera en modo mock (sin persistencia real).
 
-Inicia el backend:
+### Frontend (`web/.env`)
 
-```cmd
-uvicorn rest.app:app --reload --host 0.0.0.0 --port 8000
+Ejemplo:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-La documentación interactiva queda disponible en `http://localhost:8000/docs`.
+Esto define la URL base para Axios en React.
 
-### 2. Frontend (React)
+---
 
-```cmd
-cd web
-npm install
-npm run dev
-```
+## ¿Cómo ejecutar el backend?
 
-El frontend consulta la API usando `axiosInstance`. Para cambiar el host expuesto, ajusta `web/src/api/axiosInstance.js` o crea una variable `VITE_API_BASE_URL` siguiendo las convenciones de Vite.
+1. Instala dependencias:
+   ```bash
+   cd backoffice
+   python -m venv .venv
+   source .venv/bin/activate  # o .venv\\Scripts\\activate en Windows
+   pip install -r requirements.txt
+   ```
+2. Configura el archivo `.env` como se indica arriba.
+3. Inicia el backend:
+   ```bash
+   uvicorn rest.app:app --reload --host 0.0.0.0 --port 8000
+   ```
+4. Accede a la documentación interactiva en: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Módulos expuestos por la API
+---
+
+## ¿Cómo ejecutar el frontend?
+
+1. Instala dependencias:
+   ```bash
+   cd web
+   npm install
+   ```
+2. Crea o edita `web/.env` con la variable `VITE_API_BASE_URL` apuntando al backend.
+3. Inicia el frontend:
+   ```bash
+   npm run dev
+   ```
+4. Accede a la app en: [http://localhost:5173](http://localhost:5173) (o el puerto que indique Vite)
+
+---
+
+## Descripción de los módulos principales
+
+### Backend (FastAPI)
+
+- **Usuarios**: CRUD, búsqueda avanzada, relación con carreras y roles.
+- **Roles**: Definición de permisos y categorías (ADMINISTRADOR, DOCENTE, ALUMNO).
+- **Sedes**: Gestión de ubicaciones físicas.
+- **Espacios**: Aulas, laboratorios, oficinas, etc. Incluye disponibilidad y reservas.
+- **Parámetros**: Configuración global del sistema.
+- **Sueldos**: Gestión de nómina y liquidaciones.
+- **Clases individuales**: Reservas, seguimiento y estados (programada, dictada, etc).
+- **Autenticación**: Login JWT, verificación y control de acceso.
+
+### Frontend (React)
+
+- Formularios dinámicos y validaciones en tiempo real.
+- Búsqueda y filtrado de entidades.
+- Gestión de sesiones y autenticación.
+- Integración con la API mediante Axios y variables de entorno.
+- UI moderna con Tailwind y componentes reutilizables.
+
+---
+
+## Endpoints principales de la API
 
 | Módulo              | Prefijo                       | Descripción                                    |
 | ------------------- | ----------------------------- | ---------------------------------------------- |
@@ -89,27 +145,20 @@ El frontend consulta la API usando `axiosInstance`. Para cambiar el host expuest
 | Usuarios-Carreras   | `/api/v1/usuarios-carreras`   | Relación entre usuarios y carreras             |
 | Clases Individuales | `/api/v1/clases-individuales` | Reservas y seguimiento de clases               |
 
-## Conexión a base de datos
-
-`rest/database.py` selecciona la conexión según el entorno:
-
-1. `ENVIRONMENT=development` busca primero `HOSTED_DATABASE_URL`, luego `DATABASE_URL` local.
-2. `ENVIRONMENT=production` toma `DATABASE_URL` (normalizado a `postgresql+asyncpg`).
-3. Si ninguna conexión es válida, se activa un mock in-memory para evitar caídas durante desarrollo.
+---
 
 ## Testing
 
-```cmd
+```bash
 pip install pytest pytest-asyncio httpx
 pytest
 ```
 
-## Contribución
+---
 
-- CONTROLLER MANEJA ERRORES HTTP Y SERVICE NOOO!!!
+## Contribución y soporte
 
-## Soporte
-
-- Documentación interactiva: `http://localhost:8000/docs`
+- Los controladores (controller) manejan los errores HTTP; la lógica de negocio va en service.
+- Documentación interactiva: [http://localhost:8000/docs](http://localhost:8000/docs)
 - Revisión de logs: consola de Uvicorn y navegador
 - Issues y mejoras: tablero de GitHub del repositorio

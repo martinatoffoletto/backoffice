@@ -202,32 +202,47 @@ export default function ModifMateria({ materia_inicial = null }) {
         </div>
 
         {showForm && materiaData && (
-          <div className="w-full max-w-6xl p-6 mt-8">
-            <div className="w-full bg-white border-2 border-blue-500 p-6 rounded-xl shadow-lg">
-              <h2 className="text-xl font-bold text-blue-600 mb-4">
-                Modificar Materia
-              </h2>
+          <div>
+            <h1 className="font-bold text-center text-2xl mb-4">
+              Modificar Materia - {materiaData.nombre}
+            </h1>
+            <span className="block w-full h-[3px] bg-sky-950 mb-6" />
 
-              <span className="block w-full h-[2px] bg-blue-500 mb-6"></span>
-
-              <FormMateria
-                form={form}
-                setForm={setForm}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                submitButtonText="Guardar Cambios"
-                isLoading={isSubmitting}
-              />
+            <div className="bg-blue-50 p-4 rounded-lg mb-6">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Materia actual:</span>{" "}
+                {materiaData.nombre} (ID: {materiaData.uuid})
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Modificá los campos que desees actualizar y presioná "Guardar"
+              </p>
             </div>
+
+            <FormMateria
+              form={form}
+              setForm={setForm}
+              onSubmit={handleSubmit}
+              onCancel={handleCancel}
+              submitButtonText="Guardar Cambios"
+              isLoading={isSubmitting}
+            />
           </div>
         )}
 
         {completed && (
-          <div className="w-full max-w-6xl p-6 mt-8">
-            <div className="flex flex-col justify-center items-center border-2 border-green-500 p-6 rounded-lg shadow-lg gap-4 bg-white">
-              <h2 className="text-xl font-bold text-green-600">
-                Materia Modificada Exitosamente
-              </h2>
+          <div className="w-full bg-green-50 border-2 border-green-500 p-8 rounded-xl shadow-lg">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-3xl font-bold">OK</span>
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-green-700 text-center mb-2">
+              Materia Modificada Exitosamente
+            </h2>
+            <p className="text-center text-gray-600 text-sm mb-6">
+              Los cambios se han guardado correctamente.
+            </p>
+            <div className="flex justify-center">
               <Button
                 onClick={() => {
                   setCompleted(false);
@@ -244,7 +259,7 @@ export default function ModifMateria({ materia_inicial = null }) {
                 }}
                 className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded"
               >
-                OK
+                Nueva Modificación
               </Button>
             </div>
           </div>

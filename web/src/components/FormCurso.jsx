@@ -13,8 +13,8 @@ import {
 import { useEffect, useState } from "react";
 import { aulasDisponibles } from "@/api/espaciosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
-import {obtenerSedes } from "@/api/sedesApi";
-import {  obtenerDocentesDisponibles } from "@/api/docentesApi";
+import { obtenerSedes } from "@/api/sedesApi";
+import { obtenerDocentesDisponibles } from "@/api/docentesApi";
 
 export default function FormCurso({
   form,
@@ -47,8 +47,8 @@ export default function FormCurso({
   const [materia, setMateria] = useState(null);
   const [dia, setDia] = useState(null);
   const [turno, setTurno] = useState(null);
-  const [sede, setSede]=useState(null);
-  const [modalidad, setModalidad]=useState(null);
+  const [sede, setSede] = useState(null);
+  const [modalidad, setModalidad] = useState(null);
 
   const filteredMateriasList = materias.filter((materia) =>
     materia.nombre?.toLowerCase().includes(materiaSearch.toLowerCase().trim())
@@ -70,11 +70,15 @@ export default function FormCurso({
             form.sede,
             form.turno
           );
-          console.log("Aulas disponibles:", response, form.desde,
+          console.log(
+            "Aulas disponibles:",
+            response,
+            form.desde,
             form.hasta,
             form.dia,
             form.sede,
-            form.turno);
+            form.turno
+          );
           setAulas(response || []);
         } catch (error) {
           console.error("Error al cargar aulas:", error);
@@ -157,8 +161,6 @@ export default function FormCurso({
     fetchDocentes();
   }, [form.uuid_materia, form.dia, form.turno, form.sede, form.modalidad]);
 
-
-
   const handleMateriaSearch = (texto) => {
     setMateriaSearch(texto);
   };
@@ -173,6 +175,31 @@ export default function FormCurso({
 
   return (
     <form onSubmit={onSubmit} className="mt-8">
+      {isModificacion && (
+        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Materia:</span> {form.uuid_materia}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Sede:</span> {form.sede}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Aula:</span> {form.aula}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Día:</span> {form.dia}{" "}
+            <span className="ml-4 font-semibold">Turno:</span> {form.turno}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Período:</span> {form.periodo}{" "}
+            <span className="ml-4 font-semibold">Modalidad:</span>{" "}
+            {form.modalidad}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Estado:</span> {form.estado}
+          </p>
+        </div>
+      )}
       <FieldSet>
         <FieldGroup>
           {!isModificacion && (
@@ -406,7 +433,13 @@ export default function FormCurso({
                 </FieldLabel>
                 <Select
                   value={form.aula}
-                  disabled={!form.sede || !form.dia || !form.turno || !form.desde || !form.hasta}
+                  disabled={
+                    !form.sede ||
+                    !form.dia ||
+                    !form.turno ||
+                    !form.desde ||
+                    !form.hasta
+                  }
                   onValueChange={(value) =>
                     setForm((prev) => ({ ...prev, aula: value }))
                   }
@@ -414,9 +447,7 @@ export default function FormCurso({
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        loadingAulas
-                          ? "Cargando aulas..."
-                          : "Seleccione aula"
+                        loadingAulas ? "Cargando aulas..." : "Seleccione aula"
                       }
                     />
                   </SelectTrigger>
