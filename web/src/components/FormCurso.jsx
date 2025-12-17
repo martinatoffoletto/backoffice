@@ -114,7 +114,7 @@ export default function FormCurso({
         );
 
         // Agregar sede VIRTUAL
-        setSedes([...limpias, { id_sede: "vir", nombre: "Virtual" }]);
+        setSedes([...limpias, { id_sede: "vir", nombre: "vir" }]);
       } catch (error) {
         console.error("Error al cargar sedes:", error);
         setSedes([]);
