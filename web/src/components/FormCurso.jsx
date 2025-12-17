@@ -70,6 +70,11 @@ export default function FormCurso({
             form.sede,
             form.turno
           );
+          console.log("Aulas disponibles:", response, form.desde,
+            form.hasta,
+            form.dia,
+            form.sede,
+            form.turno);
           setAulas(response || []);
         } catch (error) {
           console.error("Error al cargar aulas:", error);
@@ -394,54 +399,56 @@ export default function FormCurso({
               </Select>
             </Field>
 
-            <Field>
-              <FieldLabel htmlFor="aula">
-                Aula<span className="text-red-500">*</span>
-              </FieldLabel>
-              <Select
-                value={form.aula}
-                disabled={!form.sede || !form.dia || !form.turno || !form.desde || !form.hasta}
-                onValueChange={(value) =>
-                  setForm((prev) => ({ ...prev, aula: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      loadingAulas
-                        ? "Cargando aulas..."
-                        : "Seleccione aula"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="p-2">
-                    <Input
-                      placeholder="Buscar aula..."
-                      value={aulaSearch}
-                      onChange={(e) => setAulaSearch(e.target.value)}
-                      className="mb-2"
+            {!isModificacion && (
+              <Field>
+                <FieldLabel htmlFor="aula">
+                  Aula<span className="text-red-500">*</span>
+                </FieldLabel>
+                <Select
+                  value={form.aula}
+                  disabled={!form.sede || !form.dia || !form.turno || !form.desde || !form.hasta}
+                  onValueChange={(value) =>
+                    setForm((prev) => ({ ...prev, aula: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        loadingAulas
+                          ? "Cargando aulas..."
+                          : "Seleccione aula"
+                      }
                     />
-                  </div>
-                  <SelectGroup>
-                    <SelectLabel>Aulas disponibles</SelectLabel>
-                    {filteredAulas.length > 0 ? (
-                      filteredAulas.map((aula) => (
-                        <SelectItem key={aula.nombre} value={aula.nombre}>
-                          {aula.nombre}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1.5 text-sm text-gray-500">
-                        {loadingAulas
-                          ? "Cargando..."
-                          : "No se encontraron aulas"}
-                      </div>
-                    )}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder="Buscar aula..."
+                        value={aulaSearch}
+                        onChange={(e) => setAulaSearch(e.target.value)}
+                        className="mb-2"
+                      />
+                    </div>
+                    <SelectGroup>
+                      <SelectLabel>Aulas disponibles</SelectLabel>
+                      {filteredAulas.length > 0 ? (
+                        filteredAulas.map((aula) => (
+                          <SelectItem key={aula.nombre} value={aula.nombre}>
+                            {aula.nombre}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-gray-500">
+                          {loadingAulas
+                            ? "Cargando..."
+                            : "No se encontraron aulas"}
+                        </div>
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">

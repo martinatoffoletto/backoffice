@@ -90,7 +90,8 @@ export const aulasDisponibles = async (desde, hasta, dia, sede, turno) => {
 
     const cursosConflicto = cursos.filter(
       (curso) =>
-        curso.sede === sede &&
+        (curso.sede.toLowerCase() === sedeId.toLowerCase() ||
+          curso.sede.toUpperCase() === sedeObj.nombre.toUpperCase()) &&
         curso.dia === dia &&
         curso.turno === turno &&
         curso.estado === "activo" // Solo cursos activos
