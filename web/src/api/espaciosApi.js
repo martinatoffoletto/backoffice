@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { obtenerCursos } from "./cursosApi";
+import { obtenerSedes } from "./sedesApi";
 
 export const altaEspacio = async (espacioData) => {
   try {
@@ -79,6 +80,14 @@ export const aulasDisponibles = async (desde, hasta, dia, sede, turno) => {
     const cursosResponse = await obtenerCursos();
     const cursos = cursosResponse.data || cursosResponse;
 
+    const sedesResponse = await obtenerSedes((status_filter = "active"));
+    const sedes = sedesResponse.filter((s) => s.status);
+
+    const sedeObj = sedes.find((s) => s.nombre === sede);
+    if (!sedeObj) return [];
+
+    const sedeId = sedeObj.id_sede;
+
     const cursosConflicto = cursos.filter(
       (curso) =>
         curso.sede === sede &&
@@ -88,7 +97,7 @@ export const aulasDisponibles = async (desde, hasta, dia, sede, turno) => {
     );
 
     const aulasDisponibles = aulas.filter((aula) => {
-      if (aula.id_sede !== sede) return false;
+      if (aula.id_sede !== sedeId) return false;
 
       const conflicto = cursosConflicto.some((curso) => {
         if (curso.aula !== aula.nombre) return false;
