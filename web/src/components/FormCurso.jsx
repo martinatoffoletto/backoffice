@@ -173,6 +173,15 @@ export default function FormCurso({
     aula.nombre?.toLowerCase().includes(aulaSearch.toLowerCase().trim())
   );
 
+  // Filtrar docentes para evitar duplicados entre titular y auxiliar
+  const docentes_titular_disponibles = docentesDisponibles.filter(
+    (docente) => docente.teacherId !== form.auxiliar_uuid
+  );
+
+  const docentes_auxiliar_disponibles = docentesDisponibles.filter(
+    (docente) => docente.teacherId !== form.titular_uuid
+  );
+
   return (
     <form onSubmit={onSubmit} className="mt-8">
       {isModificacion && (
@@ -730,10 +739,18 @@ export default function FormCurso({
                 <Select
                   value={form.titular_uuid || ""}
                   onValueChange={(value) => {
+                    // Validar si es el mismo que el auxiliar
+                    if (value === form.auxiliar_uuid && value !== "") {
+                      setCamposConError((prev) => new Set([...prev, "docentes_duplicados"]));
+                      setError("El titular y auxiliar no pueden ser la misma persona");
+                      return;
+                    }
+                    
                     setForm((prev) => ({ ...prev, titular_uuid: value }));
-                    if (camposConError.has("inscripciones_iniciales")) {
+                    if (camposConError.has("inscripciones_iniciales") || camposConError.has("docentes_duplicados")) {
                       const nuevosErrores = new Set(camposConError);
                       nuevosErrores.delete("inscripciones_iniciales");
+                      nuevosErrores.delete("docentes_duplicados");
                       setCamposConError(nuevosErrores);
                       if (nuevosErrores.size === 0) setError(null);
                     }
@@ -767,12 +784,12 @@ export default function FormCurso({
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Docentes Disponibles</SelectLabel>
-                      {docentesDisponibles.length === 0 ? (
+                      {docentes_titular_disponibles.length === 0 ? (
                         <SelectItem value="_no_disponibles" disabled>
                           No hay docentes disponibles
                         </SelectItem>
                       ) : (
-                        docentesDisponibles.map((docente) => (
+                        docentes_titular_disponibles.map((docente) => (
                           <SelectItem
                             key={docente.teacherId}
                             value={docente.teacherId}
@@ -793,10 +810,18 @@ export default function FormCurso({
                 <Select
                   value={form.auxiliar_uuid || ""}
                   onValueChange={(value) => {
+                    // Validar si es el mismo que el titular
+                    if (value === form.titular_uuid && value !== "") {
+                      setCamposConError((prev) => new Set([...prev, "docentes_duplicados"]));
+                      setError("El titular y auxiliar no pueden ser la misma persona");
+                      return;
+                    }
+                    
                     setForm((prev) => ({ ...prev, auxiliar_uuid: value }));
-                    if (camposConError.has("inscripciones_iniciales")) {
+                    if (camposConError.has("inscripciones_iniciales") || camposConError.has("docentes_duplicados")) {
                       const nuevosErrores = new Set(camposConError);
                       nuevosErrores.delete("inscripciones_iniciales");
+                      nuevosErrores.delete("docentes_duplicados");
                       setCamposConError(nuevosErrores);
                       if (nuevosErrores.size === 0) setError(null);
                     }
@@ -830,12 +855,12 @@ export default function FormCurso({
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>Docentes Disponibles</SelectLabel>
-                      {docentesDisponibles.length === 0 ? (
+                      {docentes_auxiliar_disponibles.length === 0 ? (
                         <SelectItem value="_no_disponibles" disabled>
                           No hay docentes disponibles
                         </SelectItem>
                       ) : (
-                        docentesDisponibles.map((docente) => (
+                        docentes_auxiliar_disponibles.map((docente) => (
                           <SelectItem
                             key={docente.teacherId}
                             value={docente.teacherId}
@@ -850,6 +875,13 @@ export default function FormCurso({
               </Field>
             </div>
           )}
+          
+          {camposConError.has("docentes_duplicados") && (
+            <p className="text-sm text-red-500 mt-1">
+              El docente titular y auxiliar no pueden ser la misma persona
+            </p>
+          )}
+          
           <p className="text-sm text-gray-500 mt-1">
             Debe seleccionar al menos un Titular o un Auxiliar
           </p>
