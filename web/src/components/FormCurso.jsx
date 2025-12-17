@@ -107,7 +107,7 @@ export default function FormCurso({
     const fetchSedes = async () => {
       try {
         setLoadingSedes(true);
-        const response = await obtenerSedes();
+        const response = await obtenerSedes(status_filter="active");
 
         const limpias = response.filter(
           (s) => s && typeof s === "object" && s.nombre
@@ -400,6 +400,7 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.aula}
+                disabled={!form.sede || !form.dia || !form.turno || !form.desde || !form.hasta}
                 onValueChange={(value) =>
                   setForm((prev) => ({ ...prev, aula: value }))
                 }
@@ -409,12 +410,6 @@ export default function FormCurso({
                     placeholder={
                       loadingAulas
                         ? "Cargando aulas..."
-                        : !form.desde ||
-                          !form.hasta ||
-                          !form.dia ||
-                          !form.sede ||
-                          !form.turno
-                        ? "Seleccione fechas, día, sede y turno primero"
                         : "Seleccione aula"
                     }
                   />
