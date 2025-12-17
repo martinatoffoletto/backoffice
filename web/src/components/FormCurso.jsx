@@ -107,7 +107,7 @@ export default function FormCurso({
     const fetchSedes = async () => {
       try {
         setLoadingSedes(true);
-        const response = await obtenerSedes(status_filter=true);
+        const response = await obtenerSedes(0, 100, true);
 
         const limpias = response.filter(
           (s) => s && typeof s === "object" && s.nombre
