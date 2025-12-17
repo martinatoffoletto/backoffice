@@ -3,6 +3,15 @@ import FormCurso from "./FormCurso";
 import { modificarCurso } from "@/api/cursosApi";
 import PopUp from "@/components/PopUp";
 
+const formatLocalDateTime = (isoString) => {
+  const date = new Date(isoString);
+  return date.getFullYear() + '-' +
+    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+    String(date.getDate()).padStart(2, '0') + 'T' +
+    String(date.getHours()).padStart(2, '0') + ':' +
+    String(date.getMinutes()).padStart(2, '0');
+};
+
 const ModificarCurso = ({ curso, onCancel }) => {
   const [form, setForm] = useState({
     uuid_materia: curso.uuid_materia || "",
@@ -16,8 +25,8 @@ const ModificarCurso = ({ curso, onCancel }) => {
     estado: curso.estado || "activo",
     cantidad_max: curso.cantidad_max || 0,
     cantidad_min: curso.cantidad_min || 0,
-    desde: curso.desde || "",
-    hasta: curso.hasta || "",
+    desde: curso.desde ? formatLocalDateTime(curso.desde) : "",
+    hasta: curso.hasta ? formatLocalDateTime(curso.hasta) : "",
     dia: curso.dia || "",
   });
 
@@ -67,8 +76,8 @@ const ModificarCurso = ({ curso, onCancel }) => {
         estado: form.estado,
         cantidad_max: parseInt(form.cantidad_max),
         cantidad_min: parseInt(form.cantidad_min),
-        desde: form.desde,
-        hasta: form.hasta,
+        desde: new Date(form.desde).toISOString(),
+        hasta: new Date(form.hasta).toISOString(),
         dia: form.dia,
       };
 
