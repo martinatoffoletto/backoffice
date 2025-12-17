@@ -235,12 +235,21 @@ const BusquedaCurso = ({ onCursoSeleccionado }) => {
       // 3. Consultar docentes disponibles con los mismos parámetros del curso
       if (titular || auxiliar) {
         try {
-          const docentes_disponibles = await obtenerDocentesDisponibles(
-            curso_seleccionado.dia,
-            curso_seleccionado.turno,
-            curso_seleccionado.modalidad,
-            curso_seleccionado.sede
-          );
+          console.log("🔍 Consultando disponibilidad con parámetros:", {
+            subjectId: curso_seleccionado.uuid_materia,
+            dayOfWeek: curso_seleccionado.dia,
+            shift: curso_seleccionado.turno,
+            modality: curso_seleccionado.modalidad,
+            campuses: curso_seleccionado.sede,
+          });
+          
+          const docentes_disponibles = await obtenerDocentesDisponibles({
+            subjectId: curso_seleccionado.uuid_materia,
+            dayOfWeek: curso_seleccionado.dia,
+            shift: curso_seleccionado.turno,
+            modality: curso_seleccionado.modalidad,
+            campuses: curso_seleccionado.sede,
+          });
           
           console.log("📚 Docentes disponibles obtenidos:", docentes_disponibles.length);
           
