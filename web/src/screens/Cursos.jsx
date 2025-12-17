@@ -11,11 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { cursoPorIdConDocentes } from "@/api/cursosApi";
 
 const Cursos = () => {
   const [operacion_seleccionada, setOperacionSeleccionada] = useState("");
   const [curso_seleccionado, setCursoSeleccionado] = useState(null);
+  const [curso_enriquecido, setCursoEnriquecido] = useState(null);
+  const [loading_docentes, setLoadingDocentes] = useState(false);
 
   const handleCursoSeleccionado = (curso, accion) => {
     setCursoSeleccionado(curso);
@@ -28,7 +31,39 @@ const Cursos = () => {
 
   const handleResetOperacion = () => {
     setCursoSeleccionado(null);
+    setCursoEnriquecido(null);
   };
+
+  // Cargar docentes cuando se selecciona gestionar clases
+  useEffect(() => {
+    const cargarDocentesDelCurso = async () => {
+      if (operacion_seleccionada === "gestionar" && curso_seleccionado) {
+        const uuid_curso =
+          curso_seleccionado.uuid ||
+          curso_seleccionado.id_curso ||
+          curso_seleccionado.id;
+
+        if (uuid_curso) {
+          try {
+            setLoadingDocentes(true);
+            const curso_con_docentes = await cursoPorIdConDocentes(uuid_curso);
+            setCursoEnriquecido(curso_con_docentes);
+          } catch (error) {
+            console.error("Error cargando docentes del curso:", error);
+            // Si falla, usar el curso original sin docentes enriquecidos
+            setCursoEnriquecido({
+              ...curso_seleccionado,
+              docentes_enriquecidos: { titular: null, auxiliar: null },
+            });
+          } finally {
+            setLoadingDocentes(false);
+          }
+        }
+      }
+    };
+
+    cargarDocentesDelCurso();
+  }, [operacion_seleccionada, curso_seleccionado]);
 
   return (
     <div className="min-h-screen w-full bg-white shadow-lg rounded-2xl flex flex-col items-center p-4 mt-4">
@@ -75,28 +110,52 @@ const Cursos = () => {
       )}
 
       {operacion_seleccionada === "gestionar" && curso_seleccionado && (
-        <GestionClases
-          id_curso={
-            curso_seleccionado.uuid ||
-            curso_seleccionado.id_curso ||
-            curso_seleccionado.id
-          }
-          fecha_inicio={
-            curso_seleccionado.desde || curso_seleccionado.fecha_inicio
-          }
-          fecha_fin={curso_seleccionado.hasta || curso_seleccionado.fecha_fin}
-          dia={curso_seleccionado.dia}
-          turno={curso_seleccionado.turno}
-          materia={
-            curso_seleccionado.materia?.nombre ||
-            curso_seleccionado.materia ||
-            "N/A"
-          }
-          periodo={curso_seleccionado.periodo}
-          modalidad={curso_seleccionado.modalidad}
-          titular={curso_seleccionado.titular || null}
-          auxiliar={curso_seleccionado.auxiliar || null}
-        />
+        <>
+          {loading_docentes ? (
+            <div className="w-full max-w-4xl mt-6 text-center">
+              <p className="text-gray-500">Cargando información del curso...</p>
+            </div>
+          ) : curso_enriquecido ? (
+            <GestionClases
+              id_curso={
+                curso_enriquecido.uuid ||
+                curso_enriquecido.id_curso ||
+                curso_enriquecido.id
+              }
+              fecha_inicio={
+                curso_enriquecido.desde || curso_enriquecido.fecha_inicio
+              }
+              fecha_fin={
+                curso_enriquecido.hasta || curso_enriquecido.fecha_fin
+              }
+              dia={curso_enriquecido.dia}
+              turno={curso_enriquecido.turno}
+              materia={
+                curso_enriquecido.materia?.nombre ||
+                curso_enriquecido.materia ||
+                "N/A"
+              }
+              periodo={curso_enriquecido.periodo}
+              modalidad={curso_enriquecido.modalidad}
+              titular={
+                curso_enriquecido.docentes_enriquecidos?.titular
+                  ?.nombre_completo || null
+              }
+              titular_uuid={
+                curso_enriquecido.docentes_enriquecidos?.titular?.user_uuid ||
+                null
+              }
+              auxiliar={
+                curso_enriquecido.docentes_enriquecidos?.auxiliar
+                  ?.nombre_completo || null
+              }
+              auxiliar_uuid={
+                curso_enriquecido.docentes_enriquecidos?.auxiliar?.user_uuid ||
+                null
+              }
+            />
+          ) : null}
+        </>
       )}
 
       {operacion_seleccionada === "modificar" && curso_seleccionado && (
