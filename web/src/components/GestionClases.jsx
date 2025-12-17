@@ -161,16 +161,22 @@ export default function GestionClases({
       if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
         // Primero, verificar si ya existe una clase en un sábado
         console.log("🔍 Buscando clases en sábado. Total clases:", clases.length);
+        console.log("📦 Payload de clases:", clases);
         
         const claseEnSabado = clases.find((clase) => {
-          if (!clase || !clase.fecha_clase) return false;
+          if (!clase || !clase.fecha_clase) {
+            console.log("  ⚠️ Clase sin fecha_clase:", clase);
+            return false;
+          }
+          
           const fechaClase = normalizarFecha(clase.fecha_clase);
           const esSabado = fechaClase && fechaClase.getDay() === 6;
           
-          // Log para debugging
-          if (fechaClase) {
-            console.log(`  📅 Clase: ${clase.fecha_clase} → ${fechaClase.toDateString()} → Día: ${fechaClase.getDay()} → Es sábado: ${esSabado}`);
-          }
+          // Log para debugging CON MÁS DETALLE
+          console.log(`  📅 Clase: "${clase.fecha_clase}" (tipo: ${typeof clase.fecha_clase})`);
+          console.log(`     → Parseada: ${fechaClase ? fechaClase.toDateString() : 'null'}`);
+          console.log(`     → getDay(): ${fechaClase ? fechaClase.getDay() : 'N/A'}`);
+          console.log(`     → Es sábado (===6): ${esSabado}`);
           
           return esSabado;
         });
