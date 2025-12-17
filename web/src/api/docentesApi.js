@@ -5,6 +5,19 @@ import { carreraPorId } from "./carrerasApi";
 import { buscarSedes } from "./sedesApi";
 
 /**
+ * Convierte valores de core a formato del módulo de docentes
+ * El módulo de docentes usa MANIANA (sin ñ) mientras core usa MAÑANA (con ñ)
+ * @param {string} value - Valor a convertir
+ * @returns {string} Valor convertido para el módulo de docentes
+ */
+const convertir_a_formato_docentes = (value) => {
+  if (!value) return value;
+  const valor_upper = value.toUpperCase();
+  // Convertir MAÑANA a MANIANA para el módulo de docentes
+  return valor_upper === "MAÑANA" ? "MANIANA" : valor_upper;
+};
+
+/**
  * ALTA CURSOS
  * Obtiene la lista de docentes disponibles para una materia y día específicos
  * @param {string} uuid_materia - UUID de la materia
@@ -21,9 +34,9 @@ export const obtenerDocentesDisponibles = async ({
   try {
     const params = { subjectId };
 
-    if (dayOfWeek) params.dayOfWeek = dayOfWeek.toUpperCase();
-    if (modality) params.modality = modality.toUpperCase();
-    if (shift) params.shift = shift.toUpperCase();
+    if (dayOfWeek) params.dayOfWeek = convertir_a_formato_docentes(dayOfWeek);
+    if (modality) params.modality = convertir_a_formato_docentes(modality);
+    if (shift) params.shift = convertir_a_formato_docentes(shift);
     if (campuses) {
       const sedes = await buscarSedes("nombre", campuses, 0, 100);
       if (Array.isArray(sedes)) {
@@ -63,23 +76,56 @@ export const obtenerDocentesDisponibles = async ({
   }
 };
 
-/*
- *Asigna la disponibilidad de un docente para todas las materias y días según su configuración
- *@param{string}teacherId - ID del docente
- *@returns{Promise<Object>} Resultado de la operación
+/**
+ * Asigna/bloquea la disponibilidad de un docente para un curso específico
+ * @param {string} teacherId - UUID del docente
+ * @param {Object} cursoInfo - Información del curso (opcional para compatibilidad)
+ * @param {string} cursoInfo.uuid_materia - UUID de la materia
+ * @param {string} cursoInfo.dia - Día de la semana
+ * @param {string} cursoInfo.turno - Turno (se convierte MAÑANA -> MANIANA)
+ * @param {string} cursoInfo.desde - Fecha/hora inicio (ISO 8601)
+ * @param {string} cursoInfo.hasta - Fecha/hora fin (ISO 8601)
+ * @param {string} cursoInfo.modalidad - Modalidad del curso
+ * @param {string} cursoInfo.sede - Sede del curso
+ * @returns {Promise<Object>} Resultado de la operación
  */
-export const asignarDisponibilidadDocente = async (teacherId) => {
+export const asignarDisponibilidadDocente = async (teacherId, cursoInfo = null) => {
   try {
+    // Si no se pasa cursoInfo, usar el endpoint sin body (compatibilidad con código anterior)
+    if (!cursoInfo) {
+      const response = await docentesApiInstance.post(
+        `/admin/teachers/availability/${teacherId}/assign`
+      );
+      console.log(
+        `Disponibilidad asignada para docente ${teacherId}:`,
+        response.data
+      );
+      return response.data;
+    }
+
+    // Construir payload con conversión de formato para módulo de docentes
+    const payload = {
+      subjectId: cursoInfo.uuid_materia,
+      dayOfWeek: convertir_a_formato_docentes(cursoInfo.dia),
+      shift: convertir_a_formato_docentes(cursoInfo.turno),
+      startTime: cursoInfo.desde,
+      endTime: cursoInfo.hasta,
+      modality: convertir_a_formato_docentes(cursoInfo.modalidad),
+      campuses: [cursoInfo.sede.toUpperCase()],
+    };
+
     const response = await docentesApiInstance.post(
-      `/admin/teachers/availability/${teacherId}/assign`
+      `/admin/teachers/availability/${teacherId}/assign`,
+      payload
     );
+    
     console.log(
-      `Disponibilidad asignada para docente ${teacherId}: `,
+      `✅ Disponibilidad bloqueada para docente ${teacherId}:`,
       response.data
     );
     return response.data;
   } catch (error) {
-    console.error("Error asignando disponibilidad:", error);
+    console.error(`❌ Error asignando disponibilidad para ${teacherId}:`, error);
     throw error;
   }
 };
