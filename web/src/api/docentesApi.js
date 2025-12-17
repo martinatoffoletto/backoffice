@@ -25,10 +25,17 @@ export const obtenerDocentesDisponibles = async ({
     if (modality) params.modality = modality.toUpperCase();
     if (shift) params.shift = shift.toUpperCase();
     if (campuses) {
-      params.campuses = await buscarSedes("nombre", campuses, 0, 100) 
-      params.campuses = campuses.id_sede.toUpperCase();
+      const sedes = await buscarSedes("nombre", campuses, 0, 100);
+      if (Array.isArray(sedes)) {
+        params.campuses = sedes
+          .map((sede) => (sede.id_sede ? sede.id_sede.toUpperCase() : null))
+          .filter(Boolean);
+      } else if (sedes && sedes.id_sede) {
+        params.campuses = [sedes.id_sede.toUpperCase()];
+      } else {
+        params.campuses = [];
+      }
     }
-      
 
     console.log("Parámetros para obtener docentes disponibles:", params);
 
