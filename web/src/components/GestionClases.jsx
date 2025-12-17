@@ -122,31 +122,47 @@ export default function GestionClases({
   }, [id_curso, cargarClases]);
 
   // Calcular sábado aleatorio SOLO UNA VEZ para cursos de noche
+  // Si ya existe una clase en un sábado, usar ese sábado en lugar de generar uno nuevo
   useEffect(() => {
     if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && !sabadoIntegrador) {
       const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
       const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
 
       if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
-        const sabados = [];
-        const fechaSabado = new Date(inicio);
-        
-        while (fechaSabado <= fin) {
-          if (fechaSabado.getDay() === 6) {
-            sabados.push(new Date(fechaSabado));
+        // Primero, verificar si ya existe una clase en un sábado
+        const claseEnSabado = clases.find((clase) => {
+          if (!clase || !clase.fecha_clase) return false;
+          const fechaClase = normalizarFecha(clase.fecha_clase);
+          return fechaClase && fechaClase.getDay() === 6; // 6 = sábado
+        });
+
+        if (claseEnSabado) {
+          // Si ya hay una clase en un sábado, usar ese sábado
+          const sabadoExistente = normalizarFecha(claseEnSabado.fecha_clase);
+          setSabadoIntegrador(sabadoExistente);
+          console.log("♻️ Usando sábado existente de clase guardada:", sabadoExistente.toDateString());
+        } else {
+          // Si no hay clase en sábado, generar uno aleatorio
+          const sabados = [];
+          const fechaSabado = new Date(inicio);
+          
+          while (fechaSabado <= fin) {
+            if (fechaSabado.getDay() === 6) {
+              sabados.push(new Date(fechaSabado));
+            }
+            fechaSabado.setDate(fechaSabado.getDate() + 1);
           }
-          fechaSabado.setDate(fechaSabado.getDate() + 1);
-        }
-        
-        if (sabados.length > 0) {
-          // Generar sábado aleatorio SOLO UNA VEZ
-          const aleatorio = sabados[Math.floor(Math.random() * sabados.length)];
-          setSabadoIntegrador(aleatorio);
-          console.log("🎲 Sábado integrador generado:", aleatorio.toDateString());
+          
+          if (sabados.length > 0) {
+            // Generar sábado aleatorio SOLO si no existe uno
+            const aleatorio = sabados[Math.floor(Math.random() * sabados.length)];
+            setSabadoIntegrador(aleatorio);
+            console.log("🎲 Sábado integrador generado:", aleatorio.toDateString());
+          }
         }
       }
     }
-  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador]); // NO depende de clases!
+  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador, clases]); // ✅ Ahora SÍ depende de clases!
 
   // Función helper para normalizar fechas (solo año, mes, día)
   // Debe estar antes de diasCalendario porque se usa dentro del useMemo
@@ -199,9 +215,17 @@ export default function GestionClases({
 
         // Si es turno Noche, agregar el sábado integrador (ya calculado en useEffect)
         if (sabadoIntegrador) {
-          const yaExiste = dias.some(
-            (d) => d.toDateString() === sabadoIntegrador.toDateString()
-          );
+          const sabadoNormalizado = normalizarFecha(sabadoIntegrador);
+          const yaExiste = dias.some((d) => {
+            const fechaD = normalizarFecha(d);
+            return (
+              fechaD &&
+              sabadoNormalizado &&
+              fechaD.getFullYear() === sabadoNormalizado.getFullYear() &&
+              fechaD.getMonth() === sabadoNormalizado.getMonth() &&
+              fechaD.getDate() === sabadoNormalizado.getDate()
+            );
+          });
           if (!yaExiste) {
             dias.push(sabadoIntegrador);
           }
@@ -215,7 +239,7 @@ export default function GestionClases({
         if (clase && clase.fecha_clase) {
           const fechaClase = normalizarFecha(clase.fecha_clase);
           if (fechaClase) {
-            // Verificar si la fecha ya está en la lista
+            // Verificar si la fecha ya está en la lista (misma lógica que el sábado)
             const yaExiste = dias.some((d) => {
               const fechaD = normalizarFecha(d);
               return (
