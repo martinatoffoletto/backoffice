@@ -538,7 +538,7 @@ export default function FormCurso({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Turno</SelectLabel>
-                    <SelectItem value="MANIANA">Mañana</SelectItem>
+                    <SelectItem value="MAÑANA">Mañana</SelectItem>
                     <SelectItem value="TARDE">Tarde</SelectItem>
                     <SelectItem value="NOCHE">Noche</SelectItem>
                   </SelectGroup>
