@@ -337,11 +337,13 @@ export default function AltaCurso() {
                 ? docentesNombres[form.titular_uuid] || form.titular_uuid
                 : null
             }
+            titular_uuid={form.titular_uuid || null}
             auxiliar={
               form.auxiliar_uuid
                 ? docentesNombres[form.auxiliar_uuid] || form.auxiliar_uuid
                 : null
             }
+            auxiliar_uuid={form.auxiliar_uuid || null}
           />
         </div>
       )}

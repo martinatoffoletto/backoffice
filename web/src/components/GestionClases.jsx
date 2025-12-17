@@ -65,10 +65,14 @@ export default function GestionClases({
   periodo,
   modalidad,
   titular,
+  titular_uuid,
   auxiliar,
+  auxiliar_uuid,
 }) {
-  // Debug: verificar que id_curso llegue correctamente
+  // Debug: verificar que id_curso y UUIDs lleguen correctamente
   console.log("GestionClases - id_curso recibido:", id_curso);
+  console.log("GestionClases - titular_uuid:", titular_uuid);
+  console.log("GestionClases - auxiliar_uuid:", auxiliar_uuid);
 
   const [form, setForm] = useState({
     titulo: "",

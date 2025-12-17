@@ -15,44 +15,6 @@ import { usePropuestasPolling } from "@/hooks/usePropuestasPolling";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { RefreshCwIcon } from "lucide-react";
 
-// const mockPropuestas = [
-//   {
-//     propuesta_id: "prop-001",
-//     uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40994b",
-//     profesor: "Juan Pérez",
-//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-//     materia: "Cálculo II",
-//     dia: "LUNES",
-//     estado: "pendiente",
-//   },
-//   {
-//     propuesta_id: "prop-002",
-//     uuid_docente: "a1b2c3d4-564c-4c95-b6a8-111111111111",
-//     profesor: "María García",
-//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-//     materia: "Programación I",
-//     dia: "MARTES",
-//     estado: "aceptado",
-//   },
-//   {
-//     propuesta_id: "prop-003",
-//     uuid_docente: "e9d03ceb-564c-4c95-b6a8-7e851d40114b",
-//     profesor: "Carlos López",
-//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-//     materia: "Cálculo I",
-//     dia: "MIERCOLES",
-//     estado: "rechazado",
-//   },
-//   {
-//     propuesta_id: "prop-004",
-//     uuid_docente: "b2c3d4e5-564c-4c95-b6a8-222222222222",
-//     profesor: "Ana Rodríguez",
-//     uuid_materia: "4e581607-2aab-4db0-9874-214f039866d6",
-//     materia: "Ciencia de Datos",
-//     dia: "JUEVES",
-//     estado: "pendiente",
-//   },
-// ];
 
 export default function TablaAsignaciones() {
   const [estado, setEstado] = useState("pendientes");
