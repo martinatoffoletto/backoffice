@@ -77,55 +77,27 @@ export const obtenerDocentesDisponibles = async ({
 };
 
 /**
- * Asigna/bloquea la disponibilidad de un docente para un curso específico
- * @param {string} teacherId - UUID del docente
- * @param {Object} cursoInfo - Información del curso (opcional para compatibilidad)
- * @param {string} cursoInfo.uuid_materia - UUID de la materia
- * @param {string} cursoInfo.dia - Día de la semana
- * @param {string} cursoInfo.turno - Turno (se convierte MAÑANA -> MANIANA)
- * @param {string} cursoInfo.desde - Fecha/hora inicio (ISO 8601)
- * @param {string} cursoInfo.hasta - Fecha/hora fin (ISO 8601)
- * @param {string} cursoInfo.modalidad - Modalidad del curso
- * @param {string} cursoInfo.sede - Sede del curso
+ * Asigna/bloquea un bloque de disponibilidad específico de un docente
+ * @param {string} blockId - UUID del bloque de disponibilidad (obtenido de obtenerDocentesDisponibles)
  * @returns {Promise<Object>} Resultado de la operación
  */
-export const asignarDisponibilidadDocente = async (teacherId, cursoInfo = null) => {
+export const asignarDisponibilidadDocente = async (blockId) => {
   try {
-    // Si no se pasa cursoInfo, usar el endpoint sin body (compatibilidad con código anterior)
-    if (!cursoInfo) {
-      const response = await docentesApiInstance.post(
-        `/admin/teachers/availability/${teacherId}/assign`
-      );
-      console.log(
-        `Disponibilidad asignada para docente ${teacherId}:`,
-        response.data
-      );
-      return response.data;
+    if (!blockId) {
+      throw new Error("blockId es requerido para asignar disponibilidad");
     }
 
-    // Construir payload con conversión de formato para módulo de docentes
-    const payload = {
-      subjectId: cursoInfo.uuid_materia,
-      dayOfWeek: convertir_a_formato_docentes(cursoInfo.dia),
-      shift: convertir_a_formato_docentes(cursoInfo.turno),
-      startTime: cursoInfo.desde,
-      endTime: cursoInfo.hasta,
-      modality: convertir_a_formato_docentes(cursoInfo.modalidad),
-      campuses: [cursoInfo.sede.toUpperCase()],
-    };
-
     const response = await docentesApiInstance.post(
-      `/admin/teachers/availability/${teacherId}/assign`,
-      payload
+      `/admin/teachers/availability/${blockId}/assign`
     );
     
     console.log(
-      `✅ Disponibilidad bloqueada para docente ${teacherId}:`,
+      `✅ Bloque de disponibilidad ${blockId} marcado como ocupado:`,
       response.data
     );
     return response.data;
   } catch (error) {
-    console.error(`❌ Error asignando disponibilidad para ${teacherId}:`, error);
+    console.error(`❌ Error asignando bloque de disponibilidad ${blockId}:`, error);
     throw error;
   }
 };

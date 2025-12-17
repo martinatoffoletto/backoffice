@@ -746,7 +746,17 @@ export default function FormCurso({
                       return;
                     }
                     
-                    setForm((prev) => ({ ...prev, titular_uuid: value }));
+                    // Buscar el docente seleccionado para obtener su blockId
+                    const docente_seleccionado = docentesDisponibles.find(
+                      (d) => d.teacherId === value
+                    );
+                    
+                    setForm((prev) => ({ 
+                      ...prev, 
+                      titular_uuid: value,
+                      titular_block_id: docente_seleccionado?.blockId || null
+                    }));
+                    
                     if (camposConError.has("inscripciones_iniciales") || camposConError.has("docentes_duplicados")) {
                       const nuevosErrores = new Set(camposConError);
                       nuevosErrores.delete("inscripciones_iniciales");
@@ -817,7 +827,17 @@ export default function FormCurso({
                       return;
                     }
                     
-                    setForm((prev) => ({ ...prev, auxiliar_uuid: value }));
+                    // Buscar el docente seleccionado para obtener su blockId
+                    const docente_seleccionado = docentesDisponibles.find(
+                      (d) => d.teacherId === value
+                    );
+                    
+                    setForm((prev) => ({ 
+                      ...prev, 
+                      auxiliar_uuid: value,
+                      auxiliar_block_id: docente_seleccionado?.blockId || null
+                    }));
+                    
                     if (camposConError.has("inscripciones_iniciales") || camposConError.has("docentes_duplicados")) {
                       const nuevosErrores = new Set(camposConError);
                       nuevosErrores.delete("inscripciones_iniciales");

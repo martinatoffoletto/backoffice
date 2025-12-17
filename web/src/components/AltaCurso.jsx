@@ -33,6 +33,8 @@ export default function AltaCurso() {
     estado: "activo",
     titular_uuid: "",
     auxiliar_uuid: "",
+    titular_block_id: null,
+    auxiliar_block_id: null,
   });
   const [showPopUp, setShowPopUp] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -182,6 +184,30 @@ export default function AltaCurso() {
       // El backend devuelve {success: true, data: {...}} - extraer data
       const cursoCreado = nuevo_curso.data || nuevo_curso;
 
+      // ✨ Bloquear disponibilidad de docentes usando sus blockIds
+      const bloques_a_marcar = [];
+      if (form.titular_block_id) bloques_a_marcar.push(form.titular_block_id);
+      if (form.auxiliar_block_id) bloques_a_marcar.push(form.auxiliar_block_id);
+
+      if (bloques_a_marcar.length > 0) {
+        console.log("🔒 Bloqueando disponibilidad de docentes:", bloques_a_marcar);
+        
+        const resultados_bloqueo = await Promise.allSettled(
+          bloques_a_marcar.map((blockId) => asignarDisponibilidadDocente(blockId))
+        );
+
+        // Log de resultados
+        resultados_bloqueo.forEach((resultado, index) => {
+          if (resultado.status === "fulfilled") {
+            console.log(`✅ Bloque ${bloques_a_marcar[index]} marcado como ocupado`);
+          } else {
+            console.warn(
+              `⚠️ Error al bloquear ${bloques_a_marcar[index]}:`,
+              resultado.reason
+            );
+          }
+        });
+      }
 
       setCursoData(cursoCreado);
       setCompleted(true);
