@@ -2,6 +2,7 @@ import docentesApiInstance from "./docentesApiInstance";
 import { obtenerUsuarioPorId } from "./usuariosApi";
 import { materiaPorId } from "./materiasApi";
 import { carreraPorId } from "./carrerasApi";
+import { buscarSedes } from "./sedesApi";
 
 /**
  * ALTA CURSOS
@@ -15,33 +16,37 @@ export const obtenerDocentesDisponibles = async ({
   dayOfWeek,
   modality,
   shift,
-  campuses
+  campuses,
 }) => {
   try {
     const params = { subjectId };
-    
-    if (dayOfWeek) params.dayOfWeek = dayOfWeek.toLowerCase();
-    if (modality) params.modality = modality.toLowerCase();
-    if (shift) params.shift = shift.toLowerCase();
-    if (campuses) params.campuses = campuses.toLowerCase(); 
 
-    console.log("Parámetros para obtener docentes disponibles:", params)
+    if (dayOfWeek) params.dayOfWeek = dayOfWeek.toUpperCase();
+    if (modality) params.modality = modality.toUpperCase();
+    if (shift) params.shift = shift.toUpperCase();
+    if (campuses) {
+      params.campuses = await buscarSedes("nombre", campuses, 0, 100) 
+      params.campuses = campuses.id_sede.toUpperCase();
+    }
+      
+
+    console.log("Parámetros para obtener docentes disponibles:", params);
 
     const response = await docentesApiInstance.get(
       "/admin/teachers/available",
       { params }
     );
 
-    const fullResponse=await Promise.all(
-      response.data.map(async(docente)=>{
-        const usuario=await obtenerUsuarioPorId(docente.teacherId);
-        return{
+    const fullResponse = await Promise.all(
+      response.data.map(async (docente) => {
+        const usuario = await obtenerUsuarioPorId(docente.teacherId);
+        return {
           ...docente,
-          nombre:usuario?.nombre || "Nombre no disponible",
-          apellido:usuario?.apellido || "Apellido no disponible"
-        }
+          nombre: usuario?.nombre || "Nombre no disponible",
+          apellido: usuario?.apellido || "Apellido no disponible",
+        };
       })
-    )
+    );
 
     console.log(`Docentes obtenidos para ${subjectId}:`, fullResponse);
     return fullResponse;
@@ -51,26 +56,26 @@ export const obtenerDocentesDisponibles = async ({
   }
 };
 
-
-
 /*
-  *Asigna la disponibilidad de un docente para todas las materias y días según su configuración
-  *@param{string}teacherId - ID del docente
-  *@returns{Promise<Object>} Resultado de la operación
-*/
+ *Asigna la disponibilidad de un docente para todas las materias y días según su configuración
+ *@param{string}teacherId - ID del docente
+ *@returns{Promise<Object>} Resultado de la operación
+ */
 export const asignarDisponibilidadDocente = async (teacherId) => {
   try {
     const response = await docentesApiInstance.post(
       `/admin/teachers/availability/${teacherId}/assign`
     );
-    console.log(`Disponibilidad asignada para docente ${teacherId}: `, response.data);
+    console.log(
+      `Disponibilidad asignada para docente ${teacherId}: `,
+      response.data
+    );
     return response.data;
   } catch (error) {
     console.error("Error asignando disponibilidad:", error);
     throw error;
   }
 };
-
 
 /**
  * Elimina la disponibilidad de un docente para una materia y día específicos
@@ -101,7 +106,6 @@ export const asignarDisponibilidadDocente = async (teacherId) => {
 //     throw error;
 //   }
 // };
-
 
 /**
  * Mapea los datos de propuestas del API al formato esperado por el componente
@@ -137,45 +141,60 @@ const mapearPropuestasEnriquecidas = async (propuestas) => {
       let nombreMateria = propuesta.subjectId; // Default: mostrar ID
       let nombreCarrera = null; // Default: sin carrera
       let uuidCarrera = null; // Default: sin UUID de carrera
-      
+
       // Enriquecer profesor y materia en paralelo
       const [usuario, materia] = await Promise.all([
         obtenerUsuarioPorId(propuesta.teacherId).catch((error) => {
-          console.warn(`No se pudo obtener usuario ${propuesta.teacherId}:`, error.message);
+          console.warn(
+            `No se pudo obtener usuario ${propuesta.teacherId}:`,
+            error.message
+          );
           return null;
         }),
         materiaPorId(propuesta.subjectId).catch((error) => {
-          console.warn(`No se pudo obtener materia ${propuesta.subjectId}:`, error.message);
+          console.warn(
+            `No se pudo obtener materia ${propuesta.subjectId}:`,
+            error.message
+          );
           return null;
-        })
+        }),
       ]);
-      
+
       // Asignar nombres si se encontraron
       if (usuario && usuario.nombre && usuario.apellido) {
         nombreProfesor = `${usuario.nombre} ${usuario.apellido}`;
       }
-      
+
       // Extraer datos de la materia
       // La respuesta puede venir como { success: true, data: {...} } o directamente {...}
       const materiaData = materia?.data || materia;
-      
+
       if (materiaData) {
         // El nombre de la materia puede estar en diferentes campos
-        nombreMateria = materiaData.nombre || materiaData.name_materia || materiaData.name || propuesta.subjectId;
-        
+        nombreMateria =
+          materiaData.nombre ||
+          materiaData.name_materia ||
+          materiaData.name ||
+          propuesta.subjectId;
+
         // La carrera YA VIENE INCLUIDA en la respuesta de materia
         if (materiaData.carrera) {
           uuidCarrera = materiaData.carrera.uuid || materiaData.uuid_carrera;
-          nombreCarrera = materiaData.carrera.name || materiaData.carrera.nombre || null;
-          
-          console.log(`✅ Carrera encontrada: ${nombreCarrera} para materia ${nombreMateria}`);
+          nombreCarrera =
+            materiaData.carrera.name || materiaData.carrera.nombre || null;
+
+          console.log(
+            `✅ Carrera encontrada: ${nombreCarrera} para materia ${nombreMateria}`
+          );
         } else if (materiaData.uuid_carrera) {
           // Si no viene el objeto carrera completo, guardar el UUID
           uuidCarrera = materiaData.uuid_carrera;
-          console.warn(`⚠️ Materia tiene uuid_carrera pero no el objeto carrera completo`);
+          console.warn(
+            `⚠️ Materia tiene uuid_carrera pero no el objeto carrera completo`
+          );
         }
       }
-      
+
       return {
         propuesta_id: propuesta.proposalId,
         uuid_docente: propuesta.teacherId,
@@ -190,7 +209,7 @@ const mapearPropuestasEnriquecidas = async (propuestas) => {
       };
     })
   );
-  
+
   return propuestasEnriquecidas;
 };
 
@@ -219,10 +238,12 @@ export const obtenerPropuestasPendientes = async () => {
   try {
     // Usar docentesApiInstance que automáticamente incluye el token JWT
     const response = await docentesApiInstance.get("/public/proposals/pending");
-    
+
     // Mapear y enriquecer los datos con información de usuarios Y materias (async)
-    const propuestasEnriquecidas = await mapearPropuestasEnriquecidas(response.data);
-    
+    const propuestasEnriquecidas = await mapearPropuestasEnriquecidas(
+      response.data
+    );
+
     return propuestasEnriquecidas;
   } catch (error) {
     console.error("Error al obtener propuestas pendientes:", error);
@@ -242,28 +263,27 @@ export const actualizarEstadoPropuesta = async (propuesta_id, decision) => {
     if (!["aprobar", "rechazar"].includes(decision)) {
       throw new Error("Decisión inválida. Debe ser 'aprobar' o 'rechazar'");
     }
-    
+
     // Mapear decisión a formato del API
     const decision_api = decision === "aprobar" ? "APROBADO" : "RECHAZADO";
-    const comment = decision === "aprobar" 
-      ? "Propuesta aprobada" 
-      : "Propuesta rechazada";
-    
+    const comment =
+      decision === "aprobar" ? "Propuesta aprobada" : "Propuesta rechazada";
+
     // Hacer PUT con JWT automático
     const response = await docentesApiInstance.put(
       `/teachers/me/proposals/${propuesta_id}`,
       {
         comment: comment,
-        decision: decision_api
+        decision: decision_api,
       }
     );
-    
+
     console.log(`✅ Propuesta ${propuesta_id} ${decision_api}`);
-    
+
     return {
       success: true,
       decision: decision_api,
-      data: response.data
+      data: response.data,
     };
   } catch (error) {
     console.error(`❌ Error al actualizar propuesta ${propuesta_id}:`, error);
