@@ -97,19 +97,20 @@ export const obtenerCursos = async () => {
 
 /**
  * Obtiene las inscripciones de un curso (estudiantes y profesores)
+ * Endpoint: GET /api/inscripciones?uuid_curso={uuid}
  * @param {string} uuid_curso - UUID del curso
  * @returns {Promise<Array>} Lista de inscripciones con user_uuid y rol
  */
 export const obtenerInscripcionesPorCurso = async (uuid_curso) => {
   try {
-    const response = await coreApiInstance.get(
-      `/cursos/${uuid_curso}/inscripciones`,
-      {
-        headers: {
-          accept: "application/json",
-        },
-      }
-    );
+    const response = await coreApiInstance.get("/inscripciones", {
+      params: {
+        uuid_curso: uuid_curso,
+      },
+      headers: {
+        accept: "application/json",
+      },
+    });
     return response.data || [];
   } catch (error) {
     console.error("Error al obtener inscripciones del curso:", error);
