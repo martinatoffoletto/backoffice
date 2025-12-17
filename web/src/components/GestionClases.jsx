@@ -96,6 +96,7 @@ export default function GestionClases({
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0); // Para forzar re-render de las cajas
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [sabadoIntegrador, setSabadoIntegrador] = useState(null); // Sábado aleatorio fijo para turno noche
 
   const cargarClases = useCallback(async () => {
     setLoading(true);
@@ -119,6 +120,33 @@ export default function GestionClases({
       cargarClases();
     }
   }, [id_curso, cargarClases]);
+
+  // Calcular sábado aleatorio SOLO UNA VEZ para cursos de noche
+  useEffect(() => {
+    if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && !sabadoIntegrador) {
+      const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
+      const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
+
+      if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
+        const sabados = [];
+        const fechaSabado = new Date(inicio);
+        
+        while (fechaSabado <= fin) {
+          if (fechaSabado.getDay() === 6) {
+            sabados.push(new Date(fechaSabado));
+          }
+          fechaSabado.setDate(fechaSabado.getDate() + 1);
+        }
+        
+        if (sabados.length > 0) {
+          // Generar sábado aleatorio SOLO UNA VEZ
+          const aleatorio = sabados[Math.floor(Math.random() * sabados.length)];
+          setSabadoIntegrador(aleatorio);
+          console.log("🎲 Sábado integrador generado:", aleatorio.toDateString());
+        }
+      }
+    }
+  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador]); // NO depende de clases!
 
   // Función helper para normalizar fechas (solo año, mes, día)
   // Debe estar antes de diasCalendario porque se usa dentro del useMemo
@@ -169,26 +197,13 @@ export default function GestionClases({
           fechaActual.setDate(fechaActual.getDate() + 1);
         }
 
-        // Si es turno Noche, agregar un sábado aleatorio del rango
-        if (turno && turno.toLowerCase() === "noche") {
-          const sabados = [];
-          const fechaSabado = new Date(inicio);
-          while (fechaSabado <= fin) {
-            if (fechaSabado.getDay() === 6) {
-              sabados.push(new Date(fechaSabado));
-            }
-            fechaSabado.setDate(fechaSabado.getDate() + 1);
-          }
-          if (sabados.length > 0) {
-            const sabadoAleatorio =
-              sabados[Math.floor(Math.random() * sabados.length)];
-            // Solo agregar si no está ya en la lista
-            const yaExiste = dias.some(
-              (d) => d.toDateString() === sabadoAleatorio.toDateString()
-            );
-            if (!yaExiste) {
-              dias.push(sabadoAleatorio);
-            }
+        // Si es turno Noche, agregar el sábado integrador (ya calculado en useEffect)
+        if (sabadoIntegrador) {
+          const yaExiste = dias.some(
+            (d) => d.toDateString() === sabadoIntegrador.toDateString()
+          );
+          if (!yaExiste) {
+            dias.push(sabadoIntegrador);
           }
         }
       }
@@ -226,7 +241,7 @@ export default function GestionClases({
       if (!fechaA || !fechaB) return 0;
       return fechaA.getTime() - fechaB.getTime();
     });
-  }, [fecha_inicio, fecha_fin, dia, turno, clases]);
+  }, [fecha_inicio, fecha_fin, dia, clases, sabadoIntegrador]);
 
   // Función para realizar el guardado real de la clase
   const guardarClaseReal = async () => {
