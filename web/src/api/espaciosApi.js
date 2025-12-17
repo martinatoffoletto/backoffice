@@ -80,7 +80,7 @@ export const aulasDisponibles = async (desde, hasta, dia, sede, turno) => {
     const cursosResponse = await obtenerCursos();
     const cursos = cursosResponse.data || cursosResponse;
 
-    const sedesResponse = await obtenerSedes((status_filter = true));
+    const sedesResponse = await obtenerSedes(0, 100, true);
     const sedes = sedesResponse.filter((s) => s.status);
 
     const sedeObj = sedes.find((s) => s.nombre === sede);
