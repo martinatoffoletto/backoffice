@@ -97,6 +97,8 @@ export default function GestionClases({
   const [refreshKey, setRefreshKey] = useState(0); // Para forzar re-render de las cajas
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [sabadoIntegrador, setSabadoIntegrador] = useState(null); // Sábado aleatorio fijo para turno noche
+  const [clasesLoaded, setClasesLoaded] = useState(false); // Bandera para saber si las clases ya se cargaron
+  const [sabadoCalculado, setSabadoCalculado] = useState(false); // Bandera para saber si ya se calculó el sábado
 
   const cargarClases = useCallback(async () => {
     setLoading(true);
@@ -105,11 +107,13 @@ export default function GestionClases({
       // Asegurar que siempre sea un array
       const clasesActualizadas = Array.isArray(response) ? response : [];
       setClases(clasesActualizadas);
+      setClasesLoaded(true); // Marcar que las clases ya se cargaron
     } catch (err) {
       console.error("Error al cargar clases:", err);
       setError("Error al cargar las clases del curso.");
       // En caso de error, asegurar array vacío
       setClases([]);
+      setClasesLoaded(true); // Marcar como cargado incluso en error
     } finally {
       setLoading(false);
     }
@@ -121,11 +125,36 @@ export default function GestionClases({
     }
   }, [id_curso, cargarClases]);
 
+  // Función helper para normalizar fechas (solo año, mes, día)
+  const normalizarFecha = useCallback((fecha) => {
+    if (!fecha) return null;
+
+    let date;
+    if (fecha instanceof Date) {
+      date = fecha;
+    } else if (typeof fecha === "string") {
+      // Si es un string en formato ISO (YYYY-MM-DD), parsearlo directamente sin zona horaria
+      if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+        const [year, month, day] = fecha.split("T")[0].split("-").map(Number);
+        date = new Date(year, month - 1, day);
+      } else {
+        date = new Date(fecha);
+      }
+    } else {
+      date = new Date(fecha);
+    }
+
+    if (isNaN(date.getTime())) return null;
+    // Usar solo año, mes y día, ignorando hora
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }, []);
+
   // Calcular sábado aleatorio SOLO UNA VEZ para cursos de noche
   // Si ya existe una clase en un sábado, usar ese sábado en lugar de generar uno nuevo
   useEffect(() => {
-    // ⚠️ IMPORTANTE: Solo ejecutar DESPUÉS de cargar las clases (cuando loading = false)
-    if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && !sabadoIntegrador && !loading) {
+    // ⚠️ IMPORTANTE: Solo ejecutar DESPUÉS de cargar las clases (cuando clasesLoaded = true)
+    // Y solo una vez (cuando sabadoCalculado = false)
+    if (turno && turno.toLowerCase() === "noche" && fecha_inicio && fecha_fin && clasesLoaded && !sabadoCalculado) {
       const inicio = fecha_inicio instanceof Date ? fecha_inicio : new Date(fecha_inicio);
       const fin = fecha_fin instanceof Date ? fecha_fin : new Date(fecha_fin);
 
@@ -172,34 +201,12 @@ export default function GestionClases({
             console.log("🎲 Sábado integrador generado:", aleatorio.toDateString());
           }
         }
+        
+        // Marcar como calculado para que no se ejecute de nuevo
+        setSabadoCalculado(true);
       }
     }
-  }, [fecha_inicio, fecha_fin, turno, sabadoIntegrador, clases, loading]); // ✅ Depende también de loading!
-
-  // Función helper para normalizar fechas (solo año, mes, día)
-  // Debe estar antes de diasCalendario porque se usa dentro del useMemo
-  const normalizarFecha = (fecha) => {
-    if (!fecha) return null;
-
-    let date;
-    if (fecha instanceof Date) {
-      date = fecha;
-    } else if (typeof fecha === "string") {
-      // Si es un string en formato ISO (YYYY-MM-DD), parsearlo directamente sin zona horaria
-      if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
-        const [year, month, day] = fecha.split("T")[0].split("-").map(Number);
-        date = new Date(year, month - 1, day);
-      } else {
-        date = new Date(fecha);
-      }
-    } else {
-      date = new Date(fecha);
-    }
-
-    if (isNaN(date.getTime())) return null;
-    // Usar solo año, mes y día, ignorando hora
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  };
+  }, [fecha_inicio, fecha_fin, turno, clases, clasesLoaded, sabadoCalculado, normalizarFecha]); // ✅ Se ejecuta SOLO después de que las clases se cargaron, UNA SOLA VEZ
 
   // Calcular días del calendario según el día de cursada Y las fechas de las clases existentes
   const diasCalendario = useMemo(() => {
