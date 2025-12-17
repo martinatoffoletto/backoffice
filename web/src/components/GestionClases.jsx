@@ -131,18 +131,29 @@ export default function GestionClases({
 
       if (!isNaN(inicio.getTime()) && !isNaN(fin.getTime())) {
         // Primero, verificar si ya existe una clase en un sábado
+        console.log("🔍 Buscando clases en sábado. Total clases:", clases.length);
+        
         const claseEnSabado = clases.find((clase) => {
           if (!clase || !clase.fecha_clase) return false;
           const fechaClase = normalizarFecha(clase.fecha_clase);
-          return fechaClase && fechaClase.getDay() === 6; // 6 = sábado
+          const esSabado = fechaClase && fechaClase.getDay() === 6;
+          
+          // Log para debugging
+          if (fechaClase) {
+            console.log(`  📅 Clase: ${clase.fecha_clase} → ${fechaClase.toDateString()} → Día: ${fechaClase.getDay()} → Es sábado: ${esSabado}`);
+          }
+          
+          return esSabado;
         });
 
         if (claseEnSabado) {
-          // Si ya hay una clase en un sábado, usar ese sábado
-          const sabadoExistente = normalizarFecha(claseEnSabado.fecha_clase);
-          setSabadoIntegrador(sabadoExistente);
-          console.log("♻️ Usando sábado existente de clase guardada:", sabadoExistente.toDateString());
+          // Si ya hay una clase en un sábado, NO generamos uno nuevo
+          // El sábado existente se mostrará automáticamente en la sección 2 (clases existentes)
+          // Marcamos sabadoIntegrador como null para indicar que no hay que agregar sábado extra
+          setSabadoIntegrador(null);
+          console.log("♻️ Ya existe clase en sábado (", claseEnSabado.fecha_clase, "). No se genera sábado adicional.");
         } else {
+          console.log("⚠️ No se encontró ninguna clase en sábado. Generando uno nuevo...");
           // Si no hay clase en sábado, generar uno aleatorio
           const sabados = [];
           const fechaSabado = new Date(inicio);
