@@ -11,9 +11,9 @@ import {
   SelectLabel,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { buscarEspacios } from "@/api/espaciosApi";
+import { aulasDisponibles } from "@/api/espaciosApi";
 import { obtenerMaterias } from "@/api/materiasApi";
-import { buscarSedes, obtenerSedes } from "@/api/sedesApi";
+import {obtenerSedes } from "@/api/sedesApi";
 import {  obtenerDocentesDisponibles } from "@/api/docentesApi";
 
 export default function FormCurso({
@@ -60,19 +60,29 @@ export default function FormCurso({
 
   useEffect(() => {
     const fetchAulas = async () => {
-      try {
-        setLoadingAulas(true);
-        const response = await buscarEspacios("tipo", "AULA", 0, 100);
-        setAulas(response || []);
-      } catch (error) {
-        console.error("Error al cargar aulas:", error);
+      if (form.desde && form.hasta && form.dia && form.sede && form.turno) {
+        try {
+          setLoadingAulas(true);
+          const response = await aulasDisponibles(
+            form.desde,
+            form.hasta,
+            form.dia,
+            form.sede,
+            form.turno
+          );
+          setAulas(response || []);
+        } catch (error) {
+          console.error("Error al cargar aulas:", error);
+          setAulas([]);
+        } finally {
+          setLoadingAulas(false);
+        }
+      } else {
         setAulas([]);
-      } finally {
-        setLoadingAulas(false);
       }
     };
     fetchAulas();
-  }, []);
+  }, [form.desde, form.hasta, form.dia, form.sede, form.turno]);
 
   useEffect(() => {
     const fetchMaterias = async () => {
@@ -103,7 +113,8 @@ export default function FormCurso({
           (s) => s && typeof s === "object" && s.nombre
         );
 
-        setSedes(limpias);
+        // Agregar sede VIRTUAL
+        setSedes([...limpias, { id_sede: "vir", nombre: "Virtual" }]);
       } catch (error) {
         console.error("Error al cargar sedes:", error);
         setSedes([]);
@@ -118,7 +129,7 @@ export default function FormCurso({
     const fetchDocentes = async () => {
       const { uuid_materia, dia, turno, sede, modalidad } = form;
       if (uuid_materia && dia && turno && sede && modalidad) {
-        try {          
+        try {
           setLoadingDocentes(true);
           const data = await obtenerDocentesDisponibles({
             subjectId: uuid_materia,
@@ -237,7 +248,16 @@ export default function FormCurso({
                   value={form.sede || ""}
                   onValueChange={(value) => {
                     setSede(value);
-                    setForm((prev) => ({ ...prev, sede: value }));
+                    if (value === "vir") {
+                      setModalidad("vir");
+                      setForm((prev) => ({
+                        ...prev,
+                        sede: value,
+                        modalidad: "vir",
+                      }));
+                    } else {
+                      setForm((prev) => ({ ...prev, sede: value }));
+                    }
                     if (camposConError.has("sede")) {
                       const nuevosErrores = new Set(camposConError);
                       nuevosErrores.delete("sede");
@@ -325,11 +345,11 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.modalidad}
-                onValueChange={(value) =>{
+                disabled={form.sede === "vir"}
+                onValueChange={(value) => {
                   setModalidad(value);
-                  setForm((prev) => ({ ...prev, modalidad: value }))
-                }
-                }
+                  setForm((prev) => ({ ...prev, modalidad: value }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione modalidad" />
@@ -338,7 +358,7 @@ export default function FormCurso({
                   <SelectGroup>
                     <SelectLabel>Modalidad</SelectLabel>
                     <SelectItem value="PRESENCIAL">Presencial</SelectItem>
-                    <SelectItem value="VIRTUAL">Virtual</SelectItem>
+                    <SelectItem value="vir">Virtual</SelectItem>
                     <SelectItem value="HÍBRIDA">Híbrida</SelectItem>
                   </SelectGroup>
                 </SelectContent>
@@ -353,11 +373,10 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.dia}
-                onValueChange={(value) =>{
+                onValueChange={(value) => {
                   setDia(value);
-                  setForm((prev) => ({ ...prev, dia: value }))
-                }
-                }
+                  setForm((prev) => ({ ...prev, dia: value }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione día" />
@@ -388,7 +407,15 @@ export default function FormCurso({
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      loadingAulas ? "Cargando aulas..." : "Seleccione aula"
+                      loadingAulas
+                        ? "Cargando aulas..."
+                        : !form.desde ||
+                          !form.hasta ||
+                          !form.dia ||
+                          !form.sede ||
+                          !form.turno
+                        ? "Seleccione fechas, día, sede y turno primero"
+                        : "Seleccione aula"
                     }
                   />
                 </SelectTrigger>
@@ -458,11 +485,10 @@ export default function FormCurso({
               </FieldLabel>
               <Select
                 value={form.turno}
-                onValueChange={(value) =>{
+                onValueChange={(value) => {
                   setTurno(value);
-                  setForm((prev) => ({ ...prev, turno: value }))
-                }
-                }
+                  setForm((prev) => ({ ...prev, turno: value }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione turno" />
@@ -512,12 +538,30 @@ export default function FormCurso({
                 type="number"
                 id="cantidad_min"
                 value={form.cantidad_min}
-                onChange={(e) =>
+                className={`${
+                  camposConError.has("cantidad_min_max")
+                    ? "ring-2 ring-orange-500 ring-offset-2"
+                    : ""
+                }`}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value) || 0;
                   setForm((prev) => ({
                     ...prev,
-                    cantidad_min: parseInt(e.target.value) || 0,
-                  }))
-                }
+                    cantidad_min: newValue,
+                  }));
+                  if (newValue > form.cantidad_max || newValue <= 0) {
+                    setCamposConError(
+                      (prev) => new Set([...prev, "cantidad_min_max"])
+                    );
+                  } else {
+                    if (camposConError.has("cantidad_min_max")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("cantidad_min_max");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }
+                }}
               />
             </Field>
 
@@ -529,15 +573,40 @@ export default function FormCurso({
                 type="number"
                 id="cantidad_max"
                 value={form.cantidad_max}
-                onChange={(e) =>
+                className={`${
+                  camposConError.has("cantidad_min_max")
+                    ? "ring-2 ring-orange-500 ring-offset-2"
+                    : ""
+                }`}
+                onChange={(e) => {
+                  const newValue = parseInt(e.target.value) || 0;
                   setForm((prev) => ({
                     ...prev,
-                    cantidad_max: parseInt(e.target.value) || 0,
-                  }))
-                }
+                    cantidad_max: newValue,
+                  }));
+                  if (form.cantidad_min > newValue || newValue <= 0) {
+                    setCamposConError(
+                      (prev) => new Set([...prev, "cantidad_min_max"])
+                    );
+                  } else {
+                    if (camposConError.has("cantidad_min_max")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("cantidad_min_max");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }
+                }}
               />
             </Field>
           </div>
+
+          {camposConError.has("cantidad_min_max") && (
+            <p className="text-sm text-red-500 mt-1">
+              Las cantidades deben ser positivas y la mínima no puede ser mayor
+              a la máxima
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
             <Field>
@@ -548,9 +617,31 @@ export default function FormCurso({
                 type="datetime-local"
                 id="desde"
                 value={form.desde}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, desde: e.target.value }))
-                }
+                className={`${
+                  camposConError.has("fechas_invalidas")
+                    ? "ring-2 ring-orange-500 ring-offset-2"
+                    : ""
+                }`}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setForm((prev) => ({ ...prev, desde: newValue }));
+                  if (
+                    newValue &&
+                    form.hasta &&
+                    new Date(newValue) >= new Date(form.hasta)
+                  ) {
+                    setCamposConError(
+                      (prev) => new Set([...prev, "fechas_invalidas"])
+                    );
+                  } else {
+                    if (camposConError.has("fechas_invalidas")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("fechas_invalidas");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }
+                }}
               />
             </Field>
 
@@ -562,12 +653,40 @@ export default function FormCurso({
                 type="datetime-local"
                 id="hasta"
                 value={form.hasta}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, hasta: e.target.value }))
-                }
+                className={`${
+                  camposConError.has("fechas_invalidas")
+                    ? "ring-2 ring-orange-500 ring-offset-2"
+                    : ""
+                }`}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setForm((prev) => ({ ...prev, hasta: newValue }));
+                  if (
+                    form.desde &&
+                    newValue &&
+                    new Date(form.desde) >= new Date(newValue)
+                  ) {
+                    setCamposConError(
+                      (prev) => new Set([...prev, "fechas_invalidas"])
+                    );
+                  } else {
+                    if (camposConError.has("fechas_invalidas")) {
+                      const nuevosErrores = new Set(camposConError);
+                      nuevosErrores.delete("fechas_invalidas");
+                      setCamposConError(nuevosErrores);
+                      if (nuevosErrores.size === 0) setError(null);
+                    }
+                  }
+                }}
               />
             </Field>
           </div>
+
+          {camposConError.has("fechas_invalidas") && (
+            <p className="text-sm text-red-500 mt-1">
+              La fecha de inicio debe ser anterior a la fecha de fin
+            </p>
+          )}
 
           {!isModificacion && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
@@ -586,8 +705,14 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
-                  disabled={!materia || !dia || !turno || !sede || !modalidad || loadingDocentes}
-
+                  disabled={
+                    !materia ||
+                    !dia ||
+                    !turno ||
+                    !sede ||
+                    !modalidad ||
+                    loadingDocentes
+                  }
                 >
                   <SelectTrigger
                     className={`w-full ${
@@ -615,7 +740,10 @@ export default function FormCurso({
                         </SelectItem>
                       ) : (
                         docentesDisponibles.map((docente) => (
-                          <SelectItem key={docente.teacherId} value={docente.teacherId}>
+                          <SelectItem
+                            key={docente.teacherId}
+                            value={docente.teacherId}
+                          >
                             {docente.nombre} {docente.apellido}
                           </SelectItem>
                         ))
@@ -640,8 +768,14 @@ export default function FormCurso({
                       if (nuevosErrores.size === 0) setError(null);
                     }
                   }}
-                  disabled={!materia || !dia || !turno || !sede || !modalidad || loadingDocentes}
-
+                  disabled={
+                    !materia ||
+                    !dia ||
+                    !turno ||
+                    !sede ||
+                    !modalidad ||
+                    loadingDocentes
+                  }
                 >
                   <SelectTrigger
                     className={`w-full ${
@@ -669,7 +803,10 @@ export default function FormCurso({
                         </SelectItem>
                       ) : (
                         docentesDisponibles.map((docente) => (
-                          <SelectItem key={docente.uuid} value={docente.uuid}>
+                          <SelectItem
+                            key={docente.teacherId}
+                            value={docente.teacherId}
+                          >
                             {docente.nombre} {docente.apellido}
                           </SelectItem>
                         ))
