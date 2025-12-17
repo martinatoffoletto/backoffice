@@ -52,7 +52,8 @@ export const cursoPorId = async (uuid) => {
         accept: "application/json",
       },
     });
-    return response.data;
+    // Manejar si la respuesta viene como { success, data } o directamente
+    return response.data?.data || response.data;
   } catch (err) {
     console.error("Error al buscar curso:", err);
     throw err;
@@ -136,7 +137,11 @@ export const cursoPorIdConDocentes = async (uuid_curso) => {
       obtenerInscripcionesPorCurso(uuid_curso),
     ]);
 
-    const curso = curso_response.data;
+    // Manejar si la respuesta viene como { success, data } o directamente
+    const curso = curso_response.data?.data || curso_response.data;
+    
+    console.log("📚 Curso obtenido:", curso);
+    console.log("👥 Inscripciones obtenidas:", inscripciones);
 
     // 2. Filtrar solo profesores (TITULAR y AUXILIAR)
     // Cada inscripción ya incluye el objeto user completo
